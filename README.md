@@ -1,4 +1,5 @@
-![image](https://github.com/user-attachments/assets/a2d49bd6-07c2-4543-8fae-0598042ba89c)
+![image](https://github.com/user-attachments/assets/92e4195b-fdcc-488c-b866-fb771199ffca)
+
 
 ⚛️ Tech Stack: React.js, Node.js, Express.js, MongoDB, Chakra UI
 🔥 Build an API
