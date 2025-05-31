@@ -2,7 +2,7 @@
 
 
 ⚛️ Tech Stack: React.js, Node.js, Express.js, MongoDB, Chakra UI
-🔥 Build an API
+🔥 Built an API
 📱 Responsive UI With React.js and ChakraUI
 
 Setup .env file
