@@ -68,7 +68,8 @@ export const useProductStore = create((set) =>({
         {
             console.error( "Network error deleting product:", error );
             return { success: false, message: "Network error - could not reach API" };
-        },
+        }
+    },
     updateProduct: async(pid, updatedProduct) => {
         try
         {
