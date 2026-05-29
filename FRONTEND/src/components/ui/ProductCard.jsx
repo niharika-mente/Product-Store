@@ -1,8 +1,9 @@
 import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
 import React from 'react'
 import { useState } from "react";
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
+import { FaEdit, FaTrash } from "react-icons/fa"; // 1. Swapped out @chakra-ui/icons for react-icons
 import { useProductStore } from "../../store/product";
+import { useCart } from "../../context/CartContext.jsx";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
@@ -11,8 +12,20 @@ const ProductCard = ({ product }) => {
   const bg = useColorModeValue("white","gray.800");
 
   const { deleteProduct ,updateProduct}=useProductStore()
+  const { addToCart } = useCart(); 
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
+
+  const handleAddToCart = () => {
+    addToCart(product);
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your shopping cart.`,
+      status: "success",
+      duration: 2000,
+      isClosable: true,
+    });
+  };
 
   const handleDeleteProduct = async (pid) => {
     const {success,message} = await deleteProduct(pid)
@@ -27,7 +40,7 @@ const ProductCard = ({ product }) => {
     } else{
       toast({
         title: "Success",
-        description: "Product updated successsfully",
+        description: "Product deleted successfully",
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -39,23 +52,23 @@ const ProductCard = ({ product }) => {
     const { success, message } = await updateProduct(pid, updatedProduct);
     onClose();
     if (!success) {
-			toast({
-				title: "Error",
-				description: message,
-				status: "error",
-				duration: 3000,
-				isClosable: true,
-			});
-		} else {
-			toast({
-				title: "Success",
-				description: "Product updated successfully",
-				status: "success",
-				duration: 3000,
-				isClosable: true,
-			});
-		}
-	};
+      toast({
+        title: "Error",
+        description: message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   return (
    <Box
@@ -78,58 +91,73 @@ const ProductCard = ({ product }) => {
       </Text>
 
       <HStack spacing={2}>
-        <IconButton icon={<EditIcon />} 
+        {/* 2. Updated Edit Button with clean icon child rendering */}
+        <IconButton 
+          icon={<FaEdit />} 
           onClick={onOpen}
-        colorScheme='blue' aria-label='Edit Product'/>
-        <IconButton icon={<DeleteIcon />} onClick={() => handleDeleteProduct(product._id)} colorScheme='red' aria-label='Delete Product' />
+          colorScheme='blue' 
+          aria-label='Edit Product'
+        />
+        
+        {/* 3. Updated Delete Button with clean icon child rendering */}
+        <IconButton 
+          icon={<FaTrash />} 
+          onClick={() => handleDeleteProduct(product._id)} 
+          colorScheme='red' 
+          aria-label='Delete Product' 
+        />
+        
+        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}>
+          Add to Cart
+        </Button>
       </HStack>
     </Box>
       <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay/>
 
         <ModalContent>
-          <ModalHeader>Upadate Product</ModalHeader>
+          <ModalHeader>Update Product</ModalHeader>
           <ModalCloseButton/>
           <ModalBody>
-						<VStack spacing={4}>
-							<Input
-								placeholder='Product Name'
-								name='name'
-								value={updatedProduct.name}
-								onChange={(e) => setUpdatedProduct({ ...updatedProduct, name: e.target.value })}
-							/>
-							<Input
-								placeholder='Price'
-								name='price'
-								type='number'
-								value={updatedProduct.price}
-								onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: e.target.value })}
-							/>
-							<Input
-								placeholder='Image URL'
-								name='image'
-								value={updatedProduct.image}
-								onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
-							/>
-						</VStack>
-					</ModalBody>
+            <VStack spacing={4}>
+              <Input
+                placeholder='Product Name'
+                name='name'
+                value={updatedProduct.name}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, name: e.target.value })}
+              />
+              <Input
+                placeholder='Price'
+                name='price'
+                type='number'
+                value={updatedProduct.price}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: e.target.value })}
+              />
+              <Input
+                placeholder='Image URL'
+                name='image'
+                value={updatedProduct.image}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
+              />
+            </VStack>
+          </ModalBody>
 
-					<ModalFooter>
-						<Button
-							colorScheme='blue'
-							mr={3}
-							onClick={() => handleUpdateProduct(product._id, updatedProduct)}
-						>
-							Update
-						</Button>
-						<Button variant='ghost' onClick={onClose}>
-							Cancel
-						</Button>
-					</ModalFooter>
+          <ModalFooter>
+            <Button
+              colorScheme='blue'
+              mr={3}
+              onClick={() => handleUpdateProduct(product._id, updatedProduct)}
+            >
+              Update
+            </Button>
+            <Button variant='ghost' onClick={onClose}>
+              Cancel
+            </Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
    </Box>
   );
 };
 
-export default ProductCard
+export default ProductCard;
