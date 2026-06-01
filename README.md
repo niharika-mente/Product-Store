@@ -25,8 +25,11 @@ Product-Store/
 ├── BACKEND/             # Express.js REST API, Database controllers & schemas
 ├── FRONTEND/            # React.js SPA built with global UI components
 ├── package.json         # Root scripts configured for deployment/monorepo build
-└── README.md            # Project documentation
-⚙️ Local Installation & Setup
+├── README.md            # Project documentation
+├── .env.example         # Environment variables template
+```
+
+## ⚙️ Local Installation & Setup
 Follow these steps to run the application on your local machine:
 
 1. Clone the Repository
@@ -34,11 +37,20 @@ Bash
 git clone [https://github.com/niharika-mente/Product-Store.git](https://github.com/niharika-mente/Product-Store.git)
 cd Product-Store
 2. Environment Configuration
-Create a .env file in the root directory (or inside your backend module directory depending on your local config) and include your connection strings:
+Copy the `.env.example` file to `.env` and fill in your values:
 
-Code snippet
+```bash
+cp .env.example .env
+```
+
+Then update the `.env` file with your MongoDB connection string:
+
+```
 MONGO_URI=your_mongodb_connection_string
 PORT=5000
+NODE_ENV=development
+VITE_API_URL=http://localhost:5000
+```
 3. Install Dependencies
 Install dependencies across both your backend and frontend structures:
 
