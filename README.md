@@ -71,3 +71,28 @@ npm run build
 
 # Start the application
 npm run start
+
+
+## Docker Setup
+
+Make sure [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
+
+### Run with Docker
+
+```bash
+docker-compose up --build
+```
+
+### Services
+
+| Service  | URL                   |
+|----------|-----------------------|
+| Frontend | http://localhost:5173 |
+| Backend  | http://localhost:5000 |
+| MongoDB  | localhost:27017       |
+
+### Stop Services
+
+```bash
+docker-compose down
+```
