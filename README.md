@@ -81,7 +81,6 @@ VITE_API_URL=http://localhost:5000
 
 Run the **backend server** (with auto-reload via nodemon):
 
-<<<<<<< HEAD
 # Start the application
 npm run start
 
@@ -109,7 +108,7 @@ docker-compose up --build
 ```bash
 docker-compose down
 ```
-=======
+
 ```bash
 npm run dev
 ```
@@ -122,4 +121,3 @@ cd FRONTEND && npm run dev
 
 - The backend API runs at `http://localhost:5000`
 - The frontend app runs at `http://localhost:5173`
->>>>>>> 74e8d33cfdf539669b50f6ce3cfdfdc0e352325c
