@@ -121,3 +121,26 @@ cd FRONTEND && npm run dev
 
 - The backend API runs at `http://localhost:5000`
 - The frontend app runs at `http://localhost:5173`
+
+## 💖 Contributors
+
+Thanks to all the amazing people who contribute to **Product Store** 🚀
+
+<p align="center">
+  <a href="https://github.com/niharika-mente/Product-Store/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=niharika-mente/Product-Store" alt="Contributors"/>
+  </a>
+</p>
+
+
+## ⭐ Project Support
+
+<p align="center">
+  <a href="https://github.com/niharika-mente/Product-Store/stargazers">
+    <img src="https://img.shields.io/github/stars/niharika-mente/Product-Store?style=social" alt="Stars">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/niharika-mente/Product-Store/network/members">
+    <img src="https://img.shields.io/github/forks/niharika-mente/Product-Store?style=social" alt="Forks">
+  </a>
+</p>
