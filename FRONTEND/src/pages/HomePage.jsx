@@ -52,7 +52,7 @@ const HomePage = () => {
 >
     <Text fontSize="sm">Products</Text>
     <Text fontSize="2xl" fontWeight="bold">
-      {products.length}
+      {/*products.length*/}3
     </Text>
   </Box>
 </VStack>
@@ -66,12 +66,36 @@ const HomePage = () => {
           spacing={10}
           w={"full"}
         >
-          {products.map((product) =>(
+          {/*products.map((product) =>(
             <ProductCard key={product._id} product={product} />
-          ))}
+          ))*/}
+          {/*mock data*/}
+          {[
+  {
+    _id: "1",
+    name: "iPhone 15",
+    price: 999,
+    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+  },
+  {
+    _id: "2",
+    name: "MacBook Air",
+    price: 1299,
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8"
+  },
+  {
+    _id: "3",
+    name: "Headphones",
+    price: 199,
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
+  }
+].map((product) => (
+  <ProductCard key={product._id} product={product} />
+))}
+          {/*mock data end*/}
         </SimpleGrid>
-
-        {products.length === 0 && (
+{/*false=0*/}
+        {products.length === false && (
   <VStack gap={4} py={12}>
     <Text fontSize="6xl">📦</Text>
 
