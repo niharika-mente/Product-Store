@@ -5,10 +5,11 @@ import {
   HStack,
   Link,
   useColorModeValue,
+  SimpleGrid
 } from "@chakra-ui/react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { Link as RouterLink } from "react-router-dom";
-import { SimpleGrid } from "@chakra-ui/react";
+
 
 const Footer = () => {
   const bg = useColorModeValue("gray.50", "gray.900");
@@ -62,6 +63,7 @@ const Footer = () => {
   as={RouterLink}
   to="/"
   transition="all 0.2s"
+  display="inline-block"
   _hover={{
     color: "cyan.400",
     textDecoration: "none",
@@ -75,6 +77,7 @@ const Footer = () => {
   as={RouterLink}
   to="/create"
   transition="all 0.2s"
+  display="inline-block"
   _hover={{
     color: "cyan.400",
     textDecoration: "none",

@@ -2,11 +2,10 @@ import React from 'react';
 import { 
   Button, Container, Flex, HStack, Text, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge
+  VStack, Box, Badge, useColorModeValue
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
-import { useColorModeValue } from "@chakra-ui/react";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
 import { useCart } from "../../context/CartContext.jsx";
@@ -40,13 +39,14 @@ const Navbar = () => {
         }}
       >
         <Text
-          fontSize={{ base: "22", sm: "28" }}
+          fontSize={{ base: "22px", sm: "28px" }}
           fontWeight={"bold"}
           textTransform={"uppercase"}
           textAlign={"center"}
           bgGradient={"linear(to-r, cyan.400, blue.500)"}
           bgClip={"text"}
           transition="all 0.3s"
+          display="inline-block"
 _hover={{
   transform: "scale(1.03)",
 }}
@@ -62,7 +62,7 @@ _hover={{
           </Link>
 
           {/* Shopping Cart Button with Dynamic Badge Count */}
-          <Button onClick={onOpen} position="relative">
+          <Button onClick={onOpen} position="relative" aria-label="Open cart">
             <LuShoppingCart size="20" />
             {totalItemsCount > 0 && (
               <Badge 
@@ -78,7 +78,7 @@ _hover={{
             )}
           </Button>
 
-          <Button onClick={toggleColorMode}>
+          <Button onClick={toggleColorMode} aria-label="Toggle color mode">
             {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
           </Button>
         </HStack>

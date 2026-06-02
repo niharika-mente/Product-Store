@@ -1,6 +1,5 @@
-import { Container, Text, VStack, Box } from '@chakra-ui/react';
+import { Container, Text, VStack, Box, SimpleGrid } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import { SimpleGrid } from "@chakra-ui/react"
 import React,{useEffect} from 'react'
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
@@ -37,6 +36,7 @@ const HomePage = () => {
     Browse and manage your product collection with ease.
   </Text>
   <Box
+  display="inline-block"
   bg="blue.500"
   color="white"
   px={6}
@@ -52,7 +52,7 @@ const HomePage = () => {
 >
     <Text fontSize="sm">Products</Text>
     <Text fontSize="2xl" fontWeight="bold">
-      {/*products.length*/}3
+      {products.length}
     </Text>
   </Box>
 </VStack>
@@ -66,36 +66,13 @@ const HomePage = () => {
           spacing={10}
           w={"full"}
         >
-          {/*products.map((product) =>(
+          {products.map((product) =>(
             <ProductCard key={product._id} product={product} />
-          ))*/}
-          {/*mock data*/}
-          {[
-  {
-    _id: "1",
-    name: "iPhone 15",
-    price: 999,
-    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
-  },
-  {
-    _id: "2",
-    name: "MacBook Air",
-    price: 1299,
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8"
-  },
-  {
-    _id: "3",
-    name: "Headphones",
-    price: 199,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
-  }
-].map((product) => (
-  <ProductCard key={product._id} product={product} />
-))}
-          {/*mock data end*/}
+          ))}
+          
         </SimpleGrid>
-{/*false=0*/}
-        {products.length === false && (
+
+        {products.length === 0 && (
   <VStack gap={4} py={12}>
     <Text fontSize="6xl">📦</Text>
 
@@ -114,6 +91,8 @@ const HomePage = () => {
       <Text
         color="blue.500"
         fontWeight="bold"
+        display="inline-block"
+        transition="all 0.2s"
         _hover={{
           color: "blue.600",
           transform: "translateY(-2px)",

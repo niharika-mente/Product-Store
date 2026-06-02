@@ -70,6 +70,8 @@ const ProductCard = ({ product }) => {
     }
   };
 
+const borderColor = useColorModeValue("gray.200", "gray.700");
+
   return (
    <Box
   role="group"
@@ -77,7 +79,7 @@ const ProductCard = ({ product }) => {
   rounded="lg"
   overflow="hidden"
   borderWidth="1px"
-  borderColor={useColorModeValue("gray.200", "gray.700")}
+  borderColor={borderColor}
   transition="all 0.3s"
   _hover={{
     transform: "translateY(-8px)",
