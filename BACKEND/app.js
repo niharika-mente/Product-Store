@@ -1,4 +1,5 @@
 import { fileURLToPath } from "url";
+import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
@@ -15,8 +16,14 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 connectDB();
 
 const app = express();
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests from this IP, please try again later."
+});
 app.use(cors());
 app.use(express.json());
+app.use("/api", limiter);
 
 app.use("/api/products", productRoutes);
 
