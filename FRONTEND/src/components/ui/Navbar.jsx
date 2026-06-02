@@ -6,6 +6,7 @@ import {
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
+import { useColorModeValue } from "@chakra-ui/react";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
 import { useCart } from "../../context/CartContext.jsx";
@@ -18,7 +19,16 @@ const Navbar = () => {
   // Calculate total item count (sum of all quantities)
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+  const navBg = useColorModeValue("white", "gray.800");
+  const border = useColorModeValue("gray.200", "gray.700");
+
   return (
+    <Box
+    bg={navBg}
+  borderBottom="1px solid"
+  borderColor={border}
+  mb={4}
+  >
     <Container maxW={"1140px"} px={4}>
       <Flex
         h={16}
@@ -36,6 +46,10 @@ const Navbar = () => {
           textAlign={"center"}
           bgGradient={"linear(to-r, cyan.400, blue.500)"}
           bgClip={"text"}
+          transition="all 0.3s"
+_hover={{
+  transform: "scale(1.03)",
+}}
         >
           <Link to={"/"}>Product Store 🛒</Link>
         </Text>
@@ -116,6 +130,7 @@ const Navbar = () => {
         </DrawerContent>
       </Drawer>
     </Container>
+    </Box>
   );
 };
 

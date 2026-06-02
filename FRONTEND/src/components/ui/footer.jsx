@@ -8,6 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { Link as RouterLink } from "react-router-dom";
+import { SimpleGrid } from "@chakra-ui/react";
 
 const Footer = () => {
   const bg = useColorModeValue("gray.50", "gray.900");
@@ -22,102 +23,113 @@ const Footer = () => {
       borderTop="1px solid"
       borderColor={border}
     >
-      <VStack gap={5}>
-        {/* Brand */}
-        <VStack gap={1}>
-          <Text
-            fontSize="2xl"
-            fontWeight="bold"
-            bgGradient="linear(to-r, cyan.400, blue.500)"
-            bgClip="text"
-            transition="all 0.3s"
-            _hover={{
-            transform: "scale(1.05)",
-}}>
-            Product Store 🛒
-          </Text>
+      <Box
+  maxW="1200px"
+  mx="auto"
+>
+  <SimpleGrid
+  columns={{ base: 1, md: 3 }}
+  spacing={10}
+>
+    {/* Brand */}
+    <VStack align="start" spacing={2}>
+      <Text
+        fontSize="2xl"
+        fontWeight="bold"
+        bgGradient="linear(to-r, cyan.400, blue.500)"
+        bgClip="text"
+      >
+        Product Store 🛒
+      </Text>
+      <Text
+  fontSize="sm"
+  color="cyan.400"
+  fontWeight="medium"
+>
+  Modern Product Management
+</Text>
 
-          <Text
-            color="gray.500"
-            textAlign="center"
-            maxW="500px"
-          >
-            Discover, manage and showcase products with ease.
-          </Text>
-        </VStack>
+      <Text color="gray.500" maxW="250px">
+        Discover, manage and showcase products with ease.
+      </Text>
+    </VStack>
 
-        {/* Navigation */}
-        <HStack gap={6}>
-          <Link
+    {/* Quick Links */}
+    <VStack align="start" spacing={2}>
+      <Text fontWeight="bold">Quick Links</Text>
+
+      <Link
   as={RouterLink}
   to="/"
-  px={4}
-  py={2}
-  borderRadius="md"
   transition="all 0.2s"
   _hover={{
-    bg: "blue.50",
+    color: "cyan.400",
     textDecoration: "none",
-    transform: "translateY(-2px)",
+    transform: "translateX(4px)",
   }}
 >
   Home
 </Link>
 
-          <Link
+      <Link
   as={RouterLink}
   to="/create"
-  px={4}
-  py={2}
-  borderRadius="md"
   transition="all 0.2s"
   _hover={{
-    bg: "blue.50",
+    color: "cyan.400",
     textDecoration: "none",
-    transform: "translateY(-2px)",
+    transform: "translateX(4px)",
   }}
 >
-  Create Product
-</Link>
-        </HStack>
+        Create Product
+      </Link>
+    </VStack>
 
-        {/* Social Links */}
-        <HStack gap={5}>
-          <Link
-  href="https://github.com/niharika-mente"
-  isExternal
-  fontSize="xl"
-  transition="all 0.2s"
-  _hover={{
-    transform: "scale(1.2)",
-    color: "blue.500",
-  }}
->
-            <FaGithub />
-          </Link>
+    {/* Connect */}
+    <VStack align="start" spacing={2}>
+      <Text fontWeight="bold">Connect</Text>
 
-          <Link
-  href="https://www.linkedin.com/in/niharika-mente-473434323/"
-  isExternal
-  fontSize="xl"
-  transition="all 0.2s"
-  _hover={{
-    transform: "scale(1.2)",
-    color: "blue.500",
-  }}
->
-            <FaLinkedin />
-          </Link>
-        </HStack>
+      <HStack spacing={4}>
+  <Link
+    href="https://github.com/niharika-mente"
+    isExternal
+    fontSize="xl"
+    transition="all 0.2s"
+    _hover={{
+      color: "cyan.400",
+      transform: "scale(1.2)",
+    }}
+  >
+    <FaGithub />
+  </Link>
 
-        <Text
-          fontSize="sm"
-          color="gray.400"
-          textAlign="center"
-        >
-            Designed for seamless product management.
-        </Text>
-      </VStack>
+  <Link
+    href="https://www.linkedin.com/in/niharika-mente-473434323/"
+    isExternal
+    fontSize="xl"
+    transition="all 0.2s"
+    _hover={{
+      color: "cyan.400",
+      transform: "scale(1.2)",
+    }}
+  >
+    <FaLinkedin />
+  </Link>
+</HStack>
+    </VStack>
+</SimpleGrid>
+  <Text
+    mt={10}
+    pt={6}
+    borderTop="1px solid"
+    borderColor={border}
+    textAlign="center"
+    color="gray.400"
+    fontSize="sm"
+  >
+    Designed for seamless product management.
+  </Text>
+</Box>
     </Box>
   );
 };
