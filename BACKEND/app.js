@@ -24,7 +24,24 @@ const limiter = rateLimit({
     max: 100,
     message: "Too many requests from this IP, please try again later."
 });
-app.use(cors());
+// Configure trusted origins for CORS
+const allowedOrigins = [
+   "http://localhost:5173",
+   process.env.FRONTEND_URL
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("CORS Policy Error: Origin not allowed"));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json());
 app.use("/api", limiter);
 
