@@ -13,7 +13,7 @@ const ProductCard = ({ product }) => {
 
   useEffect(() => {
     setUpdatedProduct(product);
-  }, [product]);
+  }, [product._id]);
 
   const textColor = useColorModeValue("gray.600","gray.200");
   const bg = useColorModeValue("white","gray.800");
@@ -197,7 +197,7 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
               variant='ghost' 
               onClick={() => {
                 onClose();
-                setUpdatedProduct(product); // Resets any unsaved changes
+                setUpdatedProduct(product);
               }}
             >
               Cancel
