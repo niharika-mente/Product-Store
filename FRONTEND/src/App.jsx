@@ -3,6 +3,9 @@ import { Route, Routes } from "react-router-dom";
 import CreatePage from "./pages/CreatePage";
 import HomePage from "./pages/HomePage";
 import Navbar from "./components/ui/Navbar";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute"
 
 function App() {
   return (
@@ -10,7 +13,16 @@ function App() {
       <Navbar />
       <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/create" element={<CreatePage />} />
+          <Route path="/create" 
+          element={
+          <ProtectedRoute>
+ <CreatePage />
+          </ProtectedRoute>
+           
+        
+            } />
+          <Route path="/signup" element={<Signup/>}/>
+          <Route path="/login" element={<Login/>}/>
       </Routes>
     </Box>
   )

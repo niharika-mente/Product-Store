@@ -7,7 +7,6 @@ import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 
-
 // Import the app configured in app.js and start the server
 import app from "./app.js";
 
