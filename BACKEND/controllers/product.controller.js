@@ -1,16 +1,34 @@
 import Product from '../models/product.model.js';
 import mongoose from "mongoose";
 
-export const getProducts = async ( req, res ) =>
-{
-    try
-    {
-        const products = await Product.find({ isDeleted: false });
-        res.status( 200 ).json( { success: true, data: products } );
-    } catch ( error )
-    {
-        console.log( "error in fetching products:", error.message );
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+
+export const getProducts = async (req, res) => {
+    try {
+        const { sort } = req.query;
+
+        let sortOption = {};
+
+        if (sort === "price_asc") {
+            sortOption = { price: 1 };
+        } else if (sort === "price_desc") {
+            sortOption = { price: -1 };
+        } else if (sort === "newest") {
+            sortOption = { createdAt: -1 };
+        }
+
+        const products = await Product.find({
+    isDeleted: false
+}).sort(sortOption);
+        res.status(200).json({
+            success: true,
+            data: products
+        });
+    } catch (error) {
+        console.log("error in fetching products:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Server Error"
+        });
     }
 };
 
@@ -18,7 +36,7 @@ export const createProduct = async ( req, res ) =>
 {
     const product = req.body;
 
-    if ( !product.name || !product.price || !product.image )
+    if ( !product.name || product.price === undefined || product.price === null || !product.image )
     {
         return res.status( 400 ).json( { success: false, message: "Please provide all fields" } );
     }
@@ -71,7 +89,7 @@ export const updateProduct = async ( req, res ) =>
 
     try
     {
-        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true } );
+        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true, runValidators: true } );
         res.status( 200 ).json( { success: true, data: updatedProduct } );
     } catch ( error )
     {
