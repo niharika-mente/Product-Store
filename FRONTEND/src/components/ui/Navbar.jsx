@@ -18,6 +18,33 @@ const Navbar = () => {
     window.location.reload();
   };
 
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    setIsCheckoutLoading(true);
+
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cartItems }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
+        return;
+      }
+
+      emptyCart();
+      onClose();
+      navigate("/success");
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to process checkout", status: "error", duration: 3000, isClosable: true });
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
+
   return (
     <Container maxW={"full"} px={0}>
       <Flex
