@@ -6,7 +6,8 @@ import express from "express";
 import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
-import { errorHandler,notFoundHandler } from "./middleware/errorMiddleware.js"; // ← ADD THIS LINE
+import checkoutRoutes from "./routes/checkout.route.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorMiddleware.js"; // ✅ ADD THIS
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -14,7 +15,9 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-connectDB();
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
+}
 
 const app = express();
 
@@ -25,6 +28,7 @@ const limiter = rateLimit({
   max: 100,
   message: "Too many requests from this IP, please try again later.",
 });
+
 // Configure trusted origins for CORS
 const allowedOrigins = [
    "http://localhost:5173",
@@ -43,10 +47,14 @@ app.use(cors({
     },
     credentials: true
 }));
+
 app.use(express.json());
 app.use("/api", limiter);
 
 app.use("/api/products", productRoutes);
+app.use("/api/checkout", checkoutRoutes);
+
+// ✅ ADD THESE - Error handlers (BEFORE production static files)
 app.use(notFoundHandler);
 app.use(errorHandler);
 
