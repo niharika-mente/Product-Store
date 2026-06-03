@@ -1,9 +1,9 @@
-import { Container, Text, VStack } from '@chakra-ui/react';
+import { Container, Text, VStack, Box, SimpleGrid } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import { SimpleGrid } from "@chakra-ui/react"
 import React,{useEffect} from 'react'
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
+import Footer from "../components/ui/footer";
 
 const HomePage = () => {
   const { fetchProducts,products } = useProductStore();
@@ -14,17 +14,48 @@ const HomePage = () => {
   console.log("products",products);
 
   return (
+    <>
     <Container maxW='container.xl' py={12}>
       <VStack spacing={8}>
-        <Text
-          fontSize={"30"}
-          fontWeight={"bold"}
-          bgGradient={"linear(to-r,cyan.400,blue.500)"}
-          bgClip={"text"}
-          textAlign={"center"}
-        >
-          Current Products🚀
-        </Text>
+        <VStack gap={2}>
+  <Text
+    fontSize={{ base: "3xl", md: "5xl" }}
+    fontWeight="extrabold"
+    bgGradient="linear(to-r, cyan.400, blue.500)"
+    bgClip="text"
+    textAlign="center"
+  >
+    Discover Amazing Products 🚀
+  </Text>
+
+  <Text
+    color="gray.500"
+    textAlign="center"
+    maxW="600px"
+  >
+    Browse and manage your product collection with ease.
+  </Text>
+  <Box
+  display="inline-block"
+  bg="blue.500"
+  color="white"
+  px={6}
+  py={3}
+  borderRadius="xl"
+  minW="140px"
+  textAlign="center"
+  transition="all 0.3s"
+  _hover={{
+    transform: "translateY(-3px)",
+    boxShadow: "lg",
+  }}
+>
+    <Text fontSize="sm">Products</Text>
+    <Text fontSize="2xl" fontWeight="bold">
+      {products.length}
+    </Text>
+  </Box>
+</VStack>
 
         <SimpleGrid
           columns={{
@@ -38,21 +69,45 @@ const HomePage = () => {
           {products.map((product) =>(
             <ProductCard key={product._id} product={product} />
           ))}
+          
         </SimpleGrid>
 
         {products.length === 0 && (
-          <Text fontSize='xl' textAlign={"center"} fontWeight='bold' color='gray.500'>
-          No products found😢{" "}
-          <Link to={"/create"}>
-            <Text as='span' color='blue.500' _hover={{ textDecoration: "underline"}}>
-              Create a product✨
-            </Text>
-          </Link>
-        </Text>
-        )}
+  <VStack gap={4} py={12}>
+    <Text fontSize="6xl">📦</Text>
+
+    <Text
+      fontSize="2xl"
+      fontWeight="bold"
+    >
+      No Products Yet
+    </Text>
+
+    <Text color="gray.500" textAlign="center">
+      Start building your store by adding your first product.
+    </Text>
+
+    <Link to="/create">
+      <Text
+        color="blue.500"
+        fontWeight="bold"
+        display="inline-block"
+        transition="all 0.2s"
+        _hover={{
+          color: "blue.600",
+          transform: "translateY(-2px)",
+        }}
+      >
+        Create Product ✨
+      </Text>
+    </Link>
+  </VStack>
+)}
       </VStack>
     </Container>
+    <Footer />
+</>
   );
 };
 
-export default HomePage
+export default HomePage;
