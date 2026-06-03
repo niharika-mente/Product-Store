@@ -7,6 +7,19 @@ export class AppError extends Error {
   }
 }
 
+// ADD THIS - 404 Handler for unknown API routes
+export const notFoundHandler = (req, res, next) => {
+  // Check if it's an API route (starts with /api)
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      success: false,
+      message: `API route not found: ${req.method} ${req.path}`
+    });
+  }
+  // For non-API routes, pass to next middleware (like frontend)
+  next();
+};
+
 // Global Error Handler Middleware
 export const errorHandler = (err, req, res, next) => {
   // Default values
