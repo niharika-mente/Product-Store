@@ -16,9 +16,11 @@ export const getProducts = async (req, res) => {
             sortOption = { createdAt: -1 };
         }
 
+        // Query: Find all products where isDeleted is NOT true (handles both missing and false)
         const products = await Product.find({
-    isDeleted: false
-}).sort(sortOption);
+            isDeleted: { $ne: true }
+        }).sort(sortOption);
+        
         res.status(200).json({
             success: true,
             data: products
@@ -41,46 +43,24 @@ export const createProduct = async ( req, res ) =>
         return res.status( 400 ).json( { success: false, message: "Please provide all fields" } );
     }
 
-    // const newProduct = new Product( product );
-    // async ( req, res ) =>
-    // {
-    //     const product = req.body;
+    const newProduct = new Product(product);
 
-    //     if ( !product.name || !product.price || !product.image )
-    //     {
-    //         return res.status( 400 ).json( { success: false, message: "Please provide all fields" } );
-    //     }
-
-        const newProduct = new Product(product);
-
-        try
-        {
-            await newProduct.save();
-            res.status( 201 ).json( { success: true, data: newProduct } );
-        } catch ( error )
-        {
-            console.error( "Error in Create product:", error.message );
-            res.status( 500 ).json( { success: false, message: "Server Error" } );
-        }
-    };
-    // try
-    // {
-    //     await newProduct.save();
-    //     res.status( 201 ).json( { success: true, data: newProduct } );
-    // } catch ( error )
-    // {
-    //     console.error( "Error in Create product:", error.message );
-    //     res.status( 500 ).json( { success: false, message: "Server Error" } );
-    // }
+    try
+    {
+        await newProduct.save();
+        res.status( 201 ).json( { success: true, data: newProduct } );
+    } catch ( error )
+    {
+        console.error( "Error in Create product:", error.message );
+        res.status( 500 ).json( { success: false, message: "Server Error" } );
+    }
+};
 
 
 export const updateProduct = async ( req, res ) =>
 {
-
     const { id } = req.params;
     const product = req.body;
-    console.log( "PUT Request ID:", id );
-    console.log( "PUT Request Body:", product );
 
     if ( !mongoose.Types.ObjectId.isValid( id ) )
     {
@@ -93,7 +73,7 @@ export const updateProduct = async ( req, res ) =>
         res.status( 200 ).json( { success: true, data: updatedProduct } );
     } catch ( error )
     {
-        console.error( "Update error:", error );
+        console.error( "Error in Update product:", error.message );
         res.status( 500 ).json( { success: false, message: "Server Error" } );
     }
 };
@@ -134,7 +114,9 @@ export const getProductById = async ( req, res ) =>
 
     try
     {
-        const product = await Product.findById( id );
+        // Query: Find by ID and ensure NOT deleted (handles both missing and false values)
+        const product = await Product.findOne({ _id: id, isDeleted: { $ne: true } });
+        
         if ( !product )
         {
             return res.status( 404 ).json( { success: false, message: "Product not found" } );
@@ -142,7 +124,7 @@ export const getProductById = async ( req, res ) =>
         res.status( 200 ).json( { success: true, data: product } );
     } catch ( error )
     {
-        console.log( "error in fetching product:", error.message );
+        console.error( "Error in fetching product:", error.message );
         res.status( 500 ).json( { success: false, message: "Server Error" } );
     }
 };
@@ -178,7 +160,8 @@ export const getRelatedProducts = async ( req, res ) =>
             const regexes = words.map( word => new RegExp( word, 'i' ) );
             related = await Product.find( {
                 _id: { $ne: product._id },
-                name: { $in: regexes }
+                name: { $in: regexes },
+                isDeleted: { $ne: true }
             } ).limit( 5 );
         }
 
@@ -187,7 +170,8 @@ export const getRelatedProducts = async ( req, res ) =>
         {
             const excludeIds = [ product._id, ...related.map( p => p._id ) ];
             const padding = await Product.find( {
-                _id: { $nin: excludeIds }
+                _id: { $nin: excludeIds },
+                isDeleted: { $ne: true }
             } ).limit( 5 - related.length );
             related = [ ...related, ...padding ];
         }
