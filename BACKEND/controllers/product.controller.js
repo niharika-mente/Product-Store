@@ -71,7 +71,7 @@ export const updateProduct = async ( req, res ) =>
 
     try
     {
-        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true } );
+        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true, runValidators: true } );
         res.status( 200 ).json( { success: true, data: updatedProduct } );
     } catch ( error )
     {
