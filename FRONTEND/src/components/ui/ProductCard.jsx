@@ -1,7 +1,10 @@
 import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
 import React from 'react'
-import { useState, useEffect } from "react"; // 1. Added useEffect here
-import { FaEdit, FaTrash } from "react-icons/fa"; 
+
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { FaEdit, FaTrash } from "react-icons/fa";
+
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../context/CartContext.jsx";
 
@@ -91,14 +94,26 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
   }}
   bg={bg}
 >
-    <Image src={product.image} alt={product.name} h={48} w='full' objectFit='cover'  transition="transform 0.4s"
-  _groupHover={{transform: "scale(1.05)",
-            }} />
+    <Link to={`/product/${product._id}`}>
+      <Image 
+        src={product.image} 
+        alt={product.name} 
+        h={48} 
+        w='full' 
+        objectFit='cover'  
+        transition="transform 0.4s"
+        _groupHover={{transform: "scale(1.05)"}} 
+        cursor="pointer"
+      />
+    </Link>
 
     <Box p={4}>
-      <Heading as='h3' size='md' mb={2}
-      noOfLines={1}>
-        {product.name}
+      <Heading as='h3' size='md' mb={2} noOfLines={1}>
+        <Link to={`/product/${product._id}`} style={{ textDecoration: 'none' }}>
+          <Text _hover={{ color: "cyan.500" }} transition="color 0.2s">
+            {product.name}
+          </Text>
+        </Link>
       </Heading>
 
       <Text fontWeight='bold' fontSize='xl' color={textColor} mb={4}>
