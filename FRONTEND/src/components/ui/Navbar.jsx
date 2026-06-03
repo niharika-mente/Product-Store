@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Button, Container, Flex, HStack, Text, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge
+  VStack, Box, Badge, useColorModeValue
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
@@ -18,7 +18,16 @@ const Navbar = () => {
   // Calculate total item count (sum of all quantities)
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+  const navBg = useColorModeValue("white", "gray.800");
+  const border = useColorModeValue("gray.200", "gray.700");
+
   return (
+    <Box
+    bg={navBg}
+  borderBottom="1px solid"
+  borderColor={border}
+  mb={4}
+  >
     <Container maxW={"1140px"} px={4}>
       <Flex
         h={16}
@@ -30,12 +39,17 @@ const Navbar = () => {
         }}
       >
         <Text
-          fontSize={{ base: "22", sm: "28" }}
+          fontSize={{ base: "22px", sm: "28px" }}
           fontWeight={"bold"}
           textTransform={"uppercase"}
           textAlign={"center"}
           bgGradient={"linear(to-r, cyan.400, blue.500)"}
           bgClip={"text"}
+          transition="all 0.3s"
+          display="inline-block"
+_hover={{
+  transform: "scale(1.03)",
+}}
         >
           <Link to={"/"}>Product Store 🛒</Link>
         </Text>
@@ -48,7 +62,7 @@ const Navbar = () => {
           </Link>
 
           {/* Shopping Cart Button with Dynamic Badge Count */}
-          <Button onClick={onOpen} position="relative">
+          <Button onClick={onOpen} position="relative" aria-label="Open cart">
             <LuShoppingCart size="20" />
             {totalItemsCount > 0 && (
               <Badge 
@@ -64,7 +78,7 @@ const Navbar = () => {
             )}
           </Button>
 
-          <Button onClick={toggleColorMode}>
+          <Button onClick={toggleColorMode} aria-label="Toggle color mode">
             {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
           </Button>
         </HStack>
@@ -116,6 +130,7 @@ const Navbar = () => {
         </DrawerContent>
       </Drawer>
     </Container>
+    </Box>
   );
 };
 

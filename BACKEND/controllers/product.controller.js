@@ -1,20 +1,32 @@
-
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
 import { AppError } from "../middleware/errorMiddleware.js";
 
-
 export const getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({}).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: products.length, data: products });
+    const { sort } = req.query;
+
+    let sortOption = {};
+    if (sort === "price_asc") {
+      sortOption = { price: 1 };
+    } else if (sort === "price_desc") {
+      sortOption = { price: -1 };
+    } else if (sort === "newest") {
+      sortOption = { createdAt: -1 };
+    }
+
+    const products = await Product.find().sort(sortOption);
+
+    res.status(200).json({
+      success: true,
+      data: products,
+    });
   } catch (error) {
-    next(error);
+    next(error);  
   }
 };
 
-
-export const createProduct = async (req, res, next) => {
+export const createProduct = async (req, res, next) => {  // ✅ 'next' added
   const product = req.body;
 
   // Basic validation - Missing fields
@@ -37,12 +49,10 @@ export const createProduct = async (req, res, next) => {
   }
 };
 
-
 export const updateProduct = async (req, res, next) => {
   const { id } = req.params;
   const product = req.body;
 
-  // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(new AppError("Invalid Product Id format", 404));
   }
@@ -50,7 +60,7 @@ export const updateProduct = async (req, res, next) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(id, product, {
       new: true,
-      runValidators: true  // Schema validation bhi run karo
+      runValidators: true,
     });
 
     if (!updatedProduct) {
@@ -63,18 +73,16 @@ export const updateProduct = async (req, res, next) => {
   }
 };
 
-
 export const deleteProduct = async (req, res, next) => {
   const { id } = req.params;
 
-  // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(new AppError("Invalid Product Id format", 404));
   }
 
   try {
     const deletedProduct = await Product.findByIdAndDelete(id);
-    
+
     if (!deletedProduct) {
       return next(new AppError("Product not found with this ID", 404));
     }
@@ -94,7 +102,7 @@ export const getProductById = async (req, res, next) => {
 
   try {
     const product = await Product.findById(id);
-    
+
     if (!product) {
       return next(new AppError("Product not found with this ID", 404));
     }
@@ -103,4 +111,4 @@ export const getProductById = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};       
+};
