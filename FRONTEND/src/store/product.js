@@ -35,10 +35,14 @@ export const useProductStore = create((set) =>({
             return { success: false, message: "Network error - could not reach API" };
         }
         },
-    fetchProducts: async() =>{
+    fetchProducts: async (sort = "") => {
         try
         {
-            const res = await fetch( `${ API }/api/products` );
+            const url = sort
+    ? `${API}/api/products?sort=${sort}`
+    : `${API}/api/products`;
+
+const res = await fetch(url);
             if ( !res.ok )
             {
                 const errorData = await res.json().catch( () => ( {} ) );
