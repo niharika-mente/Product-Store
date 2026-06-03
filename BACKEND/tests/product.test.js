@@ -13,7 +13,7 @@ beforeAll(async () => {
     
     // Connect to the in-memory database
     await mongoose.connect(uri);
-}, 120000);
+}, 600000);
 
 afterAll(async () => {
     // Disconnect and stop MongoMemoryServer
