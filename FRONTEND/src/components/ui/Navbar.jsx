@@ -26,18 +26,17 @@ const Navbar = () => {
     bg={navBg}
   borderBottom="1px solid"
   borderColor={border}
-  mb={4}
+  mb={{ base: 6, sm: 4 }}
   >
     <Container maxW={"1140px"} px={4}>
       <Flex
-        h={16}
-        alignItems={"center"}
-        justifyContent={"space-between"}
-        flexDir={{
-          base: "column",
-          sm: "row"
-        }}
-      >
+  minH={16}
+  py={{ base: 3, sm: 0 }}
+  alignItems="center"
+  justifyContent="space-between"
+  flexDir={{ base: "column", sm: "row" }}
+  gap={{ base: 2, sm: 0 }}
+>
         <Text
           fontSize={{ base: "22px", sm: "28px" }}
           fontWeight={"bold"}
@@ -56,13 +55,13 @@ _hover={{
 
         <HStack spacing={2} alignItems={"center"}>
           <Link to={"/create"}>
-            <Button>
+            <Button size={{ base: "sm", sm: "md" }}>
               <PlusSquareIcon fontSize={20} />
             </Button>
           </Link>
 
           {/* Shopping Cart Button with Dynamic Badge Count */}
-          <Button onClick={onOpen} position="relative" aria-label="Open cart">
+          <Button size={{ base: "sm", sm: "md" }} onClick={onOpen} position="relative" aria-label="Open cart">
             <LuShoppingCart size="20" />
             {totalItemsCount > 0 && (
               <Badge 
@@ -78,7 +77,7 @@ _hover={{
             )}
           </Button>
 
-          <Button onClick={toggleColorMode} aria-label="Toggle color mode">
+          <Button size={{ base: "sm", sm: "md" }} onClick={toggleColorMode} aria-label="Toggle color mode">
             {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
           </Button>
         </HStack>
