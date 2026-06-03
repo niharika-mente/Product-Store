@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import CreatePage from "./pages/CreatePage";
 import HomePage from "./pages/HomePage";
 import SuccessPage from "./pages/SuccessPage";
+import ProductPage from "./pages/ProductPage";
 import Navbar from "./components/ui/Navbar";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/create" element={<CreatePage />} />
           <Route path="/success" element={<SuccessPage />} />
+          <Route path="/product/:id" element={<ProductPage />} />
       </Routes>
     </Box>
   )
