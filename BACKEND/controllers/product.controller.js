@@ -5,7 +5,7 @@ export const getProducts = async ( req, res ) =>
 {
     try
     {
-        const products = await Product.find( {} );
+        const products = await Product.find({ isDeleted: false });
         res.status( 200 ).json( { success: true, data: products } );
     } catch ( error )
     {
@@ -92,7 +92,11 @@ export const deleteProduct = async ( req, res ) =>
 
     try
     {
-        await Product.findByIdAndDelete( id );
+        await Product.findByIdAndUpdate(
+    id,
+    { isDeleted: true },
+    { new: true }
+);
         res.status( 200 ).json( { success: true, message: "Product deleted" } );
     } catch ( error )
     {
