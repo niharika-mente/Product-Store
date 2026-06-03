@@ -38,8 +38,13 @@ export const CartProvider = ({ children }) => {
   // Calculate total price dynamically
   const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  // Function to empty the cart
+  const emptyCart = () => {
+    setCartItems([]);
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, totalPrice }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, emptyCart, totalPrice }}>
       {children}
     </CartContext.Provider>
   );

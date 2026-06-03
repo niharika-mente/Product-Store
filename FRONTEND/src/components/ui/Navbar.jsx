@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue
+  VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
@@ -22,6 +22,33 @@ const Navbar = () => {
 
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
+
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    setIsCheckoutLoading(true);
+
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cartItems }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
+        return;
+      }
+
+      emptyCart();
+      onClose();
+      navigate("/success");
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to process checkout", status: "error", duration: 3000, isClosable: true });
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
 
   return (
     <Box
@@ -138,7 +165,7 @@ _hover={{
               <Text fontWeight="bold" fontSize="lg">Total Amount:</Text>
               <Text fontWeight="bold" fontSize="lg" color="cyan.500">${totalPrice.toFixed(2)}</Text>
             </HStack>
-            <Button colorScheme="blue" size="lg" width="100%">
+            <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
               Proceed to Checkout
             </Button>
           </DrawerFooter>

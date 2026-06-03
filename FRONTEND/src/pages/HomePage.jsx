@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
+import ScrollToTop from "../components/ui/ScrollToTop";
 
 const HomePage = () => {
   const { fetchProducts, products, searchQuery } = useProductStore();
@@ -147,6 +148,7 @@ const HomePage = () => {
       </VStack>
     </Container>
     <Footer />
+    <ScrollToTop />
 </>
   );
 };
