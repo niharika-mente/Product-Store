@@ -1,13 +1,19 @@
 import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
 import React from 'react'
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaEdit, FaTrash } from "react-icons/fa"; // 1. Swapped out @chakra-ui/icons for react-icons
+import { FaEdit, FaTrash } from "react-icons/fa";
+
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../context/CartContext.jsx";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
+
+  useEffect(() => {
+    setUpdatedProduct(product);
+  }, [product._id]);
 
   const textColor = useColorModeValue("gray.600","gray.200");
   const bg = useColorModeValue("white","gray.800");
@@ -187,7 +193,13 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
             >
               Update
             </Button>
-            <Button variant='ghost' onClick={onClose}>
+            <Button 
+              variant='ghost' 
+              onClick={() => {
+                onClose();
+                setUpdatedProduct(product);
+              }}
+            >
               Cancel
             </Button>
           </ModalFooter>
