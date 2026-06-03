@@ -155,7 +155,7 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
                 name='price'
                 type='number'
                 value={updatedProduct.price}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: e.target.value })}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: Number(e.target.value) })}
               />
               <Input
                 placeholder='Image URL'
