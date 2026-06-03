@@ -1,6 +1,7 @@
 import Product from '../models/product.model.js';
 import mongoose from "mongoose";
 
+
 export const getProducts = async (req, res) => {
     try {
         const { sort } = req.query;
@@ -15,8 +16,9 @@ export const getProducts = async (req, res) => {
             sortOption = { createdAt: -1 };
         }
 
-        const products = await Product.find({}).sort(sortOption);
-
+        const products = await Product.find({
+    isDeleted: false
+}).sort(sortOption);
         res.status(200).json({
             success: true,
             data: products
@@ -108,7 +110,11 @@ export const deleteProduct = async ( req, res ) =>
 
     try
     {
-        await Product.findByIdAndDelete( id );
+        await Product.findByIdAndUpdate(
+    id,
+    { isDeleted: true },
+    { new: true }
+);
         res.status( 200 ).json( { success: true, message: "Product deleted" } );
     } catch ( error )
     {

@@ -25,6 +25,8 @@ export const useCartStore = create(
           cartItems: state.cartItems.filter((item) => item._id !== id),
         }));
       },
+
+      emptyCart: () => set({ cartItems: [] }),
     }),
     {
       name: 'productStoreCart',
@@ -36,8 +38,9 @@ export const useCart = () => {
   const cartItems = useCartStore((state) => state.cartItems);
   const addToCart = useCartStore((state) => state.addToCart);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const emptyCart = useCartStore((state) => state.emptyCart);
   
   const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  return { cartItems, addToCart, removeFromCart, totalPrice };
+  return { cartItems, addToCart, removeFromCart, emptyCart, totalPrice };
 };
