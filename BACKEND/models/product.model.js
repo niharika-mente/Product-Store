@@ -3,15 +3,18 @@ import mongoose from 'mongoose';
 const productSchema = new mongoose.Schema({
     name:{
       type: String,
-      required: true  
+      required: true,
+      trim: true
     },
     price: {
         type: Number,
-        required: true
+        required: true,
+        min: [0, 'Price cannot be negative']
     },
     image:{
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
 },{
    timestamps: true //createdAt,updatedAt
