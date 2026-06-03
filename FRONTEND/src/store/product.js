@@ -4,7 +4,9 @@ const API = ( import.meta.env.VITE_API_URL || "" ).replace( /\/$/, "" );
 
 export const useProductStore = create((set) =>({
     products: [],
+    searchQuery: "",
     setProducts: (products) => set({ products }),
+    setSearchQuery: (searchQuery) => set({ searchQuery }),
     createProduct: async (newProduct) =>{
 
         if(!newProduct.name || !newProduct.image || !newProduct.price){

@@ -6,12 +6,15 @@ import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
 
 const HomePage = () => {
-  const { fetchProducts,products } = useProductStore();
+  const { fetchProducts,products,searchQuery } = useProductStore();
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
   console.log("products",products);
+  const filteredProducts = products.filter((product) =>
+  product.name?.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   return (
     <>
@@ -52,7 +55,7 @@ const HomePage = () => {
 >
     <Text fontSize="sm">Products</Text>
     <Text fontSize="2xl" fontWeight="bold">
-      {products.length}
+      {filteredProducts.length}
     </Text>
   </Box>
 </VStack>
@@ -66,13 +69,13 @@ const HomePage = () => {
           spacing={10}
           w={"full"}
         >
-          {products.map((product) =>(
+          {filteredProducts.map((product) =>(
             <ProductCard key={product._id} product={product} />
           ))}
           
         </SimpleGrid>
 
-        {products.length === 0 && (
+        {filteredProducts.length === 0 && (
   <VStack gap={4} py={12}>
     <Text fontSize="6xl">📦</Text>
 
