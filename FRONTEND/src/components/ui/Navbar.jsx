@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Button, Container, Flex, HStack, Text, useColorMode, useDisclosure,
+  Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue
 } from '@chakra-ui/react';
@@ -9,11 +9,13 @@ import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
 import { useCart } from "../../context/CartContext.jsx";
+import { useProductStore } from "../../store/product";
 
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure(); // Controls Drawer sliding state
   const { cartItems, removeFromCart, totalPrice } = useCart();
+  const { searchQuery, setSearchQuery } = useProductStore();
 
   // Calculate total item count (sum of all quantities)
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -54,33 +56,46 @@ _hover={{
           <Link to={"/"}>Product Store 🛒</Link>
         </Text>
 
-        <HStack spacing={2} alignItems={"center"}>
-          <Link to={"/create"}>
-            <Button>
-              <PlusSquareIcon fontSize={20} />
+        <HStack spacing={4} alignItems={"center"} justifyContent="flex-end" w={{ base: "full", sm: "auto" }}>
+          <Box w={{ base: "full", sm: "240px", md: "300px" }}>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              bg={useColorModeValue("gray.50", "gray.700")}
+              borderColor={useColorModeValue("gray.200", "gray.600")}
+              _placeholder={{ color: useColorModeValue("gray.400", "gray.400") }}
+            />
+          </Box>
+
+          <HStack spacing={2} alignItems={"center"}>
+            <Link to={"/create"}>
+              <Button>
+                <PlusSquareIcon fontSize={20} />
+              </Button>
+            </Link>
+
+            {/* Shopping Cart Button with Dynamic Badge Count */}
+            <Button onClick={onOpen} position="relative" aria-label="Open cart">
+              <LuShoppingCart size="20" />
+              {totalItemsCount > 0 && (
+                <Badge 
+                  colorScheme="teal" 
+                  borderRadius="full" 
+                  position="absolute" 
+                  top="-5px" 
+                  right="-5px" 
+                  px={2}
+                >
+                  {totalItemsCount}
+                </Badge>
+              )}
             </Button>
-          </Link>
 
-          {/* Shopping Cart Button with Dynamic Badge Count */}
-          <Button onClick={onOpen} position="relative" aria-label="Open cart">
-            <LuShoppingCart size="20" />
-            {totalItemsCount > 0 && (
-              <Badge 
-                colorScheme="teal" 
-                borderRadius="full" 
-                position="absolute" 
-                top="-5px" 
-                right="-5px" 
-                px={2}
-              >
-                {totalItemsCount}
-              </Badge>
-            )}
-          </Button>
-
-          <Button onClick={toggleColorMode} aria-label="Toggle color mode">
-            {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
-          </Button>
+            <Button onClick={toggleColorMode} aria-label="Toggle color mode">
+              {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
+            </Button>
+          </HStack>
         </HStack>
       </Flex>
 

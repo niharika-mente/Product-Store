@@ -1,21 +1,22 @@
-import { Container, Text, VStack, Select } from '@chakra-ui/react';
+import { Box, Container, Select, SimpleGrid, Text, VStack } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import { SimpleGrid } from "@chakra-ui/react"
 import React, { useEffect, useState } from 'react';
-import { Container, Text, VStack, Box, SimpleGrid } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
-import React,{useEffect} from 'react'
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
 
 const HomePage = () => {
-  const { fetchProducts,products } = useProductStore();
+  const { fetchProducts, products, searchQuery } = useProductStore();
   const [sort, setSort] = useState("");
 
   useEffect(() => {
   fetchProducts(sort);
 }, [fetchProducts, sort]);
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredProducts = products.filter((product) =>
+    (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
+  );
 
   return (
     <>
@@ -75,7 +76,7 @@ const HomePage = () => {
 >
     <Text fontSize="sm">Products</Text>
     <Text fontSize="2xl" fontWeight="bold">
-      {products.length}
+      {filteredProducts.length}
     </Text>
   </Box>
 </VStack>
@@ -89,7 +90,7 @@ const HomePage = () => {
           spacing={10}
           w={"full"}
         >
-          {products.map((product) =>(
+          {filteredProducts.map((product) =>(
             <ProductCard key={product._id} product={product} />
           ))}
           
@@ -124,6 +125,23 @@ const HomePage = () => {
         Create Product ✨
       </Text>
     </Link>
+  </VStack>
+)}
+
+        {products.length > 0 && filteredProducts.length === 0 && (
+  <VStack gap={4} py={12}>
+    <Text fontSize="6xl">🔎</Text>
+
+    <Text
+      fontSize="2xl"
+      fontWeight="bold"
+    >
+      No matching products
+    </Text>
+
+    <Text color="gray.500" textAlign="center">
+      Try a different search term.
+    </Text>
   </VStack>
 )}
       </VStack>
