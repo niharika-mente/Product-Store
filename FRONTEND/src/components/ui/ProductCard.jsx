@@ -3,7 +3,7 @@ import React from 'react'
 import { useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa"; // 1. Swapped out @chakra-ui/icons for react-icons
 import { useProductStore } from "../../store/product";
-import { useCart } from "../../context/CartContext.jsx";
+import { useCart } from "../../store/cart";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);

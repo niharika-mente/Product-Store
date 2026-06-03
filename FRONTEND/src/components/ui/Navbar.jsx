@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
-import { useCart } from "../../context/CartContext.jsx";
+import { useCart } from "../../store/cart";
 
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
