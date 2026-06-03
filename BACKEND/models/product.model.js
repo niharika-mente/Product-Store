@@ -29,11 +29,13 @@ const productSchema = new mongoose.Schema(
       trim: true,
      
     },
-  },
-  {
-    timestamps: true,
-  },
-);
+    isDeleted: {
+        type: Boolean,
+        default: false
+    }
+},{
+   timestamps: true //createdAt,updatedAt
+});
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

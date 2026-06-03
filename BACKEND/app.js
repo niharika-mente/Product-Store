@@ -6,6 +6,7 @@ import express from "express";
 import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
+import checkoutRoutes from "./routes/checkout.route.js";
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath( import.meta.url );
@@ -13,7 +14,9 @@ const __dirname = path.dirname( __filename );
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-connectDB();
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
+}
 
 const app = express();
 
@@ -46,6 +49,7 @@ app.use(express.json());
 app.use("/api", limiter);
 
 app.use("/api/products", productRoutes);
+app.use("/api/checkout", checkoutRoutes);
 
 if(process.env.NODE_ENV === "production") {
    app.use(express.static(path.join(__dirname,"..","FRONTEND","dist")));

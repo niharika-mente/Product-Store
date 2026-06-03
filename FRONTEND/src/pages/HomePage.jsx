@@ -1,13 +1,11 @@
-import { Container, Text, VStack, Select } from '@chakra-ui/react';
+import { Container, Text, VStack, Select,Box } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import { SimpleGrid } from "@chakra-ui/react"
+import { SimpleGrid } from "@chakra-ui/react";
 import React, { useEffect, useState } from 'react';
-import { Container, Text, VStack, Box, SimpleGrid } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
-import React,{useEffect} from 'react'
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
+import ScrollToTop from "../components/ui/ScrollToTop";
 
 const HomePage = () => {
   const { fetchProducts,products } = useProductStore();
@@ -129,6 +127,7 @@ const HomePage = () => {
       </VStack>
     </Container>
     <Footer />
+    <ScrollToTop />
 </>
   );
 };
