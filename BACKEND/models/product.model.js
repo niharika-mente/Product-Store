@@ -27,16 +27,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Image URL is required"],
       trim: true,
-      validate: {
-        validator: function (v) {
-          const urlPattern =
-            /^(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-          const imagePattern = /\.(jpg|jpeg|png|gif|webp|bmp)$/i;
-          return urlPattern.test(v) && imagePattern.test(v);
-        },
-        message:
-          "Please enter a valid image URL (must end with .jpg, .png, .gif, etc.)",
-      },
+     
     },
   },
   {
