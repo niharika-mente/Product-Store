@@ -1,16 +1,32 @@
 import Product from '../models/product.model.js';
 import mongoose from "mongoose";
 
-export const getProducts = async ( req, res ) =>
-{
-    try
-    {
-        const products = await Product.find( {} );
-        res.status( 200 ).json( { success: true, data: products } );
-    } catch ( error )
-    {
-        console.log( "error in fetching products:", error.message );
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+export const getProducts = async (req, res) => {
+    try {
+        const { sort } = req.query;
+
+        let sortOption = {};
+
+        if (sort === "price_asc") {
+            sortOption = { price: 1 };
+        } else if (sort === "price_desc") {
+            sortOption = { price: -1 };
+        } else if (sort === "newest") {
+            sortOption = { createdAt: -1 };
+        }
+
+        const products = await Product.find({}).sort(sortOption);
+
+        res.status(200).json({
+            success: true,
+            data: products
+        });
+    } catch (error) {
+        console.log("error in fetching products:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Server Error"
+        });
     }
 };
 
