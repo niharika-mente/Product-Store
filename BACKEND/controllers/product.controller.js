@@ -1,23 +1,30 @@
+
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import { AppError } from "../middleware/errorMiddleware.js";
 
-export const getProducts = async (req, res) => {
+
+export const getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({});
-    res.status(200).json({ success: true, data: products });
+    const products = await Product.find({}).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: products.length, data: products });
   } catch (error) {
-    console.log("error in fetching products:", error.message);
-    res.status(500).json({ success: false, message: "Server Error" });
+    next(error);
   }
 };
 
-export const createProduct = async (req, res) => {
+
+export const createProduct = async (req, res, next) => {
   const product = req.body;
 
+  // Basic validation - Missing fields
   if (!product.name || !product.price || !product.image) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please provide all fields" });
+    return next(new AppError("Please provide all fields: name, price, image", 400));
+  }
+
+  // Price validation (extra check)
+  if (product.price < 0) {
+    return next(new AppError("Price cannot be negative", 400));
   }
 
   const newProduct = new Product(product);
@@ -26,68 +33,74 @@ export const createProduct = async (req, res) => {
     await newProduct.save();
     res.status(201).json({ success: true, data: newProduct });
   } catch (error) {
-    console.error("Error in Create product:", error.message);
-    
-   
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
-      
-      return res.status(400).json({ 
-        success: false, 
-        message: "Validation failed",
-        errors: errors  
-      });
-    }
-    
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Duplicate field value entered" 
-      });
-    }
-    
-    res.status(500).json({ success: false, message: "Server Error" });
+    next(error);
   }
 };
 
 
-export const updateProduct = async (req, res) => {
+export const updateProduct = async (req, res, next) => {
   const { id } = req.params;
   const product = req.body;
-  console.log("PUT Request ID:", id);
-  console.log("PUT Request Body:", product);
 
+  // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Invalid Product Id" });
+    return next(new AppError("Invalid Product Id format", 404));
   }
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(id, product, {
       new: true,
+      runValidators: true  // Schema validation bhi run karo
     });
+
+    if (!updatedProduct) {
+      return next(new AppError("Product not found with this ID", 404));
+    }
+
     res.status(200).json({ success: true, data: updatedProduct });
   } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    next(error);
   }
 };
 
-export const deleteProduct = async (req, res) => {
+
+export const deleteProduct = async (req, res, next) => {
   const { id } = req.params;
 
+  // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Invalid Product Id" });
+    return next(new AppError("Invalid Product Id format", 404));
   }
 
   try {
-    await Product.findByIdAndDelete(id);
-    res.status(200).json({ success: true, message: "Product deleted" });
+    const deletedProduct = await Product.findByIdAndDelete(id);
+    
+    if (!deletedProduct) {
+      return next(new AppError("Product not found with this ID", 404));
+    }
+
+    res.status(200).json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    console.log("error in deleting product:", error.message);
-    res.status(500).json({ success: false, message: "Server Error" });
+    next(error);
   }
 };
+
+export const getProductById = async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError("Invalid Product Id format", 404));
+  }
+
+  try {
+    const product = await Product.findById(id);
+    
+    if (!product) {
+      return next(new AppError("Product not found with this ID", 404));
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    next(error);
+  }
+};       
