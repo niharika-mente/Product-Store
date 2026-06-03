@@ -70,19 +70,30 @@ const ProductCard = ({ product }) => {
     }
   };
 
+const borderColor = useColorModeValue("gray.200", "gray.700");
+
   return (
    <Box
-   shadow='lg'
-   rounded='lg'
-   overflow='hidden'
-   transition='all 0.3s'
-   _hover={{ transform: "translateY(-5px)", shadow: "xl"}}
-   bg={bg}
-   >
-    <Image src={product.image} alt={product.name} h={48} w='full' objectFit='cover' />
+  role="group"
+  shadow="lg"
+  rounded="lg"
+  overflow="hidden"
+  borderWidth="1px"
+  borderColor={borderColor}
+  transition="all 0.3s"
+  _hover={{
+    transform: "translateY(-8px)",
+    shadow: "2xl",
+  }}
+  bg={bg}
+>
+    <Image src={product.image} alt={product.name} h={48} w='full' objectFit='cover'  transition="transform 0.4s"
+  _groupHover={{transform: "scale(1.05)",
+            }} />
 
     <Box p={4}>
-      <Heading as='h3' size='md' mb={2}>
+      <Heading as='h3' size='md' mb={2}
+      noOfLines={1}>
         {product.name}
       </Heading>
 
@@ -97,6 +108,10 @@ const ProductCard = ({ product }) => {
           onClick={onOpen}
           colorScheme='blue' 
           aria-label='Edit Product'
+          transition="all 0.2s"
+          _hover={{
+          transform: "scale(1.1)",
+  }}
         />
         
         {/* 3. Updated Delete Button with clean icon child rendering */}
@@ -105,9 +120,18 @@ const ProductCard = ({ product }) => {
           onClick={() => handleDeleteProduct(product._id)} 
           colorScheme='red' 
           aria-label='Delete Product' 
+          transition="all 0.2s"
+          _hover={{
+            transform: "scale(1.1)",
+          }}
         />
         
-        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}>
+        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
+          transition="all 0.2s"
+          _hover={{
+            transform: "translateY(-2px)",
+          }}
+        >
           Add to Cart
         </Button>
       </HStack>
