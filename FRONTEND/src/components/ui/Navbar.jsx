@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Button, Container, Flex, HStack, Text, useColorMode, useDisclosure,
+  Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
@@ -8,15 +8,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
+
 import { useCart } from "../../store/cart";
+import { useProductStore } from "../../store/product";
+
 
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure(); // Controls Drawer sliding state
-  const { cartItems, removeFromCart, emptyCart, totalPrice } = useCart();
-  const navigate = useNavigate();
-  const toast = useToast();
-  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const { cartItems, removeFromCart, totalPrice } = useCart();
+  const { searchQuery, setSearchQuery } = useProductStore();
 
   // Calculate total item count (sum of all quantities)
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -56,18 +57,20 @@ const Navbar = () => {
     bg={navBg}
   borderBottom="1px solid"
   borderColor={border}
-  mb={4}
+  mb={{ base: 6, sm: 4 }}
+  position="sticky"
+  top="0"
+  zIndex="1000"
   >
     <Container maxW={"1140px"} px={4}>
       <Flex
-        h={16}
-        alignItems={"center"}
-        justifyContent={"space-between"}
-        flexDir={{
-          base: "column",
-          sm: "row"
-        }}
-      >
+  minH={16}
+  py={{ base: 3, sm: 0 }}
+  alignItems="center"
+  justifyContent="space-between"
+  flexDir={{ base: "column", sm: "row" }}
+  gap={{ base: 2, sm: 0 }}
+>
         <Text
           fontSize={{ base: "22px", sm: "28px" }}
           fontWeight={"bold"}
@@ -84,33 +87,46 @@ _hover={{
           <Link to={"/"}>Product Store 🛒</Link>
         </Text>
 
-        <HStack spacing={2} alignItems={"center"}>
-          <Link to={"/create"}>
-            <Button>
-              <PlusSquareIcon fontSize={20} />
+        <HStack spacing={4} alignItems={"center"} justifyContent="flex-end" w={{ base: "full", sm: "auto" }}>
+          <Box w={{ base: "full", sm: "240px", md: "300px" }}>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              bg={useColorModeValue("gray.50", "gray.700")}
+              borderColor={useColorModeValue("gray.200", "gray.600")}
+              _placeholder={{ color: useColorModeValue("gray.400", "gray.400") }}
+            />
+          </Box>
+
+          <HStack spacing={2} alignItems={"center"}>
+            <Link to={"/create"}>
+              <Button>
+                <PlusSquareIcon fontSize={20} />
+              </Button>
+            </Link>
+
+            {/* Shopping Cart Button with Dynamic Badge Count */}
+            <Button onClick={onOpen} position="relative" aria-label="Open cart">
+              <LuShoppingCart size="20" />
+              {totalItemsCount > 0 && (
+                <Badge 
+                  colorScheme="teal" 
+                  borderRadius="full" 
+                  position="absolute" 
+                  top="-5px" 
+                  right="-5px" 
+                  px={2}
+                >
+                  {totalItemsCount}
+                </Badge>
+              )}
             </Button>
-          </Link>
 
-          {/* Shopping Cart Button with Dynamic Badge Count */}
-          <Button onClick={onOpen} position="relative" aria-label="Open cart">
-            <LuShoppingCart size="20" />
-            {totalItemsCount > 0 && (
-              <Badge 
-                colorScheme="teal" 
-                borderRadius="full" 
-                position="absolute" 
-                top="-5px" 
-                right="-5px" 
-                px={2}
-              >
-                {totalItemsCount}
-              </Badge>
-            )}
-          </Button>
-
-          <Button onClick={toggleColorMode} aria-label="Toggle color mode">
-            {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
-          </Button>
+            <Button onClick={toggleColorMode} aria-label="Toggle color mode">
+              {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
+            </Button>
+          </HStack>
         </HStack>
       </Flex>
 
