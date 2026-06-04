@@ -9,6 +9,7 @@ import ScrollToTop from "../components/ui/ScrollToTop";
 const HomePage = () => {
   const { fetchProducts, products, searchQuery } = useProductStore();
   const [sort, setSort] = useState("");
+  const labelColor = useColorModeValue("gray.600", "gray.300");
 
   useEffect(() => {
   fetchProducts(sort);
@@ -33,15 +34,16 @@ const HomePage = () => {
           Current Products🚀
         </Text>
         <Select
-  value={sort}
-  onChange={(e) => setSort(e.target.value)}
-  maxW="250px"
->
-  <option value="">Default</option>
-  <option value="price_asc">Price: Low to High</option>
-  <option value="price_desc">Price: High to Low</option>
-  <option value="newest">Newest First</option>
-</Select>
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          maxW="250px"
+          aria-label="Sort products"
+        >
+          <option value="">Default</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="newest">Newest First</option>
+        </Select>
         <VStack gap={2}>
   <Text
     fontSize={{ base: "3xl", md: "5xl" }}
@@ -54,7 +56,7 @@ const HomePage = () => {
   </Text>
 
   <Text
-    color="gray.500"
+    color={labelColor}
     textAlign="center"
     maxW="600px"
   >
@@ -108,7 +110,7 @@ const HomePage = () => {
       No Products Yet
     </Text>
 
-    <Text color="gray.500" textAlign="center">
+    <Text color={labelColor} textAlign="center">
       Start building your store by adding your first product.
     </Text>
 
@@ -140,7 +142,7 @@ const HomePage = () => {
       No matching products
     </Text>
 
-    <Text color="gray.500" textAlign="center">
+    <Text color={labelColor} textAlign="center">
       Try a different search term.
     </Text>
   </VStack>
