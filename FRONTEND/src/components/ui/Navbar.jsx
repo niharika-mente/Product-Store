@@ -55,18 +55,17 @@ const Navbar = () => {
     bg={navBg}
   borderBottom="1px solid"
   borderColor={border}
-  mb={4}
+  mb={{ base: 6, sm: 4 }}
   >
     <Container maxW={"1140px"} px={4}>
       <Flex
-        h={16}
-        alignItems={"center"}
-        justifyContent={"space-between"}
-        flexDir={{
-          base: "column",
-          sm: "row"
-        }}
-      >
+  minH={16}
+  py={{ base: 3, sm: 0 }}
+  alignItems="center"
+  justifyContent="space-between"
+  flexDir={{ base: "column", sm: "row" }}
+  gap={{ base: 2, sm: 0 }}
+>
         <Text
           fontSize={{ base: "22px", sm: "28px" }}
           fontWeight={"bold"}
