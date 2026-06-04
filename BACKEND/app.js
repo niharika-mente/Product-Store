@@ -1,5 +1,6 @@
 import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
@@ -19,7 +20,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const app = express();
-
+app.use(helmet());
 app.set("trust proxy", 1);
 
 const limiter = rateLimit({
