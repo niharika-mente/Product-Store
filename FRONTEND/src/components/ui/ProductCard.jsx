@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
 import { useProductStore } from "../../store/product";
-import { useCart } from "../../context/CartContext.jsx";
+import { useCart } from "../../store/cart";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
