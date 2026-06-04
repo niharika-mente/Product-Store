@@ -1,17 +1,38 @@
 import { Container, Text, VStack } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { SimpleGrid } from "@chakra-ui/react"
-import React,{useEffect} from 'react'
+import React,{ useEffect, useState } from 'react'
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
+import Pagination from '../components/ui/Pagination';
 
 const HomePage = () => {
-  const { fetchProducts,products } = useProductStore();
+  const { fetchProducts, products } = useProductStore();
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const limit = 10;
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-  console.log("products",products);
+    const loadProducts = async () => {
+      const response = await fetchProducts(page, limit);
+      if ( response.success )
+      {
+        // Keep pagination state aligned with backend metadata.
+        const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
+        if ( page !== normalizedPage )
+        {
+          setPage(normalizedPage);
+          return;
+        }
+
+        setTotalPages(response.totalPages);
+        setTotalProducts(response.totalProducts);
+      }
+    };
+
+    loadProducts();
+  }, [fetchProducts, page]);
 
   return (
     <Container maxW='container.xl' py={12}>
@@ -50,6 +71,16 @@ const HomePage = () => {
           </Link>
         </Text>
         )}
+
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(newPage) => {
+            if ( newPage >= 1 && newPage <= totalPages ) {
+              setPage(newPage);
+            }
+          }}
+        />
       </VStack>
     </Container>
   );

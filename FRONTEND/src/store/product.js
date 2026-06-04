@@ -35,21 +35,29 @@ export const useProductStore = create((set) =>({
             return { success: false, message: "Network error - could not reach API" };
         }
         },
-    fetchProducts: async() =>{
+    fetchProducts: async( page = 1, limit = 10 ) =>{
         try
         {
-            const res = await fetch( `${ API }/api/products` );
+            const res = await fetch( `${ API }/api/products?page=${ page }&limit=${ limit }` );
             if ( !res.ok )
             {
                 const errorData = await res.json().catch( () => ( {} ) );
                 console.error( "Failed to fetch products:", errorData.message );
-                return;
+                return { success: false, message: errorData.message };
             }
             const data = await res.json();
             set( { products: data.data } );
+            return {
+                success: true,
+                currentPage: data.currentPage,
+                totalPages: data.totalPages,
+                totalProducts: data.totalProducts,
+                limit: data.limit,
+            };
         } catch ( error )
         {
             console.error( "Network error fetching products:", error );
+            return { success: false, message: "Network error fetching products." };
         }
     },
     deleteProduct: async(pid) => {
