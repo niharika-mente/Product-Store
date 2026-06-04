@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, Container, Flex, Image, Heading, Text, Button, 
   Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
-import { useCart } from '../context/CartContext.jsx';
+import { useCart } from '../store/cart';
 import RelatedProducts from '../components/ui/RelatedProducts';
+import ProductReviews from '../components/ui/ProductReviews';
 
 const API = ( import.meta.env.VITE_API_URL || "" ).replace( /\/$/, "" );
 
 const ProductPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,7 +26,6 @@ const ProductPage = () => {
   const priceColor = useColorModeValue("blue.600", "blue.300");
   const borderCol = useColorModeValue("gray.200", "gray.700");
   const cardBg = useColorModeValue("white", "gray.800");
-  const badgeBg = useColorModeValue("green.50", "green.900");
   const featureBg = useColorModeValue("gray.50", "gray.700");
   const infoColor = useColorModeValue("gray.600", "gray.400");
 
@@ -194,6 +193,20 @@ const ProductPage = () => {
                   {product.name}
                 </Heading>
 
+                {/* Average Rating */}
+                {product.reviewCount > 0 && (
+                  <HStack spacing={2} mt={2}>
+                    {[1,2,3,4,5].map(s => (
+                      <Box key={s} as="span" color={s <= Math.round(product.averageRating) ? 'yellow.400' : 'gray.300'} fontSize="sm">
+                        ★
+                      </Box>
+                    ))}
+                    <Text fontSize="sm" color={infoColor}>
+                      {product.averageRating} ({product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'})
+                    </Text>
+                  </HStack>
+                )}
+
                 {/* Category & Brand - Only show if exists */}
                 <HStack spacing={3} mt={2} flexWrap="wrap">
                   {product.category && (
@@ -333,6 +346,9 @@ const ProductPage = () => {
             </VStack>
           </GridItem>
         </Grid>
+
+        {/* Reviews Section */}
+        <ProductReviews productId={id} />
 
         {/* Related Products Section */}
         <RelatedProducts productId={id} />

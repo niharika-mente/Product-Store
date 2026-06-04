@@ -51,6 +51,18 @@ const productSchema = new mongoose.Schema({
         default: 0
     },
     
+    // Review Aggregates
+    averageRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    reviewCount: {
+        type: Number,
+        default: 0
+    },
+
     // System Fields
     isDeleted: {
         type: Boolean,
