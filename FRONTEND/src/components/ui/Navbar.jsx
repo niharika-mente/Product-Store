@@ -16,8 +16,11 @@ import { useProductStore } from "../../store/product";
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure(); // Controls Drawer sliding state
-  const { cartItems, removeFromCart, totalPrice } = useCart();
+  const { cartItems, removeFromCart, emptyCart, totalPrice } = useCart();
   const { searchQuery, setSearchQuery } = useProductStore();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   // Calculate total item count (sum of all quantities)
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
