@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon BACKEND/server.js",
     "build": "npm install && npm install --prefix FRONTEND && npm run build --prefix FRONTEND",
-    "start": "cross-env NODE_ENV=production node BACKEND/server.js"
+    "start": "cross-env NODE_ENV=production node BACKEND/server.js",
+    "prepare": "husky"
   },
   "type": "module",
   "keywords": [],
@@ -19,8 +20,18 @@
     "mongoose": "^8.13.2",
     "serverless-http": "^4.0.0"
   },
+  "lint-staged": {
+    "FRONTEND/**/*.{js,jsx}": [
+      "npx eslint --fix",
+      "npx prettier --write"
+    ]
+  },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "nodemon": "^3.1.9"
+    "eslint": "^10.4.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.8.3"
   }
 }
