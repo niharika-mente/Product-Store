@@ -57,6 +57,9 @@ const Navbar = () => {
   borderBottom="1px solid"
   borderColor={border}
   mb={{ base: 6, sm: 4 }}
+  position="sticky"
+  top="0"
+  zIndex="1000"
   >
     <Container maxW={"1140px"} px={4}>
       <Flex
