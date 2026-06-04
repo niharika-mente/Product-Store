@@ -4,7 +4,9 @@ const API = ( import.meta.env.VITE_API_URL || "" ).replace( /\/$/, "" );
 
 export const useProductStore = create((set) =>({
     products: [],
+    searchQuery: "",
     setProducts: (products) => set({ products }),
+    setSearchQuery: (searchQuery) => set({ searchQuery }),
     createProduct: async (newProduct) =>{
 
         if(!newProduct.name || !newProduct.image || !newProduct.price){
@@ -39,6 +41,14 @@ export const useProductStore = create((set) =>({
         try
         {
             const res = await fetch( `${ API }/api/products?page=${ page }&limit=${ limit }` );
+    fetchProducts: async (sort = "") => {
+        try
+        {
+            const url = sort
+    ? `${API}/api/products?sort=${sort}`
+    : `${API}/api/products`;
+
+const res = await fetch(url);
             if ( !res.ok )
             {
                 const errorData = await res.json().catch( () => ( {} ) );
@@ -102,4 +112,3 @@ export const useProductStore = create((set) =>({
         }
     }
 }));
-
