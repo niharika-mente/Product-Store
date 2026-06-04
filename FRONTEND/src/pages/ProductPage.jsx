@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, Container, Flex, Image, Heading, Text, Button, 
   Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
-import { useCart } from '../context/CartContext.jsx';
+import { useCart } from '../store/cart';
 import RelatedProducts from '../components/ui/RelatedProducts';
 
 const API = ( import.meta.env.VITE_API_URL || "" ).replace( /\/$/, "" );
 
 const ProductPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,7 +25,6 @@ const ProductPage = () => {
   const priceColor = useColorModeValue("blue.600", "blue.300");
   const borderCol = useColorModeValue("gray.200", "gray.700");
   const cardBg = useColorModeValue("white", "gray.800");
-  const badgeBg = useColorModeValue("green.50", "green.900");
   const featureBg = useColorModeValue("gray.50", "gray.700");
   const infoColor = useColorModeValue("gray.600", "gray.400");
 
