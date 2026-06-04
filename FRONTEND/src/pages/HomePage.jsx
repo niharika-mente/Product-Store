@@ -5,9 +5,10 @@ import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
+import useDebounce from '../hooks/useDebounce';
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
   const [sort, setSort] = useState("");
 
   useEffect(() => {
@@ -15,9 +16,20 @@ const HomePage = () => {
 }, [fetchProducts, sort]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filteredProducts = products.filter((product) =>
-    (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  );
+  // const filteredProducts = products.filter((product) =>
+  //   (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
+  // );
+
+  const debounceSearch=useDebounce(searchQuery,500);
+
+  useEffect(() => {
+    if (debounceSearch.trim() === "") {
+      fetchProducts(sort);
+    } else {
+      searchProducts(debounceSearch);
+    }
+  }, [debounceSearch] );
+
 
   return (
     <>
@@ -77,7 +89,7 @@ const HomePage = () => {
 >
     <Text fontSize="sm">Products</Text>
     <Text fontSize="2xl" fontWeight="bold">
-      {filteredProducts.length}
+      {products.length}
     </Text>
   </Box>
 </VStack>
@@ -91,7 +103,7 @@ const HomePage = () => {
           spacing={10}
           w={"full"}
         >
-          {filteredProducts.map((product) =>(
+          {products.map((product) =>(
             <ProductCard key={product._id} product={product} />
           ))}
           
@@ -129,12 +141,12 @@ const HomePage = () => {
   </VStack>
 )}
 
-        {products.length > 0 && filteredProducts.length === 0 && (
+        {products.length > 0 && searchQuery && (
   <VStack gap={4} py={12}>
     <Text fontSize="6xl">🔎</Text>
 
     <Text
-      fontSize="2xl"
+      fontSize="2xl"  
       fontWeight="bold"
     >
       No matching products
