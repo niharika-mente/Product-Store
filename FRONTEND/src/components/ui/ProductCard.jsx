@@ -155,10 +155,10 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
         </Button>
       </HStack>
     </Box>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
       <ModalOverlay/>
 
-        <ModalContent>
+        <ModalContent maxH="90vh">
           <ModalHeader>Update Product</ModalHeader>
           <ModalCloseButton/>
           <ModalBody>
@@ -181,6 +181,55 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
                 name='image'
                 value={updatedProduct.image}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
+              />
+              
+              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color="gray.500" mt={2}>
+                Optional Details
+              </Text>
+              
+              <Input
+                placeholder='Description (optional)'
+                name='description'
+                value={updatedProduct.description || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
+              />
+              
+              <Input
+                placeholder='Category (optional)'
+                name='category'
+                value={updatedProduct.category || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, category: e.target.value })}
+              />
+              
+              <Input
+                placeholder='Brand (optional)'
+                name='brand'
+                value={updatedProduct.brand || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, brand: e.target.value })}
+              />
+              
+              <Input
+                placeholder='Stock Quantity (optional)'
+                name='stock'
+                type='number'
+                value={updatedProduct.stock || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: Number(e.target.value) })}
+              />
+              
+              <Input
+                placeholder='Original Price (optional)'
+                name='originalPrice'
+                type='number'
+                value={updatedProduct.originalPrice || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: Number(e.target.value) })}
+              />
+              
+              <Input
+                placeholder='Discount % (optional)'
+                name='discount'
+                type='number'
+                value={updatedProduct.discount || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: Number(e.target.value) })}
               />
             </VStack>
           </ModalBody>

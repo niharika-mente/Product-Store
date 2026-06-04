@@ -15,6 +15,5 @@ router.post( "/", createProduct );
 router.put( "/:id", updateProduct );
 
 router.delete( "/:id", deleteProduct );
-//console.log( "📦 product.route.js loaded" );
 
 export default router;
