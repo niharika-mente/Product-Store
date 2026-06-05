@@ -52,6 +52,11 @@ export const createProduct = async ( req, res ) =>
     } catch ( error )
     {
         console.error( "Error in Create product:", error.message );
+        if ( error.name === 'ValidationError' )
+        {
+            const messages = Object.values( error.errors ).map( err => err.message );
+            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
+        }
         res.status( 500 ).json( { success: false, message: "Server Error" } );
     }
 };
@@ -83,6 +88,11 @@ export const updateProduct = async ( req, res ) =>
     } catch ( error )
     {
         console.error( "Error in Update product:", error.message );
+        if ( error.name === 'ValidationError' )
+        {
+            const messages = Object.values( error.errors ).map( err => err.message );
+            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
+        }
         res.status( 500 ).json( { success: false, message: "Server Error" } );
     }
 };
