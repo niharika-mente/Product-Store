@@ -1,4 +1,4 @@
-import { Box, Container, Select, SimpleGrid, Text, VStack } from '@chakra-ui/react';
+import { Box, Container, Select, SimpleGrid, Text, useColorModeValue, VStack } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { useProductStore } from '../store/product';
