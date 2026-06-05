@@ -1,5 +1,6 @@
 import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
@@ -7,7 +8,7 @@ import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
-import { errorHandler, notFoundHandler } from "./middleware/errorMiddleware.js"; // ✅ ADD THIS
+import reviewRoutes from "./routes/review.route.js";
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +21,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const app = express();
-
+app.use(helmet());
 app.set("trust proxy", 1);
 
 const limiter = rateLimit({
@@ -52,6 +53,7 @@ app.use(express.json());
 app.use("/api", limiter);
 
 app.use("/api/products", productRoutes);
+app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 
 // ✅ ADD THESE - Error handlers (BEFORE production static files)
