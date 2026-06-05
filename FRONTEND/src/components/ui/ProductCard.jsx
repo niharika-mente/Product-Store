@@ -87,32 +87,32 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
-    <Box
-      role="group"
-      shadow="lg"
-      rounded="lg"
-      overflow="hidden"
-      borderWidth="1px"
-      borderColor={borderColor}
-      transition="all 0.3s"
-      _hover={{
-        transform: "translateY(-8px)",
-        shadow: "2xl",
-      }}
-      bg={bg}
-    >
-      <Link to={`/product/${product._id}`}>
-        <Image
-          src={product.image}
-          alt={product.name}
-          h={48}
-          w='full'
-          objectFit='cover'
-          transition="transform 0.4s"
-          _groupHover={{ transform: "scale(1.05)" }}
-          cursor="pointer"
-        />
-      </Link>
+   <Box
+  role="group"
+  shadow="lg"
+  rounded="lg"
+  overflow="hidden"
+  borderWidth="1px"
+  borderColor={borderColor}
+  transition="all 0.3s"
+  _hover={{
+    transform: "translateY(-8px)",
+    shadow: "2xl",
+  }}
+  bg={bg}
+>
+    <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+      <Image 
+        src={product.image} 
+        alt={product.name} 
+        h={48} 
+        w='full' 
+        objectFit='cover'  
+        transition="transform 0.4s"
+        _groupHover={{transform: "scale(1.05)"}} 
+        cursor="pointer"
+      />
+    </Link>
 
       <Box p={4}>
         <Heading as='h3' size='md' mb={2} noOfLines={1}>
@@ -127,6 +127,44 @@ const ProductCard = ({ product }) => {
           ${product.price}
         </Text>
 
+      <HStack spacing={2}>
+        {/* 2. Updated Edit Button with clean icon child rendering */}
+        <IconButton 
+          icon={<FaEdit />} 
+          onClick={onOpen}
+          colorScheme='blue' 
+          aria-label={`Edit ${product.name}`}
+          transition="all 0.2s"
+          _hover={{
+          transform: "scale(1.1)",
+  }}
+        />
+        
+        {/* 3. Updated Delete Button with clean icon child rendering */}
+        <IconButton 
+          icon={<FaTrash />} 
+          onClick={() => handleDeleteProduct(product._id)} 
+          colorScheme='red' 
+          aria-label={`Delete ${product.name}`}
+          transition="all 0.2s"
+          _hover={{
+            transform: "scale(1.1)",
+          }}
+        />
+        
+        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
+          transition="all 0.2s"
+          aria-label={`Add ${product.name} to cart`}
+          _hover={{
+            transform: "translateY(-2px)",
+          }}
+        >
+          Add to Cart
+        </Button>
+      </HStack>
+    </Box>
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+      <ModalOverlay/>
         <HStack spacing={2}>
           <IconButton
             icon={<FaEdit />}
@@ -199,6 +237,7 @@ const ProductCard = ({ product }) => {
               <Input
                 placeholder='Product Name'
                 name='name'
+                aria-label="Product Name"
                 value={updatedProduct.name}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, name: e.target.value })}
               />
@@ -206,23 +245,26 @@ const ProductCard = ({ product }) => {
                 placeholder='Price'
                 name='price'
                 type='number'
+                aria-label="Price"
                 value={updatedProduct.price}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: Number(e.target.value) })}
               />
               <Input
                 placeholder='Image URL'
                 name='image'
+                aria-label="Image URL"
                 value={updatedProduct.image}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
               />
               
-              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color="gray.500" mt={2}>
+              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={useColorModeValue("gray.600", "gray.300")} mt={2}>
                 Optional Details
               </Text>
               
               <Input
                 placeholder='Description (optional)'
                 name='description'
+                aria-label="Description"
                 value={updatedProduct.description || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
               />
@@ -230,6 +272,7 @@ const ProductCard = ({ product }) => {
               <Input
                 placeholder='Category (optional)'
                 name='category'
+                aria-label="Category"
                 value={updatedProduct.category || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, category: e.target.value })}
               />
@@ -237,6 +280,7 @@ const ProductCard = ({ product }) => {
               <Input
                 placeholder='Brand (optional)'
                 name='brand'
+                aria-label="Brand"
                 value={updatedProduct.brand || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, brand: e.target.value })}
               />
@@ -245,6 +289,7 @@ const ProductCard = ({ product }) => {
                 placeholder='Stock Quantity (optional)'
                 name='stock'
                 type='number'
+                aria-label="Stock Quantity"
                 value={updatedProduct.stock || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: Number(e.target.value) })}
               />
@@ -253,6 +298,7 @@ const ProductCard = ({ product }) => {
                 placeholder='Original Price (optional)'
                 name='originalPrice'
                 type='number'
+                aria-label="Original Price"
                 value={updatedProduct.originalPrice || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: Number(e.target.value) })}
               />
@@ -261,6 +307,7 @@ const ProductCard = ({ product }) => {
                 placeholder='Discount % (optional)'
                 name='discount'
                 type='number'
+                aria-label="Discount Percentage"
                 value={updatedProduct.discount || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: Number(e.target.value) })}
               />

@@ -62,7 +62,7 @@ const CreatePage = () => {
 
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const toggleBg = useColorModeValue("blue.50", "blue.900");
-  const infoColor = useColorModeValue("gray.600", "gray.400");
+  const infoColor = useColorModeValue("gray.700", "gray.300");
 
   return (
    <Container maxW = {"container.sm"} py={12}>
@@ -91,6 +91,7 @@ const CreatePage = () => {
               <Input 
                 placeholder = 'Product Name'
                 name = 'name'
+                aria-label="Product Name"
                 value={newProduct.name}
                 onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                 size="lg"
@@ -99,6 +100,7 @@ const CreatePage = () => {
                 placeholder = 'Price ($)'
                 name = 'price'
                 type='number'
+                aria-label="Price"
                 value={newProduct.price}
                 onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
                 size="lg"
@@ -106,6 +108,7 @@ const CreatePage = () => {
               <Input 
                 placeholder = 'Image URL'
                 name = 'image'
+                aria-label="Image URL"
                 value={newProduct.image}
                 onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
                 size="lg"
@@ -141,6 +144,7 @@ const CreatePage = () => {
               <Textarea
                 placeholder="Product Description (detailed information about the product)"
                 name="description"
+                aria-label="Product Description"
                 value={newProduct.description}
                 onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
                 rows={4}
@@ -150,6 +154,7 @@ const CreatePage = () => {
               <Select
                 placeholder="Select Category"
                 name="category"
+                aria-label="Select Category"
                 value={newProduct.category}
                 onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
               >
@@ -167,6 +172,7 @@ const CreatePage = () => {
               <Input
                 placeholder="Brand / Manufacturer"
                 name="brand"
+                aria-label="Brand"
                 value={newProduct.brand}
                 onChange={(e) => setNewProduct({...newProduct, brand: e.target.value})}
               />
@@ -176,6 +182,7 @@ const CreatePage = () => {
                 name="stock"
                 type="number"
                 min="0"
+                aria-label="Stock Quantity"
                 value={newProduct.stock}
                 onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
               />
@@ -186,6 +193,7 @@ const CreatePage = () => {
                 type="number"
                 min="0"
                 step="0.01"
+                aria-label="Original Price"
                 value={newProduct.originalPrice}
                 onChange={(e) => setNewProduct({...newProduct, originalPrice: e.target.value})}
               />
@@ -196,6 +204,7 @@ const CreatePage = () => {
                 type="number"
                 min="0"
                 max="100"
+                aria-label="Discount Percentage"
                 value={newProduct.discount}
                 onChange={(e) => setNewProduct({...newProduct, discount: e.target.value})}
               />

@@ -28,7 +28,7 @@ const ProductPage = () => {
   const cardBg = useColorModeValue("white", "gray.800");
   const badgeBg = useColorModeValue("green.50", "green.900");
   const featureBg = useColorModeValue("gray.50", "gray.700");
-  const infoColor = useColorModeValue("gray.600", "gray.400");
+  const infoColor = useColorModeValue("gray.700", "gray.300");
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -268,6 +268,7 @@ const ProductPage = () => {
                     size="md" 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     isDisabled={quantity <= 1}
+                    aria-label="Decrease quantity"
                   >
                     -
                   </Button>
@@ -278,6 +279,7 @@ const ProductPage = () => {
                     size="md" 
                     onClick={() => setQuantity(Math.min(10, quantity + 1))}
                     isDisabled={quantity >= 10}
+                    aria-label="Increase quantity"
                   >
                     +
                   </Button>
