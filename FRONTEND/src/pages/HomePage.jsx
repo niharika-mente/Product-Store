@@ -121,9 +121,27 @@ const HomePage = () => {
                 Start building your store by adding your first product.
               </Text>
               <Link to="/create">
-                  <Button colorScheme="blue">
-                    Create Product ✨
-                  </Button>
+                <Button
+                  colorScheme="blue"
+                  animation="pulse 2s infinite"
+                  transition="all 0.25s ease"
+                  _hover={{
+                    transform: "translateY(-3px) scale(1.05)",
+                    boxShadow: "xl",
+                  }}
+                  _active={{
+                    transform: "scale(0.98)",
+                  }}
+                  sx={{
+                    "@keyframes pulse": {
+                      "0%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0.6)" },
+                      "70%": { boxShadow: "0 0 0 10px rgba(66, 153, 225, 0)" },
+                      "100%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0)" },
+                    },
+                  }}
+                >
+                  Create Product 
+                </Button>
               </Link>
             </VStack>
           )}
