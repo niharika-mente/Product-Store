@@ -1,21 +1,33 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
     // Required Fields
     name:{
       type: String,
-      required: true,
-      trim: true
+      required: [true, "Product name is required"], // Custom error message
+      trim: true,
+      minlength: [3, "Product name must be at least 3 characters long"],
+      maxlength: [100, "Product name cannot exceed 100 characters"],
     },
+
     price: {
-        type: Number,
-        required: true,
-        min: [0, 'Price cannot be negative']
+      type: Number,
+      required: [true, "Price is required"],
+      min: [0, "Price cannot be negative"],
+      max: [1000000, "Price cannot exceed 1,000,000"],
+      validate: {
+        validator: function (value) {
+          return value !== null && value !== undefined && !isNaN(value);
+        },
+        message: "Price must be a valid number",
+      },
     },
-    image:{
-        type: String,
-        required: true,
-        trim: true
+
+    image: {
+      type: String,
+      required: [true, "Image URL is required"],
+      trim: true,
+     
     },
     
     // Optional Fields - Extra Product Details
@@ -51,6 +63,18 @@ const productSchema = new mongoose.Schema({
         default: 0
     },
     
+    // Review Aggregates
+    averageRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5
+    },
+    reviewCount: {
+        type: Number,
+        default: 0
+    },
+
     // System Fields
     isDeleted: {
         type: Boolean,
@@ -61,5 +85,4 @@ const productSchema = new mongoose.Schema({
 });
 
 const Product = mongoose.model("Product", productSchema);
-
 export default Product;
