@@ -7,12 +7,16 @@ import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js'
+
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath( import.meta.url );
 const __dirname = path.dirname( __filename );
 
 dotenv.config({ path: path.join(__dirname, ".env") });
+
 
 if (process.env.NODE_ENV !== 'test') {
     connectDB();
@@ -46,7 +50,9 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", limiter);
+
 
 app.use("/api/products", productRoutes);
 app.use("/api/checkout", checkoutRoutes);
