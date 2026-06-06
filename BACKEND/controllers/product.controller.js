@@ -19,7 +19,6 @@ export const getProducts = async (req, res, next) => {
             sortOption = { createdAt: -1 };
         }
 
-        // Query: Find all products where isDeleted is NOT true (handles both missing and false)
         const products = await Product.find({
             isDeleted: { $ne: true }
         }).sort(sortOption);
@@ -39,33 +38,28 @@ export const getProducts = async (req, res, next) => {
 export const createProduct = async (req, res, next) => {
     const product = req.body;
 
-    // Basic validation - Missing fields
     if (!product.name || !product.price || !product.image) {
         return next(new AppError("Please provide all fields: name, price, image", 400));
     }
 
+    if (product.price < 0) {
+        return next(new AppError("Price cannot be negative", 400));
+    }
+
     const newProduct = new Product(product);
 
-    try
-    {
+    try {
         await newProduct.save();
-        res.status( 201 ).json( { success: true, data: newProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Create product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+        res.status(201).json({ success: true, data: newProduct });
+    } catch (error) {
+        next(error);
     }
 };
 
-    const newProduct = new Product(product);
-
-export const updateProduct = async ( req, res ) =>
-{
+// @desc    Update a product
+// @route   PUT /api/products/:id
+// @access  Public
+export const updateProduct = async (req, res, next) => {
     const { id } = req.params;
     const product = req.body;
 
@@ -73,33 +67,23 @@ export const updateProduct = async ( req, res ) =>
         return next(new AppError("Invalid Product Id format", 404));
     }
 
-    if ( !product || Object.keys( product ).length === 0 )
-    {
-        return res.status( 400 ).json( { success: false, message: "No update fields provided" } );
+    if (!product || Object.keys(product).length === 0) {
+        return next(new AppError("No update fields provided", 400));
     }
 
-<<<<<<< HEAD
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(id, product, { 
+            new: true, 
+            runValidators: true 
+        });
+
         if (!updatedProduct || updatedProduct.isDeleted === true) {
             return next(new AppError("Product not found", 404));
-=======
-    try
-    {
-        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true, runValidators: true } );
-        if ( !updatedProduct )
-        {
-            return res.status( 404 ).json( { success: false, message: "Product not found" } );
->>>>>>> 3cba3a02606b3f236f8bfaa3d965c651da458963
         }
-        res.status( 200 ).json( { success: true, data: updatedProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Update product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+
+        res.status(200).json({ success: true, data: updatedProduct });
+    } catch (error) {
+        next(error);
     }
 };
 
@@ -143,20 +127,19 @@ export const getProductById = async (req, res, next) => {
         return next(new AppError("Invalid Product Id", 404));
     }
 
-    try
-    {
-        // Query: Find by ID and ensure NOT deleted (handles both missing and false values)
-        const product = await Product.findOne({ _id: id, isDeleted: { $ne: true } });
-        
-        if ( !product )
-        {
-            return res.status( 404 ).json( { success: false, message: "Product not found" } );
+    try {
+        const product = await Product.findOne({ 
+            _id: id, 
+            isDeleted: { $ne: true } 
+        });
+
+        if (!product) {
+            return next(new AppError("Product not found", 404));
         }
-        res.status( 200 ).json( { success: true, data: product } );
-    } catch ( error )
-    {
-        console.error( "Error in fetching product:", error.message );
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+
+        res.status(200).json({ success: true, data: product });
+    } catch (error) {
+        next(error);
     }
 };
 
@@ -172,12 +155,11 @@ export const getRelatedProducts = async (req, res, next) => {
 
     try {
         const product = await Product.findById(id);
-        
+
         if (!product || product.isDeleted === true) {
             return next(new AppError("Product not found", 404));
         }
 
-        // Tokenize product name into keywords for similarity matching
         const stopWords = new Set(["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of"]);
         const words = product.name
             .toLowerCase()
@@ -192,18 +174,16 @@ export const getRelatedProducts = async (req, res, next) => {
                 _id: { $ne: product._id },
                 name: { $in: regexes },
                 isDeleted: { $ne: true }
-            } ).limit( 5 );
+            }).limit(5);
         }
 
-        // Pad if less than 4 related products are found
-        if ( related.length < 4 )
-        {
-            const excludeIds = [ product._id, ...related.map( p => p._id ) ];
-            const padding = await Product.find( {
+        if (related.length < 4) {
+            const excludeIds = [product._id, ...related.map(p => p._id)];
+            const padding = await Product.find({
                 _id: { $nin: excludeIds },
                 isDeleted: { $ne: true }
-            } ).limit( 5 - related.length );
-            related = [ ...related, ...padding ];
+            }).limit(5 - related.length);
+            related = [...related, ...padding];
         }
 
         res.status(200).json({ success: true, data: related.slice(0, 5) });
