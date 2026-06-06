@@ -1,6 +1,5 @@
-import Product from '../models/product.model.js';
+import Product from "../models/product.model.js";
 import mongoose from "mongoose";
-
 
 export const getProducts = async (req, res) => {
     try {
@@ -34,13 +33,30 @@ export const getProducts = async (req, res) => {
     }
 };
 
-export const createProduct = async ( req, res ) =>
-{
-    const product = req.body;
+export const createProduct = async (req, res) => {
+  const product = req.body;
 
-    if ( !product.name || product.price === undefined || product.price === null || !product.image )
-    {
-        return res.status( 400 ).json( { success: false, message: "Please provide all fields" } );
+  if (!product.name || !product.price || !product.image) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Please provide all fields" });
+  }
+
+  const newProduct = new Product(product);
+
+  try {
+    await newProduct.save();
+    res.status(201).json({ success: true, data: newProduct });
+  } catch (error) {
+    console.error("Error in Create product:", error.message);
+
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors,
+      });
     }
 
     const newProduct = new Product(product);
@@ -67,9 +83,10 @@ export const updateProduct = async ( req, res ) =>
     const { id } = req.params;
     const product = req.body;
 
-    if ( !mongoose.Types.ObjectId.isValid( id ) )
-    {
-        return res.status( 404 ).json( { success: false, message: "Invalid Product Id" } );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res
+            .status(404)
+            .json({ success: false, message: "Invalid Product Id" });
     }
 
     if ( !product || Object.keys( product ).length === 0 )
@@ -97,38 +114,29 @@ export const updateProduct = async ( req, res ) =>
     }
 };
 
-export const deleteProduct = async ( req, res ) =>
-{
+export const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
-    if ( !mongoose.Types.ObjectId.isValid( id ) )
-    {
-        return res.status( 404 ).json( { success: false, message: "Invalid Product Id" } );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res
+            .status(404)
+            .json({ success: false, message: "Invalid Product Id" });
     }
 
-
-    try
-    {
-        await Product.findByIdAndUpdate(
-    id,
-    { isDeleted: true },
-    { new: true }
-);
-        res.status( 200 ).json( { success: true, message: "Product deleted" } );
-    } catch ( error )
-    {
-        console.log( "error in deleting product:", error.message );
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+    try {
+        await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+        res.status(200).json({ success: true, message: "Product deleted successfully" });
+    } catch (error) {
+        console.log("error in deleting product:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-export const getProductById = async ( req, res ) =>
-{
+export const getProductById = async (req, res) => {
     const { id } = req.params;
 
-    if ( !mongoose.Types.ObjectId.isValid( id ) )
-    {
-        return res.status( 404 ).json( { success: false, message: "Invalid Product Id" } );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({ success: false, message: "Invalid Product Id" });
     }
 
     try
@@ -148,36 +156,31 @@ export const getProductById = async ( req, res ) =>
     }
 };
 
-export const getRelatedProducts = async ( req, res ) =>
-{
+export const getRelatedProducts = async (req, res) => {
     const { id } = req.params;
 
-    if ( !mongoose.Types.ObjectId.isValid( id ) )
-    {
-        return res.status( 404 ).json( { success: false, message: "Invalid Product Id" } );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({ success: false, message: "Invalid Product Id" });
     }
 
-    try
-    {
-        const product = await Product.findById( id );
-        if ( !product )
-        {
-            return res.status( 404 ).json( { success: false, message: "Product not found" } );
+    try {
+        const product = await Product.findById(id);
+        if (!product || product.isDeleted === true) {
+            return res.status(404).json({ success: false, message: "Product not found" });
         }
 
         // Tokenize product name into keywords for similarity matching
-        const stopWords = new Set( [ "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of" ] );
+        const stopWords = new Set(["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of"]);
         const words = product.name
             .toLowerCase()
-            .split( /\s+/ )
-            .map( w => w.replace( /[^a-z0-9]/g, "" ) )
-            .filter( w => w.length > 1 && !stopWords.has( w ) );
+            .split(/\s+/)
+            .map(w => w.replace(/[^a-z0-9]/g, ""))
+            .filter(w => w.length > 1 && !stopWords.has(w));
 
         let related = [];
-        if ( words.length > 0 )
-        {
-            const regexes = words.map( word => new RegExp( word, 'i' ) );
-            related = await Product.find( {
+        if (words.length > 0) {
+            const regexes = words.map(word => new RegExp(word, 'i'));
+            related = await Product.find({
                 _id: { $ne: product._id },
                 name: { $in: regexes },
                 isDeleted: { $ne: true }
@@ -195,10 +198,9 @@ export const getRelatedProducts = async ( req, res ) =>
             related = [ ...related, ...padding ];
         }
 
-        res.status( 200 ).json( { success: true, data: related.slice( 0, 5 ) } );
-    } catch ( error )
-    {
-        console.error( "Error in fetching related products:", error.message );
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+        res.status(200).json({ success: true, data: related.slice(0, 5) });
+    } catch (error) {
+        console.error("Error in fetching related products:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
