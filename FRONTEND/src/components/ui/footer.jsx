@@ -14,6 +14,7 @@ import { Link as RouterLink } from "react-router-dom";
 const Footer = () => {
   const bg = useColorModeValue("gray.50", "gray.900");
   const border = useColorModeValue("gray.200", "gray.700");
+  const labelColor = useColorModeValue("gray.600", "gray.400");
 
   return (
     <Box
@@ -50,7 +51,7 @@ const Footer = () => {
   Modern Product Management
 </Text>
 
-      <Text color="gray.500" maxW="250px">
+      <Text color={labelColor} maxW="250px">
         Discover, manage and showcase products with ease.
       </Text>
     </VStack>
@@ -97,6 +98,7 @@ const Footer = () => {
     href="https://github.com/niharika-mente"
     isExternal
     fontSize="xl"
+    aria-label="GitHub Repository"
     transition="all 0.2s"
     _hover={{
       color: "cyan.400",
@@ -110,6 +112,7 @@ const Footer = () => {
     href="https://www.linkedin.com/in/niharika-mente-473434323/"
     isExternal
     fontSize="xl"
+    aria-label="LinkedIn Profile"
     transition="all 0.2s"
     _hover={{
       color: "cyan.400",
