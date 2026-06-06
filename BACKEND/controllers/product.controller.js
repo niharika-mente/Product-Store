@@ -2,7 +2,7 @@ import Product from "../models/product.model.js";
 import mongoose from "mongoose";
 import { AppError } from "../middleware/errorMiddleware.js";
 
-// @desc    Get all products (with sorting, filtering deleted products)
+// @desc    Get all products
 // @route   GET /api/products
 // @access  Public
 export const getProducts = async (req, res, next) => {
@@ -74,7 +74,7 @@ export const updateProduct = async (req, res, next) => {
         });
 
         if (!updatedProduct || updatedProduct.isDeleted === true) {
-            return next(new AppError("Product not found with this ID", 404));
+            return next(new AppError("Product not found", 404));
         }
 
         res.status(200).json({ success: true, data: updatedProduct });
@@ -83,41 +83,44 @@ export const updateProduct = async (req, res, next) => {
     }
 };
 
-// @desc    Delete a product (soft delete - set isDeleted to true)
+// @desc    Delete a product (soft delete)
 // @route   DELETE /api/products/:id
 // @access  Public
 export const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return next(new AppError("Invalid Product Id", 404));
     }
 
     try {
         const deletedProduct = await Product.findByIdAndUpdate(
-            id,
-            { isDeleted: true },
+            id, 
+            { isDeleted: true }, 
             { new: true }
         );
 
         if (!deletedProduct) {
-            return next(new AppError("Product not found with this ID", 404));
+            return next(new AppError("Product not found", 404));
         }
 
-        res.status(200).json({ success: true, message: "Product deleted successfully" });
+        res.status(200).json({ 
+            success: true, 
+            message: "Product deleted successfully" 
+        });
     } catch (error) {
         next(error);
     }
 };
 
-// @desc    Get single product by ID
+// @desc    Get product by ID
 // @route   GET /api/products/:id
 // @access  Public
 export const getProductById = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return next(new AppError("Invalid Product Id", 404));
     }
 
     try {
@@ -133,14 +136,14 @@ export const getProductById = async (req, res, next) => {
     }
 };
 
-// @desc    Get related products based on name keywords
+// @desc    Get related products
 // @route   GET /api/products/:id/related
 // @access  Public
 export const getRelatedProducts = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return next(new AppError("Invalid Product Id", 404));
     }
 
     try {
@@ -159,7 +162,6 @@ export const getRelatedProducts = async (req, res, next) => {
             .filter(w => w.length > 1 && !stopWords.has(w));
 
         let related = [];
-        
         if (words.length > 0) {
             const regexes = words.map(word => new RegExp(word, 'i'));
             related = await Product.find({
