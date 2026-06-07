@@ -57,7 +57,7 @@ export const getProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
     const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
 
-    if (!name || price === undefined || price === null) {
+    if (!name || price === undefined || price === null || price === '' || isNaN(Number(price))) {
         return res.status(400).json({ success: false, message: "Please provide all fields" });
     }
 
@@ -113,7 +113,13 @@ export const updateProduct = async (req, res) => {
         return res.status(400).json({ success: false, message: "No update fields provided" });
     }
 
-    const existing = await Product.findById(id);
+    let existing;
+    try {
+        existing = await Product.findById(id);
+    } catch (error) {
+        console.error("Error fetching product:", error.message);
+        return res.status(500).json({ success: false, message: "Server Error" });
+    }
     if (!existing) {
         return res.status(404).json({ success: false, message: "Product not found" });
     }
@@ -121,7 +127,12 @@ export const updateProduct = async (req, res) => {
     const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
     const updateData = {};
     if (name !== undefined) updateData.name = name;
-    if (price !== undefined) updateData.price = Number(price);
+    if (price !== undefined) {
+        if (price === '' || isNaN(Number(price))) {
+            return res.status(400).json({ success: false, message: "Invalid price value" });
+        }
+        updateData.price = Number(price);
+    }
     if (imageUrl !== undefined) updateData.image = imageUrl;
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) updateData.category = category;

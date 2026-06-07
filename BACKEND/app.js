@@ -16,7 +16,7 @@ const __dirname = path.dirname( __filename );
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV === 'production') {
     const REQUIRED_ENV = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
     const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
     if (missing.length > 0) {
@@ -24,6 +24,9 @@ if (process.env.NODE_ENV !== 'test') {
         console.error('Add them to your .env file. See .env.example for reference.');
         process.exit(1);
     }
+}
+
+if (process.env.NODE_ENV !== 'test') {
     connectDB();
 }
 
@@ -36,21 +39,18 @@ const limiter = rateLimit({
     max: 100,
     message: "Too many requests from this IP, please try again later."
 });
-// Configure trusted origins for CORS
-const allowedOrigins = [
-   "http://localhost:5173",
-   process.env.FRONTEND_URL
-];
+const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
-
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("CORS Policy Error: Origin not allowed"));
+        if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
+            return callback(null, true);
         }
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error("CORS Policy Error: Origin not allowed"));
     },
     credentials: true
 }));
