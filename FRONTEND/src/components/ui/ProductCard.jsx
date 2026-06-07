@@ -20,6 +20,8 @@ const ProductCard = ({ product }) => {
 
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
   const { deleteProduct, updateProduct } = useProductStore();
   const { addToCart } = useCart();
@@ -29,8 +31,21 @@ const ProductCard = ({ product }) => {
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = useRef();
 
+  const isOutOfStock = product.stock != null && product.stock === 0;
+
   const handleAddToCart = () => {
-    addToCart(product);
+    if (isOutOfStock) return;
+    const result = addToCart(product);
+    if (result === 'capped') {
+      toast({
+        title: "Stock limit reached",
+        description: `Only ${product.stock} unit(s) of ${product.name} are available.`,
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your shopping cart.`,
@@ -44,21 +59,9 @@ const ProductCard = ({ product }) => {
     onDeleteClose();
     const { success, message } = await deleteProduct(product._id);
     if (!success) {
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
     } else {
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Success", description: "Product deleted successfully", status: "success", duration: 3000, isClosable: true });
     }
   };
 
@@ -66,53 +69,36 @@ const ProductCard = ({ product }) => {
     const { success, message } = await updateProduct(pid, updatedProduct);
     onClose();
     if (!success) {
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
     } else {
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Success", description: "Product updated successfully", status: "success", duration: 3000, isClosable: true });
     }
   };
 
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-
   return (
-   <Box
-  role="group"
-  shadow="lg"
-  rounded="lg"
-  overflow="hidden"
-  borderWidth="1px"
-  borderColor={borderColor}
-  transition="all 0.3s"
-  _hover={{
-    transform: "translateY(-8px)",
-    shadow: "2xl",
-  }}
-  bg={bg}
->
-    <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-      <Image 
-        src={product.image} 
-        alt={product.name} 
-        h={48} 
-        w='full' 
-        objectFit='cover'  
-        transition="transform 0.4s"
-        _groupHover={{transform: "scale(1.05)"}} 
-        cursor="pointer"
-      />
-    </Link>
+    <Box
+      role="group"
+      shadow="lg"
+      rounded="lg"
+      overflow="hidden"
+      borderWidth="1px"
+      borderColor={borderColor}
+      transition="all 0.3s"
+      _hover={{ transform: "translateY(-8px)", shadow: "2xl" }}
+      bg={bg}
+    >
+      <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+        <Image
+          src={product.image}
+          alt={product.name}
+          h={48}
+          w='full'
+          objectFit='cover'
+          transition="transform 0.4s"
+          _groupHover={{ transform: "scale(1.05)" }}
+          cursor="pointer"
+        />
+      </Link>
 
       <Box p={4}>
         <Heading as='h3' size='md' mb={2} noOfLines={1}>
@@ -127,77 +113,38 @@ const ProductCard = ({ product }) => {
           ${product.price}
         </Text>
 
-      <HStack spacing={2}>
-        {/* 2. Updated Edit Button with clean icon child rendering */}
-        <IconButton 
-          icon={<FaEdit />} 
-          onClick={onOpen}
-          colorScheme='blue' 
-          aria-label={`Edit ${product.name}`}
-          transition="all 0.2s"
-          _hover={{
-          transform: "scale(1.1)",
-  }}
-        />
-        
-        {/* 3. Updated Delete Button with clean icon child rendering */}
-        <IconButton 
-          icon={<FaTrash />} 
-          onClick={() => handleDeleteProduct(product._id)} 
-          colorScheme='red' 
-          aria-label={`Delete ${product.name}`}
-          transition="all 0.2s"
-          _hover={{
-            transform: "scale(1.1)",
-          }}
-        />
-        
-        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
-          transition="all 0.2s"
-          aria-label={`Add ${product.name} to cart`}
-          _hover={{
-            transform: "translateY(-2px)",
-          }}
-        >
-          Add to Cart
-        </Button>
-      </HStack>
-    </Box>
-      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
-      <ModalOverlay/>
         <HStack spacing={2}>
           <IconButton
             icon={<FaEdit />}
             onClick={onOpen}
             colorScheme='blue'
-            aria-label='Edit Product'
+            aria-label={`Edit ${product.name}`}
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}
           />
-
           <IconButton
             icon={<FaTrash />}
             onClick={onDeleteOpen}
             colorScheme='red'
-            aria-label='Delete Product'
+            aria-label={`Delete ${product.name}`}
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}
           />
-
           <Button
             colorScheme='teal'
             onClick={handleAddToCart}
             size='sm'
             flex={1}
+            isDisabled={isOutOfStock}
+            aria-label={`Add ${product.name} to cart`}
             transition="all 0.2s"
-            _hover={{ transform: "translateY(-2px)" }}
+            _hover={{ transform: isOutOfStock ? "none" : "translateY(-2px)" }}
           >
-            Add to Cart
+            {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </Button>
         </HStack>
       </Box>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -209,24 +156,17 @@ const ProductCard = ({ product }) => {
             <AlertDialogHeader fontSize='lg' fontWeight='bold'>
               Delete Product
             </AlertDialogHeader>
-
             <AlertDialogBody>
               Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
             </AlertDialogBody>
-
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onDeleteClose}>
-                Cancel
-              </Button>
-              <Button colorScheme='red' onClick={handleDeleteProduct} ml={3}>
-                Delete
-              </Button>
+              <Button ref={cancelRef} onClick={onDeleteClose}>Cancel</Button>
+              <Button colorScheme='red' onClick={handleDeleteProduct} ml={3}>Delete</Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
 
-      {/* Edit Product Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
@@ -256,11 +196,11 @@ const ProductCard = ({ product }) => {
                 value={updatedProduct.image}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
               />
-              
-              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={useColorModeValue("gray.600", "gray.300")} mt={2}>
+
+              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={optionalLabelColor} mt={2}>
                 Optional Details
               </Text>
-              
+
               <Input
                 placeholder='Description (optional)'
                 name='description'
@@ -268,7 +208,7 @@ const ProductCard = ({ product }) => {
                 value={updatedProduct.description || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
               />
-              
+
               <Input
                 placeholder='Category (optional)'
                 name='category'
@@ -276,7 +216,7 @@ const ProductCard = ({ product }) => {
                 value={updatedProduct.category || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, category: e.target.value })}
               />
-              
+
               <Input
                 placeholder='Brand (optional)'
                 name='brand'
@@ -284,51 +224,40 @@ const ProductCard = ({ product }) => {
                 value={updatedProduct.brand || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, brand: e.target.value })}
               />
-              
+
               <Input
                 placeholder='Stock Quantity (optional)'
                 name='stock'
                 type='number'
                 aria-label="Stock Quantity"
-                value={updatedProduct.stock || ''}
+                value={updatedProduct.stock ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: Number(e.target.value) })}
               />
-              
+
               <Input
                 placeholder='Original Price (optional)'
                 name='originalPrice'
                 type='number'
                 aria-label="Original Price"
-                value={updatedProduct.originalPrice || ''}
+                value={updatedProduct.originalPrice ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: Number(e.target.value) })}
               />
-              
+
               <Input
                 placeholder='Discount % (optional)'
                 name='discount'
                 type='number'
                 aria-label="Discount Percentage"
-                value={updatedProduct.discount || ''}
+                value={updatedProduct.discount ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: Number(e.target.value) })}
               />
             </VStack>
           </ModalBody>
-
           <ModalFooter>
-            <Button
-              colorScheme='blue'
-              mr={3}
-              onClick={() => handleUpdateProduct(product._id, updatedProduct)}
-            >
+            <Button colorScheme="blue" mr={3} onClick={() => handleUpdateProduct(product._id, updatedProduct)}>
               Update
             </Button>
-            <Button
-              variant='ghost'
-              onClick={() => {
-                onClose();
-                setUpdatedProduct(product);
-              }}
-            >
+            <Button variant='ghost' onClick={() => { onClose(); setUpdatedProduct(product); }}>
               Cancel
             </Button>
           </ModalFooter>

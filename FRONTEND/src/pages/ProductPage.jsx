@@ -66,8 +66,12 @@ const ProductPage = () => {
     }
   }, [id]);
 
+  const hasStock = product && product.stock !== undefined && product.stock !== null;
+  const isOutOfStock = hasStock && product.stock === 0;
+  const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
+
   const handleAddToCart = () => {
-    if (product) {
+    if (product && !isOutOfStock) {
       for (let i = 0; i < quantity; i++) {
         addToCart(product);
       }
@@ -277,10 +281,10 @@ const ProductPage = () => {
               <Box>
                 <Text fontWeight="semibold" mb={2}>Quantity</Text>
                 <HStack spacing={3}>
-                  <Button 
-                    size="md" 
+                  <Button
+                    size="md"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    isDisabled={quantity <= 1}
+                    isDisabled={quantity <= 1 || isOutOfStock}
                     aria-label="Decrease quantity"
                   >
                     -
@@ -288,10 +292,10 @@ const ProductPage = () => {
                   <Text fontSize="xl" fontWeight="bold" minW="50px" textAlign="center">
                     {quantity}
                   </Text>
-                  <Button 
-                    size="md" 
-                    onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                    isDisabled={quantity >= 10}
+                  <Button
+                    size="md"
+                    onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                    isDisabled={quantity >= maxQty || isOutOfStock}
                     aria-label="Increase quantity"
                   >
                     +
@@ -300,22 +304,23 @@ const ProductPage = () => {
               </Box>
 
               {/* Add to Cart Button */}
-              <Button 
-                colorScheme="blue" 
-                size="lg" 
+              <Button
+                colorScheme="blue"
+                size="lg"
                 fontSize="lg"
                 h="60px"
                 onClick={handleAddToCart}
+                isDisabled={isOutOfStock}
                 leftIcon={<FaShoppingCart />}
                 boxShadow="lg"
-                _hover={{ 
-                  transform: "translateY(-3px)", 
-                  boxShadow: "2xl" 
+                _hover={{
+                  transform: isOutOfStock ? "none" : "translateY(-3px)",
+                  boxShadow: isOutOfStock ? "lg" : "2xl"
                 }}
                 _active={{ transform: "translateY(0)" }}
                 transition="all 0.2s"
               >
-                Add {quantity > 1 ? `${quantity} items` : ''} to Cart
+                {isOutOfStock ? "Out of Stock" : `Add ${quantity > 1 ? `${quantity} items` : ''} to Cart`}
               </Button>
 
               {/* Features Grid */}
