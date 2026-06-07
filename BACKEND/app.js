@@ -7,6 +7,8 @@ import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
+import wishlistRoutes from "./routes/wishlist.route.js";  
+
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath( import.meta.url );
@@ -50,6 +52,8 @@ app.use("/api", limiter);
 
 app.use("/api/products", productRoutes);
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+
 
 if(process.env.NODE_ENV === "production") {
    app.use(express.static(path.join(__dirname,"..","FRONTEND","dist")));
@@ -60,3 +64,5 @@ if(process.env.NODE_ENV === "production") {
 }
 
 export default app;
+
+

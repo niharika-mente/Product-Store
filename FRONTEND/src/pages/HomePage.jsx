@@ -60,7 +60,7 @@ const HomePage = () => {
   display="inline-block"
   bg="blue.500"
   color="white"
-  px={6}
+  px={6}    
   py={3}
   borderRadius="xl"
   minW="140px"

@@ -13,6 +13,7 @@
     "@chakra-ui/icons": "^2.0.17",
     "@chakra-ui/react": "^2.7.1",
     "@emotion/react": "^11.14.0",
+    "axios": "^1.17.0",
     "cors": "^2.8.5",
     "mern": "file:..",
     "next-themes": "^0.4.6",
