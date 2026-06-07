@@ -27,6 +27,13 @@ export const useProductStore = create((set) =>({
                 formData.append("image", newProduct.image);
             }
 
+            if (newProduct.description) formData.append("description", newProduct.description);
+            if (newProduct.category) formData.append("category", newProduct.category);
+            if (newProduct.brand) formData.append("brand", newProduct.brand);
+            if (newProduct.stock !== undefined && newProduct.stock !== '') formData.append("stock", newProduct.stock);
+            if (newProduct.originalPrice !== undefined && newProduct.originalPrice !== '') formData.append("originalPrice", newProduct.originalPrice);
+            if (newProduct.discount !== undefined && newProduct.discount !== '') formData.append("discount", newProduct.discount);
+
             const res = await fetch(`${API}/api/products`, {
                 method: "POST",
                 body: formData,
@@ -92,6 +99,13 @@ export const useProductStore = create((set) =>({
             } else if (updatedProduct.image) {
                 formData.append("image", updatedProduct.image);
             }
+
+            if (updatedProduct.description !== undefined) formData.append("description", updatedProduct.description);
+            if (updatedProduct.category !== undefined) formData.append("category", updatedProduct.category);
+            if (updatedProduct.brand !== undefined) formData.append("brand", updatedProduct.brand);
+            if (updatedProduct.stock !== undefined && updatedProduct.stock !== '') formData.append("stock", updatedProduct.stock);
+            if (updatedProduct.originalPrice !== undefined && updatedProduct.originalPrice !== '') formData.append("originalPrice", updatedProduct.originalPrice);
+            if (updatedProduct.discount !== undefined && updatedProduct.discount !== '') formData.append("discount", updatedProduct.discount);
 
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "PUT",

@@ -17,6 +17,13 @@ const __dirname = path.dirname( __filename );
 dotenv.config({ path: path.join(__dirname, ".env") });
 
 if (process.env.NODE_ENV !== 'test') {
+    const REQUIRED_ENV = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
+    const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
+    if (missing.length > 0) {
+        console.error(`Missing required environment variables: ${missing.join(', ')}`);
+        console.error('Add them to your .env file. See .env.example for reference.');
+        process.exit(1);
+    }
     connectDB();
 }
 

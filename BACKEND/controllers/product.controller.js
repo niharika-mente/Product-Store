@@ -55,7 +55,7 @@ export const getProducts = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-    const { name, price, image: imageUrl } = req.body;
+    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
 
     if (!name || price === undefined || price === null) {
         return res.status(400).json({ success: false, message: "Please provide all fields" });
@@ -77,7 +77,17 @@ export const createProduct = async (req, res) => {
         return res.status(400).json({ success: false, message: "Please provide a product image" });
     }
 
-    const newProduct = new Product({ ...req.body, image: finalImageUrl });
+    const newProduct = new Product({
+        name,
+        price: Number(price),
+        image: finalImageUrl,
+        description,
+        category,
+        brand,
+        ...(stock !== undefined && { stock: Number(stock) }),
+        ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
+        ...(discount !== undefined && { discount: Number(discount) }),
+    });
 
     try {
         await newProduct.save();
@@ -108,7 +118,17 @@ export const updateProduct = async (req, res) => {
         return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    const updateData = { ...req.body };
+    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (price !== undefined) updateData.price = Number(price);
+    if (imageUrl !== undefined) updateData.image = imageUrl;
+    if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    if (brand !== undefined) updateData.brand = brand;
+    if (stock !== undefined) updateData.stock = Number(stock);
+    if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
+    if (discount !== undefined) updateData.discount = Number(discount);
 
     if (req.file) {
         try {
