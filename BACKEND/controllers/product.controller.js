@@ -204,3 +204,18 @@ export const getRelatedProducts = async (req, res) => {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
+
+export const searchProducts=async(req,res)=>{
+    const {q}=req.query;
+    console.log("Search query:", q);
+
+    try {
+        const regex = new RegExp(q, 'i');
+        console.log("Constructed regex:", regex); 
+        const products=await Product.find({name:regex});
+        res.status(200).json({success:true,data:products});
+    } catch (error) {
+        console.error("Error in searching products:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+}
