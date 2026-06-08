@@ -29,10 +29,5 @@ export const connectDB = async () =>{
     }
 }
 
-// Graceful shutdown
-export const disconnectDB = async () => {
-    if (mongoServer) {
-        await mongoServer.stop();
-    }
-    await mongoose.disconnect();
-};
+
+}  

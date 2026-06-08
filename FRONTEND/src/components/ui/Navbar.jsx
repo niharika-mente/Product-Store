@@ -27,6 +27,7 @@ const Navbar = () => {
 
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
+  const labelColor = useColorModeValue("gray.600", "gray.300");
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
@@ -48,7 +49,7 @@ const Navbar = () => {
       emptyCart();
       onClose();
       navigate("/success");
-    } catch (error) {
+    } catch {
       toast({ title: "Error", description: "Failed to process checkout", status: "error", duration: 3000, isClosable: true });
     } finally {
       setIsCheckoutLoading(false);
@@ -96,6 +97,7 @@ _hover={{
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products..."
+              aria-label="Search products"
               bg={useColorModeValue("gray.50", "gray.700")}
               borderColor={useColorModeValue("gray.200", "gray.600")}
               _placeholder={{ color: useColorModeValue("gray.400", "gray.400") }}
@@ -104,7 +106,7 @@ _hover={{
 
           <HStack spacing={2} alignItems={"center"}>
             <Link to={"/create"}>
-              <Button>
+              <Button aria-label="Create new product">
                 <PlusSquareIcon fontSize={20} />
               </Button>
             </Link>
@@ -142,14 +144,14 @@ _hover={{
 
           <DrawerBody>
             {cartItems.length === 0 ? (
-              <Text textAlign="center" mt={10} color="gray.500">Your cart is empty.</Text>
+              <Text textAlign="center" mt={10} color={labelColor}>Your cart is empty.</Text>
             ) : (
               <VStack align="stretch" spacing={4} mt={4}>
                 {cartItems.map((item) => (
                   <HStack key={item._id} justify="space-between" p={3} borderWidth="1px" borderRadius="lg" borderColor={colorMode === "light" ? "gray.200" : "gray.600"}>
                     <Box>
                       <Text fontWeight="bold">{item.name}</Text>
-                      <Text fontSize="sm" color="gray.500">
+                      <Text fontSize="sm" color={labelColor}>
                         Qty: {item.quantity} × ${item.price}
                       </Text>
                     </Box>

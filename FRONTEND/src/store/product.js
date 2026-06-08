@@ -110,5 +110,21 @@ const res = await fetch(url);
             console.error( "Network error updating product:", error );
             return { success: false, message: "Network error - could not reach API" };
         }
+    },
+    searchProducts:async(query)=>{
+        try{
+            const res=await fetch(`${API}/api/products/search?q=${encodeURIComponent(query)}`);
+            if(!res.ok){
+                return {success:false,message:"Failed to search products."};
+            }
+            const data=await res.json();
+            set({products:data.data});
+            return {success:true};
+        }
+        catch(error){
+            console.error("Network error searching products:", error);
+            return {success:false,message:"Network error - could not reach API"};
+        }
+
     }
 }));

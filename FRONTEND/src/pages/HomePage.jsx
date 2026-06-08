@@ -38,19 +38,32 @@ import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
+import useDebounce from '../hooks/useDebounce';
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
   const [sort, setSort] = useState("");
+  const labelColor = useColorModeValue("gray.600", "gray.300");
 
   useEffect(() => {
   fetchProducts(sort);
 }, [fetchProducts, sort]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filteredProducts = products.filter((product) =>
-    (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  );
+  // const filteredProducts = products.filter((product) =>
+  //   (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
+  // );
+
+  const debounceSearch=useDebounce(searchQuery,500);
+
+  useEffect(() => {
+    if (debounceSearch.trim() === "") {
+      fetchProducts(sort);
+    } else {
+      searchProducts(debounceSearch);
+    }
+  }, [debounceSearch] );
+
 
   return (
     <>
@@ -66,15 +79,16 @@ const HomePage = () => {
           Current Products🚀
         </Text>
         <Select
-  value={sort}
-  onChange={(e) => setSort(e.target.value)}
-  maxW="250px"
->
-  <option value="">Default</option>
-  <option value="price_asc">Price: Low to High</option>
-  <option value="price_desc">Price: High to Low</option>
-  <option value="newest">Newest First</option>
-</Select>
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          maxW="250px"
+          aria-label="Sort products"
+        >
+          <option value="">Default</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="newest">Newest First</option>
+        </Select>
         <VStack gap={2}>
   <Text
     fontSize={{ base: "3xl", md: "5xl" }}
@@ -87,7 +101,7 @@ const HomePage = () => {
   </Text>
 
   <Text
-    color="gray.500"
+    color={labelColor}
     textAlign="center"
     maxW="600px"
   >
@@ -110,7 +124,7 @@ const HomePage = () => {
 >
     <Text fontSize="sm">Products</Text>
     <Text fontSize="2xl" fontWeight="bold">
-      {filteredProducts.length}
+      {products.length}
     </Text>
   </Box>
 </VStack>
@@ -124,7 +138,7 @@ const HomePage = () => {
           spacing={10}
           w={"full"}
         >
-          {filteredProducts.map((product) =>(
+          {products.map((product) =>(
             <ProductCard key={product._id} product={product} />
           ))}
           
@@ -160,7 +174,7 @@ const HomePage = () => {
       No Products Yet
     </Text>
 
-    <Text color="gray.500" textAlign="center">
+    <Text color={labelColor} textAlign="center">
       Start building your store by adding your first product.
     </Text>
 
@@ -181,18 +195,18 @@ const HomePage = () => {
   </VStack>
 )}
 
-        {products.length > 0 && filteredProducts.length === 0 && (
+        {products.length > 0 && searchQuery && (
   <VStack gap={4} py={12}>
     <Text fontSize="6xl">🔎</Text>
 
     <Text
-      fontSize="2xl"
+      fontSize="2xl"  
       fontWeight="bold"
     >
       No matching products
     </Text>
 
-    <Text color="gray.500" textAlign="center">
+    <Text color={labelColor} textAlign="center">
       Try a different search term.
     </Text>
   </VStack>
