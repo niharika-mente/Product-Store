@@ -10,10 +10,10 @@ const CreatePage = () => {
   });
 
   const toast = useToast()
-  const {createProduct} = useProductStore()
+  const { createProduct, isSubmitting } = useProductStore() // ✅ Added isSubmitting
 
   const handleAddProduct = async() => {
-    const {success,message}= await createProduct(newProduct)
+    const {success, message} = await createProduct(newProduct)
     if(!success){
       toast({
         title:"Error",
@@ -28,16 +28,15 @@ const CreatePage = () => {
         status: "success",
         isClosable: true
       })
+      // ✅ Clear form only on success
+      setNewProduct({ name: "", price: "", image: ""});
     }
-    setNewProduct({ name: "", price: "", image: ""});
-    // console.log("Success:", success);
-    // console.log("Message:",message);
   };
 
   return (
    <Container maxW = {"container.sm"}>
     <VStack spacing={8}>
-      <Heading as={"h1"} size={"2x1"} textAlign={"center"} mb={8}>
+      <Heading as={"h1"} size={"2xl"} textAlign={"center"} mb={8}>
         Create New Product
       </Heading>
 
@@ -64,14 +63,21 @@ const CreatePage = () => {
             value={newProduct.image}
             onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
           />
-          <Button colorScheme='blue' onClick={handleAddProduct} w='full'>
+          <Button 
+            colorScheme='blue' 
+            onClick={handleAddProduct} 
+            w='full'
+            isLoading={isSubmitting}           // ✅ Shows loading spinner
+            loadingText="Creating Product..."   // ✅ Text while loading
+            spinnerPlacement="start"            // ✅ Spinner on left side
+          >
             Add Product
           </Button>
         </VStack>
       </Box>
     </VStack>
     </Container>
-    );
+  );
 };
 
 export default CreatePage;

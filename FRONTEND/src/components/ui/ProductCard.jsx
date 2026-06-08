@@ -1,4 +1,3 @@
-
 import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
 import React from 'react'
 
@@ -21,7 +20,7 @@ const ProductCard = ({ product }) => {
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
 
-  const { deleteProduct, updateProduct } = useProductStore()
+  const { deleteProduct, updateProduct, isDeleting, isSubmitting } = useProductStore() // ✅ Added loading states
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast()
@@ -87,9 +86,6 @@ const ProductCard = ({ product }) => {
       }
     }
   };
-
-
-  
 
   const handleDeleteProduct = async (pid) => {
     const { success, message } = await deleteProduct(pid)
@@ -203,7 +199,7 @@ const ProductCard = ({ product }) => {
             }}
           />
 
-          {/* Delete Button */}
+          {/* Delete Button - ✅ Added loading state */}
           <IconButton
             icon={<FaTrash />}
             onClick={() => handleDeleteProduct(product._id)}
@@ -213,9 +209,15 @@ const ProductCard = ({ product }) => {
             _hover={{
               transform: "scale(1.1)",
             }}
+            isLoading={isDeleting}           // ✅ Loading spinner on delete
+            disabled={isDeleting}             // ✅ Disable while deleting
           />
 
-          <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
+          <Button 
+            colorScheme='teal' 
+            onClick={handleAddToCart} 
+            size='sm' 
+            flex={1}
             transition="all 0.2s"
             _hover={{
               transform: "translateY(-2px)",
@@ -225,9 +227,10 @@ const ProductCard = ({ product }) => {
           </Button>
         </HStack>
       </Box>
+
+      {/* Update Modal - ✅ Added loading state on Update button */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
-
         <ModalContent>
           <ModalHeader>Update Product</ModalHeader>
           <ModalCloseButton />
@@ -260,6 +263,9 @@ const ProductCard = ({ product }) => {
               colorScheme='blue'
               mr={3}
               onClick={() => handleUpdateProduct(product._id, updatedProduct)}
+              isLoading={isSubmitting}           // ✅ Loading spinner on update
+              loadingText="Updating..."           // ✅ Text while updating
+              disabled={isSubmitting}             // ✅ Disable while updating
             >
               Update
             </Button>
@@ -269,6 +275,7 @@ const ProductCard = ({ product }) => {
                 onClose();
                 setUpdatedProduct(product);
               }}
+              disabled={isSubmitting}             // ✅ Disable cancel while updating
             >
               Cancel
             </Button>
