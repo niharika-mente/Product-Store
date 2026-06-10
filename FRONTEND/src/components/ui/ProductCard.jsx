@@ -127,50 +127,12 @@ const ProductCard = ({ product }) => {
           ${product.price}
         </Text>
 
-      <HStack spacing={2}>
-        {/* 2. Updated Edit Button with clean icon child rendering */}
-        <IconButton 
-          icon={<FaEdit />} 
-          onClick={onOpen}
-          colorScheme='blue' 
-          aria-label={`Edit ${product.name}`}
-          transition="all 0.2s"
-          _hover={{
-          transform: "scale(1.1)",
-  }}
-        />
-        
-        {/* 3. Updated Delete Button with clean icon child rendering */}
-        <IconButton 
-          icon={<FaTrash />} 
-          onClick={() => handleDeleteProduct(product._id)} 
-          colorScheme='red' 
-          aria-label={`Delete ${product.name}`}
-          transition="all 0.2s"
-          _hover={{
-            transform: "scale(1.1)",
-          }}
-        />
-        
-        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
-          transition="all 0.2s"
-          aria-label={`Add ${product.name} to cart`}
-          _hover={{
-            transform: "translateY(-2px)",
-          }}
-        >
-          Add to Cart
-        </Button>
-      </HStack>
-    </Box>
-      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
-      <ModalOverlay/>
         <HStack spacing={2}>
           <IconButton
             icon={<FaEdit />}
             onClick={onOpen}
             colorScheme='blue'
-            aria-label='Edit Product'
+            aria-label={`Edit ${product.name}`}
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}
           />
@@ -179,7 +141,7 @@ const ProductCard = ({ product }) => {
             icon={<FaTrash />}
             onClick={onDeleteOpen}
             colorScheme='red'
-            aria-label='Delete Product'
+            aria-label={`Delete ${product.name}`}
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}
           />
@@ -190,6 +152,7 @@ const ProductCard = ({ product }) => {
             size='sm'
             flex={1}
             transition="all 0.2s"
+            aria-label={`Add ${product.name} to cart`}
             _hover={{ transform: "translateY(-2px)" }}
           >
             Add to Cart
