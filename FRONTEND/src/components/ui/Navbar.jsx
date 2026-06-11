@@ -2,22 +2,25 @@ import React, { useState } from 'react';
 import { 
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast
+  VStack, Box, Badge, useColorModeValue, useToast, Avatar, Menu, MenuButton, MenuList, MenuItem
 } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
-import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
+import { LuSun, LuShoppingCart, LuLogIn } from "react-icons/lu";
+import { FaUser } from 'react-icons/fa';
 
 import { useCart } from "../../store/cart";
 import { useProductStore } from "../../store/product";
+import { useAuthStore } from "../../store/auth";
 
 
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const { isOpen, onOpen, onClose } = useDisclosure(); // Controls Drawer sliding state
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const { cartItems, removeFromCart, emptyCart, totalPrice } = useCart();
   const { searchQuery, setSearchQuery } = useProductStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -128,6 +131,33 @@ _hover={{
               )}
             </Button>
 
+            {user ? (
+              <Menu>
+                <MenuButton as={Button} variant="ghost" borderRadius="full" p={0}>
+                  <Avatar size="sm" name={user.name} src={user.avatar} />
+                </MenuButton>
+                <MenuList>
+                  <MenuItem fontSize="sm" fontWeight="bold" pointerEvents="none">
+                    {user.name}
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => { logout(); toast({ title: 'Signed out', status: 'info', duration: 2000 }); navigate('/'); }}
+                  >
+                    Sign Out
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            ) : (
+              <Button
+                leftIcon={<LuLogIn />}
+                size="sm"
+                variant="outline"
+                onClick={() => navigate('/login')}
+                aria-label="Sign in"
+              >
+                Sign In
+              </Button>
+            )}
             <Button onClick={toggleColorMode} aria-label="Toggle color mode">
               {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
             </Button>

@@ -9,6 +9,8 @@ import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import authRoutes from "./routes/auth.route.js";
+import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 
@@ -51,10 +53,12 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(passport.initialize());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", limiter);
 
 
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
