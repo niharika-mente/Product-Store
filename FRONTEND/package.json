@@ -14,10 +14,13 @@
     "@chakra-ui/react": "^2.7.1",
     "@emotion/react": "^11.14.0",
     "cors": "^2.8.5",
+    "i18next": "^26.3.1",
+    "i18next-browser-languagedetector": "^8.2.1",
     "mern": "file:..",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-i18next": "^17.0.8",
     "react-icons": "^5.6.0",
     "react-router-dom": "^7.5.1",
     "zustand": "^5.0.4"
