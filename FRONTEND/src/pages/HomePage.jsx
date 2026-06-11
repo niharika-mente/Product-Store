@@ -16,11 +16,6 @@ const HomePage = () => {
   fetchProducts(sort);
 }, [fetchProducts, sort]);
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  // const filteredProducts = products.filter((product) =>
-  //   (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  // );
-
   const debounceSearch=useDebounce(searchQuery,500);
 
   useEffect(() => {
