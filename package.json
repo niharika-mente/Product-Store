@@ -13,14 +13,13 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "mongodb": "^7.0.0",
     "mongoose": "^8.13.2",
+    "nodemon": "^3.1.9",
     "serverless-http": "^4.0.0"
   },
-  "devDependencies": {
-    "cross-env": "^7.0.3",
-    "nodemon": "^3.1.9"
-  }
+  "devDependencies": {}
 }
