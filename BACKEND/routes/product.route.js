@@ -165,6 +165,50 @@
 
 /**
  * @swagger
+ * /api/products/{id}/bundle:
+ *   get:
+ *     summary: Get frequently bought together bundle
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID to get bundle for
+ *     responses:
+ *       200:
+ *         description: Bundle data with complementary items and discount
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mainProduct:
+ *                   $ref: '#/components/schemas/Product'
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       product:
+ *                         $ref: '#/components/schemas/Product'
+ *                       reason:
+ *                         type: string
+ *                 bundleTotal:
+ *                   type: number
+ *                 bundleDiscount:
+ *                   type: number
+ *                 bundlePrice:
+ *                   type: number
+ *                 savings:
+ *                   type: number
+ *       404:
+ *         description: Product not found
+ */
+
+/**
+ * @swagger
  * /api/products/related/{id}:
  *   get:
  *     summary: Get related products
@@ -190,8 +234,7 @@
  */
 
 import express from "express";
-import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts } from "../controllers/product.controller.js";
-import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts, searchProducts } from "../controllers/product.controller.js";
+import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts, searchProducts, getProductBundle } from "../controllers/product.controller.js";
 
 const router = express.Router();
 
@@ -200,6 +243,8 @@ router.get( "/", getProducts );
 router.get( "/related/:id", getRelatedProducts );
 //routes for search product
 router.get("/search",searchProducts);
+
+router.get( "/:id/bundle", getProductBundle );
 
 router.get( "/:id", getProductById );
 

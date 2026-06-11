@@ -3,9 +3,9 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, Container, Flex, Image, Heading, Text, Button, 
   Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
-  useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
+  useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid, Checkbox
 } from '@chakra-ui/react';
-import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift } from 'react-icons/fa';
 import {useCart}  from "../store/cart.js";
 
 import RelatedProducts from '../components/ui/RelatedProducts';
@@ -19,8 +19,10 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [bundleData, setBundleData] = useState(null);
+  const [selectedBundleItems, setSelectedBundleItems] = useState([]);
   
-  const { addToCart } = useCart();
+  const { addToCart, addBundleToCart } = useCart();
   const toast = useToast();
   
   const textColor = useColorModeValue("gray.700", "gray.300");
@@ -67,6 +69,22 @@ const ProductPage = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    const fetchBundle = async () => {
+      try {
+        const res = await fetch(`${API}/api/products/${id}/bundle`);
+        const data = await res.json();
+        if (data.success && data.data.items.length > 0) {
+          setBundleData(data.data);
+          setSelectedBundleItems(data.data.items.map(i => i.product._id));
+        }
+      } catch {
+      }
+    };
+    fetchBundle();
+  }, [id]);
+
   const handleAddToCart = () => {
     if (product) {
       for (let i = 0; i < quantity; i++) {
@@ -81,6 +99,29 @@ const ProductPage = () => {
         position: "top-right",
       });
     }
+  };
+
+  const handleAddBundleToCart = () => {
+    const allItems = [product, ...bundleData.items
+      .filter(i => selectedBundleItems.includes(i.product._id))
+      .map(i => i.product)];
+    addBundleToCart(allItems);
+    toast({
+      title: "Bundle Added!",
+      description: `${allItems.length} items added to your cart.`,
+      status: "success",
+      duration: 2500,
+      isClosable: true,
+      position: "top-right",
+    });
+  };
+
+  const toggleBundleItem = (productId) => {
+    setSelectedBundleItems(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
   };
 
   if (loading) {
@@ -349,6 +390,127 @@ const ProductPage = () => {
             </VStack>
           </GridItem>
         </Grid>
+
+        {/* Frequently Bought Together */}
+        {bundleData && bundleData.items.length > 0 && (
+          <Box mb={16}>
+            <Divider mb={8} />
+            <Flex align="center" gap={3} mb={6}>
+              <Icon as={FaGift} boxSize={6} color="blue.500" />
+              <Heading as="h2" size="lg" fontWeight="bold">
+                Frequently Bought Together
+              </Heading>
+            </Flex>
+
+            <Box
+              border="1px solid"
+              borderColor={borderCol}
+              borderRadius="2xl"
+              p={6}
+              bg={cardBg}
+              boxShadow="lg"
+            >
+              <VStack align="stretch" spacing={4}>
+                <HStack spacing={4}>
+                  <Checkbox
+                    isChecked
+                    isDisabled
+                    size="lg"
+                    colorScheme="blue"
+                  />
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    boxSize="60px"
+                    objectFit="cover"
+                    borderRadius="md"
+                    fallbackSrc="https://via.placeholder.com/60"
+                  />
+                  <Box flex={1}>
+                    <Text fontWeight="semibold">{product.name}</Text>
+                    <Text fontSize="sm" color={textColor}>${product.price}</Text>
+                  </Box>
+                </HStack>
+
+                {bundleData.items.map((ci) => (
+                  <HStack key={ci.product._id} spacing={4}>
+                    <Checkbox
+                      isChecked={selectedBundleItems.includes(ci.product._id)}
+                      onChange={() => toggleBundleItem(ci.product._id)}
+                      size="lg"
+                      colorScheme="blue"
+                    />
+                    <Image
+                      src={ci.product.image}
+                      alt={ci.product.name}
+                      boxSize="60px"
+                      objectFit="cover"
+                      borderRadius="md"
+                      fallbackSrc="https://via.placeholder.com/60"
+                    />
+                    <Box flex={1}>
+                      <Text fontWeight="semibold">{ci.product.name}</Text>
+                      <Text fontSize="sm" color={textColor}>${ci.product.price}</Text>
+                      {ci.reason && (
+                        <Text fontSize="xs" color="blue.400" fontStyle="italic">
+                          {ci.reason}
+                        </Text>
+                      )}
+                    </Box>
+                  </HStack>
+                ))}
+              </VStack>
+
+              <Divider my={6} />
+
+              <Flex
+                direction={{ base: "column", md: "row" }}
+                align={{ base: "stretch", md: "center" }}
+                justify="space-between"
+                gap={4}
+              >
+                <Box>
+                  <Text fontSize="sm" color={textColor}>
+                    Bundle Total:{' '}
+                    <Text as="span" textDecoration="line-through" color="gray.400">
+                      ${bundleData.bundleTotal}
+                    </Text>
+                  </Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="green.500">
+                    ${(() => {
+                      const selectedTotal = [product, ...bundleData.items
+                        .filter(i => selectedBundleItems.includes(i.product._id))
+                        .map(i => i.product)]
+                        .reduce((sum, p) => sum + p.price, 0);
+                      const discount = selectedTotal === bundleData.bundleTotal
+                        ? bundleData.bundleDiscount
+                        : 0;
+                      return (selectedTotal * (1 - discount)).toFixed(2);
+                    })()}
+                  </Text>
+                  {selectedBundleItems.length === bundleData.items.length && (
+                    <Text fontSize="sm" color="green.500" fontWeight="medium">
+                      Save ${bundleData.savings} ({Math.round(bundleData.bundleDiscount * 100)}% off)
+                    </Text>
+                  )}
+                </Box>
+                <Button
+                  colorScheme="green"
+                  size="lg"
+                  leftIcon={<FaShoppingCart />}
+                  onClick={handleAddBundleToCart}
+                  isDisabled={selectedBundleItems.length === 0}
+                  boxShadow="lg"
+                  _hover={{ transform: "translateY(-2px)", boxShadow: "xl" }}
+                  _active={{ transform: "translateY(0)" }}
+                  transition="all 0.2s"
+                >
+                  Add Bundle to Cart
+                </Button>
+              </Flex>
+            </Box>
+          </Box>
+        )}
 
         {/* Reviews Section */}
         <ProductReviews productId={id} />

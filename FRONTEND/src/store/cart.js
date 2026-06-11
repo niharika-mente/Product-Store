@@ -26,6 +26,21 @@ export const useCartStore = create(
         }));
       },
 
+      addBundleToCart: (items) => {
+        set((state) => {
+          const updated = [...state.cartItems];
+          for (const item of items) {
+            const idx = updated.findIndex((i) => i._id === item._id);
+            if (idx >= 0) {
+              updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + 1 };
+            } else {
+              updated.push({ ...item, quantity: 1 });
+            }
+          }
+          return { cartItems: updated };
+        });
+      },
+
       emptyCart: () => set({ cartItems: [] }),
     }),
     {
@@ -38,9 +53,10 @@ export const useCart = () => {
   const cartItems = useCartStore((state) => state.cartItems);
   const addToCart = useCartStore((state) => state.addToCart);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const addBundleToCart = useCartStore((state) => state.addBundleToCart);
   const emptyCart = useCartStore((state) => state.emptyCart);
   
   const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  return { cartItems, addToCart, removeFromCart, emptyCart, totalPrice };
+  return { cartItems, addToCart, removeFromCart, addBundleToCart, emptyCart, totalPrice };
 };

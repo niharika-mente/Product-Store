@@ -205,6 +205,52 @@ export const getRelatedProducts = async (req, res) => {
     }
 };
 
+export const getProductBundle = async (req, res) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({ success: false, message: "Invalid Product Id" });
+    }
+
+    try {
+        const product = await Product.findById(id);
+        if (!product || product.isDeleted === true) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        const populated = await Product.findById(id).populate('complementaryItems.product');
+
+        const items = populated.complementaryItems
+            .filter(ci => ci.product && !ci.product.isDeleted)
+            .slice(0, 3);
+
+        const bundleTotal = [product, ...items.map(i => i.product)]
+            .reduce((sum, p) => sum + p.price, 0);
+
+        const bundleDiscount = 0.1;
+        const bundlePrice = +(bundleTotal * (1 - bundleDiscount)).toFixed(2);
+        const savings = +(bundleTotal * bundleDiscount).toFixed(2);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                mainProduct: product,
+                items: items.map(ci => ({
+                    product: ci.product,
+                    reason: ci.reason
+                })),
+                bundleTotal,
+                bundleDiscount,
+                bundlePrice,
+                savings
+            }
+        });
+    } catch (error) {
+        console.error("Error in fetching bundle:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+
 export const searchProducts=async(req,res)=>{
     const {q}=req.query;
     console.log("Search query:", q);

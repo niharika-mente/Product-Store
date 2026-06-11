@@ -79,9 +79,21 @@ const productSchema = new mongoose.Schema({
     isDeleted: {
         type: Boolean,
         default: false
-    }
+    },
+
+    complementaryItems: [{
+        product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product'
+        },
+        reason: {
+            type: String,
+            trim: true,
+            default: ''
+        }
+    }]
 },{
-   timestamps: true //createdAt,updatedAt
+   timestamps: true
 });
 
 const Product = mongoose.model("Product", productSchema);
