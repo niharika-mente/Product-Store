@@ -59,6 +59,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 
+app.use("/api/*", (req, res) => {
+    res.status(404).json({ success: false, message: "API route not found" });
+});
+
 if(process.env.NODE_ENV === "production") {
    app.use(express.static(path.join(__dirname,"..","FRONTEND","dist")));
 
