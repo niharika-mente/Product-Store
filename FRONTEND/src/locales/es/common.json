@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "products": "Productos",
+    "cart": "Carrito",
+    "profile": "Perfil",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "dashboard": "Panel"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "language": "Idioma"
+  },
+  "products": {
+    "title": "Nuestros Productos",
+    "price": "Precio",
+    "addToCart": "Agregar al Carrito",
+    "outOfStock": "Agotado",
+    "description": "Descripción",
+    "reviews": "Opiniones",
+    "related": "Productos Relacionados"
+  },
+  "cart": {
+    "title": "Carrito de Compras",
+    "empty": "Tu carrito está vacío",
+    "checkout": "Proceder al Pago",
+    "total": "Monto Total",
+    "remove": "Eliminar",
+    "quantity": "Cantidad",
+    "update": "Actualizar Carrito"
+  },
+  "footer": {
+    "rights": "Todos los Derechos Reservados",
+    "about": "Sobre Nosotros",
+    "contact": "Contacto",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos de Servicio"
+  }
+}

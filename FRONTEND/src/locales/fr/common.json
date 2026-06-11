@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "products": "Produits",
+    "cart": "Panier",
+    "profile": "Profil",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "dashboard": "Tableau de Bord"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "language": "Langue"
+  },
+  "products": {
+    "title": "Nos Produits",
+    "price": "Prix",
+    "addToCart": "Ajouter au Panier",
+    "outOfStock": "Rupture de Stock",
+    "description": "Description",
+    "reviews": "Avis",
+    "related": "Produits Associés"
+  },
+  "cart": {
+    "title": "Panier d'Achat",
+    "empty": "Votre panier est vide",
+    "checkout": "Passer à la Caisse",
+    "total": "Montant Total",
+    "remove": "Supprimer",
+    "quantity": "Quantité",
+    "update": "Mettre à Jour le Panier"
+  },
+  "footer": {
+    "rights": "Tous Droits Réservés",
+    "about": "À Propos",
+    "contact": "Contact",
+    "privacy": "Politique de Confidentialité",
+    "terms": "Conditions d'Utilisation"
+  }
+}
