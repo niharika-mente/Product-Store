@@ -1,8 +1,8 @@
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
   AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
-  IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent,
-  ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue,
+  IconButton, Image, Input, ModalOverlay, ModalHeader, ModalBody, ModalFooter, Modal, ModalCloseButton, ModalContent,
+  Text, useColorModeValue,
   useDisclosure, useToast, VStack
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -15,8 +15,8 @@ const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
 
   useEffect(() => {
-    setUpdatedProduct(product);
-  }, [product._id]);
+    if (product) setUpdatedProduct(product);
+  }, [product]);
 
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
@@ -143,7 +143,7 @@ const ProductCard = ({ product }) => {
         {/* 3. Updated Delete Button with clean icon child rendering */}
         <IconButton 
           icon={<FaTrash />} 
-          onClick={() => handleDeleteProduct(product._id)} 
+          onClick={onDeleteOpen}
           colorScheme='red' 
           aria-label={`Delete ${product.name}`}
           transition="all 0.2s"

@@ -1,20 +1,16 @@
-//const express = require('express');
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import cors from "cors";
-import express from "express";
-import path from "path";
-import { connectDB } from "./config/db.js";
-import productRoutes from "./routes/product.route.js";
+dotenv.config();
 
-
-// Import the app configured in app.js and start the server
 import app from "./app.js";
+import { connectDB } from "./config/db.js";
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () =>{
-   console.log("\n🚀 ================================");
-   console.log(`   Server started at http://localhost:${PORT}`);
-   console.log("   ================================\n");
+// Connect DB FIRST
+connectDB();
+
+app.listen(PORT, () => {
+  console.log("\n🚀 ================================");
+  console.log(`   Server started at http://localhost:${PORT}`);
+  console.log("   ================================\n");
 });

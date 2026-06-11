@@ -37,81 +37,37 @@ export const createProduct = async (req, res) => {
   const product = req.body;
 
   if (!product.name || !product.price || !product.image) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please provide all fields" });
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all fields",
+    });
   }
 
-  const newProduct = new Product(product);
-
   try {
+    const newProduct = new Product(product);
     await newProduct.save();
-    res.status(201).json({ success: true, data: newProduct });
+
+    return res.status(201).json({
+      success: true,
+      data: newProduct,
+    });
+
   } catch (error) {
     console.error("Error in Create product:", error.message);
 
     if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((err) => err.message);
+      const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
-        errors: errors,
+        message: messages.join(", "),
       });
     }
 
-    const newProduct = new Product(product);
-
-    try
-    {
-        await newProduct.save();
-        res.status( 201 ).json( { success: true, data: newProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Create product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
-    }
-};
-
-
-export const updateProduct = async ( req, res ) =>
-{
-    const { id } = req.params;
-    const product = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res
-            .status(404)
-            .json({ success: false, message: "Invalid Product Id" });
-    }
-
-    if ( !product || Object.keys( product ).length === 0 )
-    {
-        return res.status( 400 ).json( { success: false, message: "No update fields provided" } );
-    }
-
-    try
-    {
-        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true, runValidators: true } );
-        if ( !updatedProduct )
-        {
-            return res.status( 404 ).json( { success: false, message: "Product not found" } );
-        }
-        res.status( 200 ).json( { success: true, data: updatedProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Update product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
 };
 
 export const deleteProduct = async (req, res) => {
@@ -131,6 +87,52 @@ export const deleteProduct = async (req, res) => {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
+
+
+export const updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const product = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({
+      success: false,
+      message: "Invalid Product Id",
+    });
+  }
+
+  if (!product || Object.keys(product).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "No update fields provided",
+    });
+  }
+
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(id, product, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedProduct,
+    });
+  } catch (error) {
+    console.error("Error updating product:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 
 export const getProductById = async (req, res) => {
     const { id } = req.params;
@@ -205,17 +207,24 @@ export const getRelatedProducts = async (req, res) => {
     }
 };
 
-export const searchProducts=async(req,res)=>{
-    const {q}=req.query;
-    console.log("Search query:", q);
+export const searchProducts = async (req, res) => {
+  const { q } = req.query;
+  console.log("Search query:", q);
 
-    try {
-        const regex = new RegExp(q, 'i');
-        console.log("Constructed regex:", regex); 
-        const products=await Product.find({name:regex});
-        res.status(200).json({success:true,data:products});
-    } catch (error) {
-        console.error("Error in searching products:", error.message);
-        res.status(500).json({ success: false, message: "Server Error" });
-    }
-}
+  try {
+    const regex = new RegExp(q, "i");
+    const products = await Product.find({ name: regex });
+
+    res.status(200).json({
+      success: true,
+      data: products,
+    });
+
+  } catch (error) {
+    console.error("Error in searching products:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
