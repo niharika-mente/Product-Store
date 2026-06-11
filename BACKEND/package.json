@@ -14,7 +14,9 @@
     "helmet": "^8.2.0",
     "mongodb-memory-server": "^11.0.1",
     "mongoose": "^8.13.2",
-    "serverless-http": "^3.0.0"
+    "serverless-http": "^3.0.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "engines": {
     "node": "18.x"
