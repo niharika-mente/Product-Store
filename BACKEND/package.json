@@ -15,6 +15,7 @@
     "mongodb-memory-server": "^11.0.1",
     "mongoose": "^8.13.2",
     "serverless-http": "^3.0.0",
+    "stripe": "^22.2.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
   },

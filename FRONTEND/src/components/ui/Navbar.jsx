@@ -48,7 +48,7 @@ const Navbar = () => {
 
       emptyCart();
       onClose();
-      navigate("/success");
+      window.location.href = data.url;
     } catch {
       toast({ title: "Error", description: "Failed to process checkout", status: "error", duration: 3000, isClosable: true });
     } finally {

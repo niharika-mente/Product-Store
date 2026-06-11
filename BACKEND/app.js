@@ -50,13 +50,20 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express.json());
+app.use(passport.initialize());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", limiter);
 
 
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
+app.use(express.json());
+
+// Stripe webhook needs raw body — imported inline to avoid early json parsing
+import { stripeWebhook } from "./controllers/checkout.controller.js";
+app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
+
 app.use("/api/checkout", checkoutRoutes);
 
 app.use("/api/*", (req, res) => {
