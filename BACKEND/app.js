@@ -10,6 +10,9 @@ import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import reviewRoutes from "./routes/review.route.js";
 
+// Import error handlers (ધારો કે આ અલગ file માં છે)
+import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
+
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,20 +55,26 @@ app.use(cors({
 app.use(express.json());
 app.use("/api", limiter);
 
+// ============= API ROUTES =============
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 
-// ✅ ADD THESE - Error handlers (BEFORE production static files)
-app.use(notFoundHandler);
-app.use(errorHandler);
-
+// ============= PRODUCTION STATIC FILES & REACT APP =============
 if (process.env.NODE_ENV === "production") {
+  // Serve static files from FRONTEND/dist
   app.use(express.static(path.join(__dirname, "..", "FRONTEND", "dist")));
 
-  app.get("/*", (req, res) => {
+  // Catch-all route for React app (client-side routing)
+  app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "FRONTEND", "dist", "index.html"));
   });
 }
+
+// ============= ERROR HANDLERS (ALWAYS AT THE BOTTOM) =============
+// 404 handler for unmatched routes (API routes that don't exist)
+app.use(notFoundHandler);
+// Global error handler
+app.use(errorHandler);
 
 export default app;
