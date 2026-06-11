@@ -6,7 +6,8 @@ import {
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
-import { useCart } from '../store/cart';
+import {useCart}  from "../store/cart.js";
+
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
 
