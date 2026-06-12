@@ -1,7 +1,11 @@
-import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
-import React from 'react'
-
-import { useState, useEffect } from "react";
+import {
+  AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
+  IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent,
+  ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue,
+  useDisclosure, useToast, VStack
+} from '@chakra-ui/react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from "react-router-dom";
 import { FaEdit, FaTrash, FaHeart, FaRegHeart } from "react-icons/fa";
 
@@ -20,11 +24,13 @@ const ProductCard = ({ product }) => {
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
 
-  const { deleteProduct, updateProduct, isDeleting, isSubmitting } = useProductStore() // ✅ Added loading states
+  const { deleteProduct, updateProduct, isDeleting, isSubmitting } = useProductStore()
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const cancelRef = useRef();
 
   // Check if product is in wishlist on load
   useEffect(() => {
@@ -45,7 +51,6 @@ const ProductCard = ({ product }) => {
       isClosable: true,
     });
   };
-
 
   const handleWishlistToggle = async () => {
     if (isInWishlist) {
@@ -87,8 +92,9 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  const handleDeleteProduct = async (pid) => {
-    const { success, message } = await deleteProduct(pid)
+  const handleDeleteProduct = async () => {
+    onDeleteClose();
+    const { success, message } = await deleteProduct(product._id);
     if (!success) {
       toast({
         title: "Error",
@@ -199,18 +205,18 @@ const ProductCard = ({ product }) => {
             }}
           />
 
-          {/* Delete Button - ✅ Added loading state */}
+          {/* Delete Button */}
           <IconButton
             icon={<FaTrash />}
-            onClick={() => handleDeleteProduct(product._id)}
+            onClick={onDeleteOpen}
             colorScheme='red'
             aria-label='Delete Product'
             transition="all 0.2s"
             _hover={{
               transform: "scale(1.1)",
             }}
-            isLoading={isDeleting}           // ✅ Loading spinner on delete
-            disabled={isDeleting}             // ✅ Disable while deleting
+            isLoading={isDeleting}
+            disabled={isDeleting}
           />
 
           <Button 
@@ -228,7 +234,36 @@ const ProductCard = ({ product }) => {
         </HStack>
       </Box>
 
-      {/* Update Modal - ✅ Added loading state on Update button */}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onDeleteClose}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+              Delete Product
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onDeleteClose}>
+                Cancel
+              </Button>
+              <Button colorScheme='red' onClick={handleDeleteProduct} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      {/* Update Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
@@ -263,9 +298,9 @@ const ProductCard = ({ product }) => {
               colorScheme='blue'
               mr={3}
               onClick={() => handleUpdateProduct(product._id, updatedProduct)}
-              isLoading={isSubmitting}           // ✅ Loading spinner on update
-              loadingText="Updating..."           // ✅ Text while updating
-              disabled={isSubmitting}             // ✅ Disable while updating
+              isLoading={isSubmitting}
+              loadingText="Updating..."
+              disabled={isSubmitting}
             >
               Update
             </Button>
@@ -275,7 +310,7 @@ const ProductCard = ({ product }) => {
                 onClose();
                 setUpdatedProduct(product);
               }}
-              disabled={isSubmitting}             // ✅ Disable cancel while updating
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
