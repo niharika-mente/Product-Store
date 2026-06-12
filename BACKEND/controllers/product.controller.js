@@ -2,6 +2,11 @@ import Product from "../models/product.model.js";
 import mongoose from "mongoose";
 import cloudinary from '../config/cloudinary.js';
 
+const cloudinaryConfigured = () =>
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET;
+
 const uploadToCloudinary = (buffer) => {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -46,7 +51,7 @@ export const getProducts = async (req, res) => {
             data: products
         });
     } catch (error) {
-        console.log("error in fetching products:", error.message);
+        console.error("Error in fetching products:", error.message);
         res.status(500).json({
             success: false,
             message: "Server Error"
@@ -64,6 +69,9 @@ export const createProduct = async (req, res) => {
     let finalImageUrl = imageUrl || '';
 
     if (req.file) {
+        if (!cloudinaryConfigured()) {
+            return res.status(503).json({ success: false, message: "File uploads are not configured. Please use an image URL instead." });
+        }
         try {
             const result = await uploadToCloudinary(req.file.buffer);
             finalImageUrl = result.secure_url;
@@ -142,6 +150,9 @@ export const updateProduct = async (req, res) => {
     if (discount !== undefined) updateData.discount = Number(discount);
 
     if (req.file) {
+        if (!cloudinaryConfigured()) {
+            return res.status(503).json({ success: false, message: "File uploads are not configured. Please use an image URL instead." });
+        }
         try {
             const result = await uploadToCloudinary(req.file.buffer);
             updateData.image = result.secure_url;
@@ -188,7 +199,7 @@ export const deleteProduct = async (req, res) => {
         }
         res.status(200).json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
-        console.log("error in deleting product:", error.message);
+        console.error("Error in deleting product:", error.message);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
@@ -207,7 +218,7 @@ export const getProductById = async (req, res) => {
         }
         res.status(200).json({ success: true, data: product });
     } catch (error) {
-        console.log("error in fetching product:", error.message);
+        console.error("Error in fetching product:", error.message);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
