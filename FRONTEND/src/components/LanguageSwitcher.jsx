@@ -14,7 +14,6 @@ export const LanguageSwitcher = () => {
   const [currentLang, setCurrentLang] = useState(i18n.language || 'en');
 
   const changeLanguage = (lng) => {
-    console.log('Changing to:', lng);
     i18n.changeLanguage(lng);
     setCurrentLang(lng);
     localStorage.setItem('i18nextLng', lng);
