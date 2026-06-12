@@ -1,6 +1,20 @@
 import {create} from "zustand";
+import {persist} from "zustand/middleware";
 const API = ( import.meta.env.VITE_API_URL || "" ).replace( /\/$/, "" );
 
+export const useRecentlyViewed = create(
+  persist(
+    (set) => ({
+      recentlyViewed: [],
+      addRecentlyViewed: (product) => set((state) => {
+        const filtered = state.recentlyViewed.filter((p) => p._id !== product._id);
+        return { recentlyViewed: [product, ...filtered].slice(0, 10) };
+      }),
+      clearRecentlyViewed: () => set({ recentlyViewed: [] }),
+    }),
+    { name: "recently-viewed-products" }
+  )
+);
 
 export const useProductStore = create((set) =>({
     products: [],
