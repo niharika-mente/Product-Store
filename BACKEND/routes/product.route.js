@@ -63,6 +63,19 @@
  *     responses:
  *       200:
  *         description: List of related products
+ * 
+ * /api/products/search:
+ *   get:
+ *     summary: Search products
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of matching products
  */
 
 import express from "express";
@@ -72,7 +85,8 @@ import {
     getProducts, 
     updateProduct, 
     getProductById, 
-    getRelatedProducts 
+    getRelatedProducts,
+    searchProducts
 } from "../controllers/product.controller.js";
 
 const router = express.Router();
@@ -80,6 +94,8 @@ const router = express.Router();
 router.get( "/", getProducts );
 
 router.get( "/related/:id", getRelatedProducts );
+
+router.get( "/search", searchProducts );
 
 router.get( "/:id", getProductById );
 
