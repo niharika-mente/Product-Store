@@ -39,6 +39,9 @@ const Navbar = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
       });
+      if (!res.ok) {
+  throw new Error(`Server error: ${res.status} ${res.statusText}`);
+}
       const data = await res.json();
 
       if (!data.success) {
@@ -49,9 +52,21 @@ const Navbar = () => {
       emptyCart();
       onClose();
       navigate("/success");
-    } catch {
-      toast({ title: "Error", description: "Failed to process checkout", status: "error", duration: 3000, isClosable: true });
-    } finally {
+    } catch (err) {
+  console.error("Checkout failed:", err);
+
+  let message;
+  if (err instanceof TypeError) {
+    message = "Network error — please check your connection";
+  } else if (err.message) {
+    message = err.message;
+  } else {
+    message = "Failed to process checkout";
+  }
+
+  toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
+}
+    finally {
       setIsCheckoutLoading(false);
     }
   };
