@@ -16,7 +16,7 @@ function App() {
           <Route path="/create" element={<CreatePage />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="*" element={<NotFound />} />  {/* ✅ ADD THIS LINE */}
+          <Route path="*" element={<NotFound />} />
       </Routes>
     </Box>
   )

@@ -9,8 +9,10 @@ import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 
-// Import error handlers (ધારો કે આ અલગ file માં છે)
+// Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
 
 // These are necessary in ES modules to get __dirname
@@ -25,6 +27,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 const app = express();
 app.use(helmet());
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("trust proxy", 1);
 
 const limiter = rateLimit({

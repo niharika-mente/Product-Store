@@ -1,3 +1,70 @@
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Get all products
+ *     description: Retrieve a list of all products
+ *     responses:
+ *       200:
+ *         description: Success
+ *   post:
+ *     summary: Create a new product
+ *     description: Add a new product to the database
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *       400:
+ *         description: Invalid input
+ * 
+ * /api/products/{id}:
+ *   get:
+ *     summary: Get product by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product found
+ *       404:
+ *         description: Product not found
+ *   put:
+ *     summary: Update product
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Product updated
+ *       404:
+ *         description: Product not found
+ *   delete:
+ *     summary: Delete product
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Product deleted
+ *       404:
+ *         description: Product not found
+ * 
+ * /api/products/related/{id}:
+ *   get:
+ *     summary: Get related products
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: List of related products
+ */
+
 import express from "express";
 import { 
     createProduct, 
