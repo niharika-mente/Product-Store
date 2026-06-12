@@ -40,12 +40,18 @@ const Navbar = () => {
         body: JSON.stringify({ items: cartItems }),
       });
       if (!res.ok) {
-  throw new Error(`Server error: ${res.status} ${res.statusText}`);
-}
+        throw new Error(`Server error: ${res.status} ${res.statusText}`);
+      }
       const data = await res.json();
 
       if (!data.success) {
-        toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
+        toast({
+          title: "Checkout Error",
+          description: data.message,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
         return;
       }
 
@@ -53,20 +59,25 @@ const Navbar = () => {
       onClose();
       navigate("/success");
     } catch (err) {
-  console.error("Checkout failed:", err);
+      console.error("Checkout failed:", err);
 
-  let message;
-  if (err instanceof TypeError) {
-    message = "Network error — please check your connection";
-  } else if (err.message) {
-    message = err.message;
-  } else {
-    message = "Failed to process checkout";
-  }
+      let message;
+      if (err instanceof TypeError) {
+        message = "Network error — please check your connection";
+      } else if (err.message && err.message.startsWith("Server error:")) {
+        message = "Something went wrong on our end. Please try again later.";
+      } else {
+        message = "Failed to process checkout";
+      }
 
-  toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
-}
-    finally {
+      toast({
+        title: "Error",
+        description: message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
       setIsCheckoutLoading(false);
     }
   };
