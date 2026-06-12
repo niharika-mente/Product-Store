@@ -72,10 +72,15 @@ const ProductReviews = ({ productId }) => {
         setLoading(true);
         try {
             const res = await fetch(`${API}/api/products/${productId}/reviews`);
+            if (!res.ok) {
+            throw new Error(`Server error: ${res.status} ${res.statusText}`);
+         }
             const data = await res.json();
             if (data.success) setReviews(data.data);
-        } catch {
+        } catch (err) {
             // silently fail — reviews are non-critical
+            console.error("Failed to fetch reviews:", err);
+
         } finally {
             setLoading(false);
         }
@@ -103,6 +108,9 @@ const ProductReviews = ({ productId }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)
             });
+                if (!res.ok) {
+                throw new Error(`Server error: ${res.status} ${res.statusText}`);
+            }
             const data = await res.json();
             if (!data.success) {
                 toast({ title: 'Error', description: data.message, status: 'error', isClosable: true, duration: 3000 });
@@ -111,8 +119,21 @@ const ProductReviews = ({ productId }) => {
                 setForm({ userName: '', rating: 0, comment: '' });
                 fetchReviews();
             }
-        } catch {
-            toast({ title: 'Network error. Please try again.', status: 'error', isClosable: true, duration: 3000 });
+        } catch (err) {
+              console.error("Failed to submit review:", err);
+
+              let message;
+               if (err instanceof TypeError) {
+               message = "Network error — please check your connection";
+               }
+                else if (err.message) {
+                message = err.message;
+                }
+                 else {
+                message = "Network error. Please try again.";
+            }
+
+            toast({ title: "Error", description: message, status: "error", isClosable: true, duration: 3000 });
         } finally {
             setSubmitting(false);
         }
