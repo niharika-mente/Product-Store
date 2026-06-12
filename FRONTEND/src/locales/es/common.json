@@ -23,12 +23,21 @@
   },
   "products": {
     "title": "Nuestros Productos",
+    "subtitle": "Explora y gestiona tu colección de productos fácilmente.",
+    "productsCount": "Productos",
     "price": "Precio",
     "addToCart": "Agregar al Carrito",
     "outOfStock": "Agotado",
     "description": "Descripción",
     "reviews": "Opiniones",
-    "related": "Productos Relacionados"
+    "related": "Productos Relacionados",
+    "noProducts": "No Hay Productos",
+    "noProductsDesc": "Comienza a construir tu tienda agregando tu primer producto.",
+    "createProduct": "Crear Producto",
+    "name": "Nombre del Producto",
+    "imageUrl": "URL de la Imagen",
+    "noProductsFound": "No hay productos coincidentes",
+    "noProductsFoundDesc": "Ajusta tu búsqueda o filtros para encontrar lo que buscas."
   },
   "cart": {
     "title": "Carrito de Compras",

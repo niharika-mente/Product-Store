@@ -2,6 +2,7 @@ import { Container, Text, VStack, Box, SimpleGrid } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect } from 'react';
+import ScrollToTop from '../components/ui/ScrollToTop';
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Footer from "../components/ui/footer";
@@ -97,6 +98,7 @@ const HomePage = () => {
         </VStack>
       </Container>
       <Footer />
+      <ScrollToTop />
     </>
   );
 };
