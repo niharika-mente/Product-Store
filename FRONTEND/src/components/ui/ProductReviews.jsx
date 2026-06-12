@@ -20,7 +20,6 @@ import { FaStar, FaPen } from 'react-icons/fa';
 
 const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
-// Interactive + readonly star rating component
 const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
     const [hovered, setHovered] = useState(0);
 
@@ -53,7 +52,6 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
     );
 };
 
-// Summary bar showing average rating and distribution
 const RatingSummary = ({ reviews }) => {
     const labelColor = useColorModeValue('gray.600', 'gray.400');
     const barBg      = useColorModeValue('gray.100', 'gray.700');
@@ -128,7 +126,6 @@ const RatingSummary = ({ reviews }) => {
     );
 };
 
-// Single review card
 const ReviewCard = ({ review }) => {
     const bg        = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
@@ -141,7 +138,7 @@ const ReviewCard = ({ review }) => {
         day: 'numeric',
     });
 
-    // Generate a consistent avatar color from the username
+    
     const avatarColors = ['blue', 'cyan', 'teal', 'purple', 'pink'];
     const colorIndex   = review.userName.charCodeAt(0) % avatarColors.length;
     const avatarScheme = avatarColors[colorIndex];

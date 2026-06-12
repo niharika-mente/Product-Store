@@ -19,7 +19,6 @@ import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 
-// Dedicated skeleton component
 const ProductCardSkeleton = () => {
   const bg          = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");

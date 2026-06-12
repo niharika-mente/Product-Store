@@ -144,6 +144,7 @@ const ProductCard = ({ product }) => {
         <IconButton 
           icon={<FaTrash />} 
           onClick={onDeleteOpen}
+
           colorScheme='red' 
           aria-label={`Delete ${product.name}`}
           transition="all 0.2s"
