@@ -143,7 +143,7 @@ const ProductCard = ({ product }) => {
         {/* 3. Updated Delete Button with clean icon child rendering */}
         <IconButton 
           icon={<FaTrash />} 
-          onClick={() => handleDeleteProduct(product._id)} 
+          onClick={onDeleteOpen} 
           colorScheme='red' 
           aria-label={`Delete ${product.name}`}
           transition="all 0.2s"

@@ -51,32 +51,16 @@ export const createProduct = async (req, res) => {
     console.error("Error in Create product:", error.message);
 
     if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((err) => err.message);
+      const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
-        errors: errors,
+        message: "Validation failed: " + messages.join(", "),
       });
     }
 
-    const newProduct = new Product(product);
-
-    try
-    {
-        await newProduct.save();
-        res.status( 201 ).json( { success: true, data: newProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Create product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
-    }
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
 };
-
 
 export const updateProduct = async ( req, res ) =>
 {
