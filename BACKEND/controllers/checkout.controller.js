@@ -1,7 +1,11 @@
 import Product from '../models/product.model.js';
+import Order from '../models/order.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+}
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -26,6 +30,12 @@ export const createCheckoutSession = async (req, res) => {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
+            const quantity = Math.max(1, Math.floor(Number(item.quantity)));
+
+            if (!Number.isFinite(quantity) || quantity < 1) {
+              return res.status(400).json({ success: false, message: `Invalid quantity for product: ${product.name}` });
+            }
+
             lineItems.push({
                 price_data: {
                     currency: 'usd',
@@ -35,7 +45,7 @@ export const createCheckoutSession = async (req, res) => {
                     },
                     unit_amount: Math.round(product.price * 100),
                 },
-                quantity: item.quantity || 1,
+                quantity,
             });
         }
 
@@ -45,6 +55,11 @@ export const createCheckoutSession = async (req, res) => {
             mode: 'payment',
             success_url: `${FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${FRONTEND_URL}/cancel`,
+            metadata: {
+                items: JSON.stringify(
+                  items.map((item) => ({ _id: item._id, quantity: item.quantity }))
+                ),
+            },
         });
 
         res.status(200).json({ success: true, url: session.url });
@@ -65,13 +80,47 @@ export const stripeWebhook = async (req, res) => {
             process.env.STRIPE_WEBHOOK_SECRET
         );
     } catch (err) {
-        console.error("Webhook signature verification failed:", err.message);
         return res.status(400).json({ success: false, message: `Webhook Error: ${err.message}` });
     }
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
-        console.log(`Payment successful for session: ${session.id}`);
+        const existingOrder = await Order.findOne({ stripeSessionId: session.id });
+        if (existingOrder) {
+          return res.json({ received: true });
+        }
+
+        let cartItems;
+        try {
+          cartItems = JSON.parse(session.metadata?.items || "[]");
+        } catch {
+          cartItems = [];
+        }
+
+        const orderItems = [];
+        for (const item of cartItems) {
+          const product = await Product.findById(item._id);
+          if (product) {
+            orderItems.push({
+              product: product._id,
+              name: product.name,
+              price: product.price,
+              quantity: item.quantity,
+              image: product.image || "",
+            });
+            await Product.findByIdAndUpdate(product._id, {
+              $inc: { stock: -item.quantity },
+            });
+          }
+        }
+
+        await Order.create({
+          user: session.metadata?.userId || null,
+          items: orderItems,
+          totalAmount: session.amount_total / 100,
+          stripeSessionId: session.id,
+          paymentStatus: "completed",
+        });
     }
 
     res.json({ received: true });

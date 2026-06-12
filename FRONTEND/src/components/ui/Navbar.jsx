@@ -46,7 +46,6 @@ const Navbar = () => {
         return;
       }
 
-      emptyCart();
       onClose();
       window.location.href = data.url;
     } catch {

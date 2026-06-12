@@ -1,13 +1,20 @@
+import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Container, VStack, Heading, Text, Button, Icon, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { CheckCircleIcon } from "@chakra-ui/icons";
+import { useCartStore } from "../store/cart";
 
 const SuccessPage = () => {
   const bg = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.600", "gray.300");
   const [params] = useSearchParams();
   const sessionId = params.get("session_id");
+  const emptyCart = useCartStore((state) => state.emptyCart);
+
+  useEffect(() => {
+    emptyCart();
+  }, [emptyCart]);
 
   return (
     <Container maxW="container.md" py={12}>

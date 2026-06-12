@@ -11,6 +11,7 @@ import checkoutRoutes from "./routes/checkout.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
+import { stripeWebhook } from "./controllers/checkout.controller.js";
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath( import.meta.url );
@@ -55,15 +56,14 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", limiter);
 
 
+// Stripe webhook needs raw body — must be registered before express.json()
+app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
+
+app.use(express.json());
+
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
-app.use(express.json());
-
-// Stripe webhook needs raw body — imported inline to avoid early json parsing
-import { stripeWebhook } from "./controllers/checkout.controller.js";
-app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
-
 app.use("/api/checkout", checkoutRoutes);
 
 app.use("/api/*", (req, res) => {
