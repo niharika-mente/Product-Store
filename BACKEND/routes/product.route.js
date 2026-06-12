@@ -190,7 +190,6 @@
  */
 
 import express from "express";
-import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts } from "../controllers/product.controller.js";
 import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts, searchProducts } from "../controllers/product.controller.js";
 
 const router = express.Router();
