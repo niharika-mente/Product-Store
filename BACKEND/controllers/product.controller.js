@@ -34,7 +34,17 @@ const extractCloudinaryPublicId = (url) => {
 // @desc    Get all products
 export const getProducts = async (req, res, next) => {
     try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
         const { sort } = req.query;
+
+        if (page < 1 || limit < 1) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid pagination parameters. page and limit must be positive integers.",
+            });
+        }
+
         let sortOption = {};
         if (sort === "price_asc") {
             sortOption = { price: 1 };
@@ -43,8 +53,20 @@ export const getProducts = async (req, res, next) => {
         } else if (sort === "newest") {
             sortOption = { createdAt: -1 };
         }
-        const products = await Product.find({ isDeleted: { $ne: true } }).sort(sortOption);
-        res.status(200).json({ success: true, data: products });
+
+        const skip = (page - 1) * limit;
+        const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
+        const products = await Product.find({ isDeleted: { $ne: true } }).sort(sortOption).skip(skip).limit(limit);
+        const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
+
+        res.status(200).json({
+            success: true,
+            currentPage: page,
+            totalPages,
+            totalProducts,
+            limit,
+            data: products,
+        });
     } catch (error) {
         next(error);
     }
@@ -84,6 +106,7 @@ export const createProduct = async (req, res, next) => {
         name,
         price: Number(price),
         image: finalImageUrl,
+        images: Array.isArray(req.body.images) ? req.body.images : [],
         description,
         category,
         brand,
@@ -132,6 +155,7 @@ export const updateProduct = async (req, res, next) => {
         updateData.price = Number(price);
     }
     if (imageUrl !== undefined) updateData.image = imageUrl;
+    if (req.body.images !== undefined) updateData.images = Array.isArray(req.body.images) ? req.body.images : [];
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) updateData.category = category;
     if (brand !== undefined) updateData.brand = brand;

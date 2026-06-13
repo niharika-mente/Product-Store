@@ -76,25 +76,33 @@ export const useProductStore = create((set) =>({
         }
     },
 
-    fetchProducts: async (sort = "") => {
+    fetchProducts: async (page = 1, limit = 10, sort = "") => {
         set({ isLoading: true, error: null });
         try {
-            const url = sort
-                ? `${API}/api/products?sort=${sort}`
-                : `${API}/api/products`;
-
+            let url = `${API}/api/products?page=${page}&limit=${limit}`;
+            if (sort) {
+                url += `&sort=${sort}`;
+            }
             const res = await fetch(url);
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
                 console.error("Failed to fetch products:", errorData.message);
                 set({ isLoading: false, error: errorData.message || "Failed to fetch products" });
-                return;
+                return { success: false, message: errorData.message || "Failed to fetch products" };
             }
             const data = await res.json();
             set({ products: data.data, isLoading: false });
+            return {
+                success: true,
+                currentPage: data.currentPage,
+                totalPages: data.totalPages,
+                totalProducts: data.totalProducts,
+                limit: data.limit,
+            };
         } catch (error) {
             console.error("Network error fetching products:", error);
             set({ isLoading: false, error: "Network error - could not reach API" });
+            return { success: false, message: "Network error fetching products." };
         }
     },
 
