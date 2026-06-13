@@ -49,10 +49,6 @@ const productSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
-    tags: {
-        type: [String],
-        default: []
-    },
     stock: {
         type: Number,
         min: [0, 'Stock cannot be negative'],

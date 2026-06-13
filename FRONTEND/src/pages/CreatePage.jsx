@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useProductStore } from '../store/product';
 import {
   Box, Button, Collapse, Container, Divider, Heading, HStack, Icon,
