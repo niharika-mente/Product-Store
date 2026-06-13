@@ -208,6 +208,7 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
 
     const toast = useToast();
 
+
     const handleSubmit = async () => {
         if (!form.userName.trim()) {
             return toast({
@@ -247,6 +248,11 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form),
             });
+            
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status} ${res.statusText}`);
+            }
+            
             const data = await res.json();
 
             if (!data.success) {
@@ -270,13 +276,24 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
                 setForm({ userName: '', rating: 0, comment: '' });
                 onReviewAdded();
             }
-        } catch {
+        } catch (err) {
+            console.error("Failed to submit review:", err);
+
+            let message;
+            if (err instanceof TypeError) {
+                message = "Network error — please check your connection";
+            } else if (err.message && err.message.startsWith("Server error:")) {
+                message = "Something went wrong on our end. Please try again later.";
+            } else {
+                message = "Failed to submit review. Please try again.";
+            }
+
             toast({
-                title: 'Network error',
-                description: 'Please check your connection and try again.',
-                status: 'error',
-                duration: 3000,
+                title: "Error",
+                description: message,
+                status: "error",
                 isClosable: true,
+                duration: 3000,
                 position: 'top-right',
             });
         } finally {
@@ -395,9 +412,13 @@ const ProductReviews = ({ productId }) => {
         setLoading(true);
         try {
             const res  = await fetch(`${API}/api/products/${productId}/reviews`);
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status} ${res.statusText}`);
+            }
             const data = await res.json();
             if (data.success) setReviews(data.data);
-        } catch {
+        } catch (err) {
+            console.error("Failed to fetch reviews:", err);
             // Reviews are non-critical; silently fail
         } finally {
             setLoading(false);
