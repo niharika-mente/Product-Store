@@ -16,6 +16,16 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/create" 
+          element={
+          <ProtectedRoute>
+ <CreatePage />
+          </ProtectedRoute>
+           
+        
+            } />
+          <Route path="/signup" element={<Signup/>}/>
+          <Route path="/login" element={<Login/>}/>
           <Route path="/create" element={<CreatePage />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/product/:id" element={<ProductPage />} />

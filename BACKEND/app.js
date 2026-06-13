@@ -7,6 +7,7 @@ import express from "express";
 import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
+import authRoutes from "./routes/auth.routes.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
@@ -63,6 +64,7 @@ app.use("/api", limiter);
 
 // ============= API ROUTES =============
 app.use("/api/products", productRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
