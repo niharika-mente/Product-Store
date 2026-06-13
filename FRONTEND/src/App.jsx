@@ -12,6 +12,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/product/:id" element={<ProductPage />} />

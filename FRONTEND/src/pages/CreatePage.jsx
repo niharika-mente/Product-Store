@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useProductStore } from '../store/product';
 import {
   Box, Button, Collapse, Container, Divider, Heading, HStack, Icon,
@@ -7,6 +8,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
 
 const CreatePage = () => {
+  const { t } = useTranslation();
   const [newProduct, setNewProduct] = useState({
     name: "",
     price: "",
@@ -86,7 +88,7 @@ const CreatePage = () => {
               </Text>
               <VStack spacing={3}>
                 <Input
-                  placeholder="Product Name"
+                  placeholder={t('products.name')}
                   name="name"
                   aria-label="Product Name"
                   value={newProduct.name}

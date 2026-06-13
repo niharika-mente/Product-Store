@@ -1,5 +1,0 @@
-﻿The changes to \ProductCard.jsx\ look perfect and successfully wire up the \AlertDialog\!
-
-However, it looks like a merge conflict resolution went wrong in \HomePage.jsx\. You accidentally deleted almost the entire file (lines 14 through 258), including the \eturn\ statement and all the UI rendering logic. 
-
-Please restore the deleted content in \FRONTEND/src/pages/HomePage.jsx\ so that the page actually renders the products again.

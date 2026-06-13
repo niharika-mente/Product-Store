@@ -1,9 +1,0 @@
-﻿I found an issue in \ProductPage.jsx\.
-
-In \ProductPage.jsx\, the \handleAddToCart\ function uses a \or\ loop to call \ddToCart(product)\ multiple times based on the selected quantity. However, it completely ignores the return value of \ddToCart\ (which returns \'capped'\ if the stock limit is reached). 
-
-Because it ignores the return value, it unconditionally shows a success toast saying \quantity\ items were added, even if the stock limit prevented some (or all) of them from actually being added to the cart. 
-
-For example, if a product has a stock of 2, and the user already has 1 in their cart, they can still select a quantity of 2 on the product page. When they click 'Add to Cart', the loop runs twice. The first call succeeds (cart quantity = 2), but the second call hits the cap and returns \'capped'\. The UI then incorrectly says '2 items have been added' when only 1 was added.
-
-Please update \ProductPage.jsx\'s \handleAddToCart\ to track how many items were actually added, stop the loop if it hits \'capped'\, and show the appropriate warning toast (similar to what you did in \ProductCard.jsx\) if the cap is reached.
