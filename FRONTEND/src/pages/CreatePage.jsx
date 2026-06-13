@@ -12,6 +12,7 @@ const CreatePage = () => {
     price: "",
     image: "",
     imageFile: null,
+    images: [],
     description: "",
     category: "",
     brand: "",
@@ -20,11 +21,12 @@ const CreatePage = () => {
     discount: ""
   });
   const [preview, setPreview] = useState(null);
+  const [extraImageInput, setExtraImageInput] = useState("");
   const [showExtraDetails, setShowExtraDetails] = useState(false);
   const fileInputRef = useRef(null);
 
   const toast = useToast();
-  const { createProduct } = useProductStore();
+  const { createProduct, isSubmitting } = useProductStore();
 
   useEffect(() => {
     const url = preview;
@@ -47,10 +49,11 @@ const CreatePage = () => {
     } else {
       toast({ title: "Success", description: message, status: "success", isClosable: true, duration: 3000 });
       setNewProduct({
-        name: "", price: "", image: "", imageFile: null,
+        name: "", price: "", image: "", imageFile: null, images: [],
         description: "", category: "", brand: "", stock: "", originalPrice: "", discount: ""
       });
       setPreview(null);
+      setExtraImageInput("");
       setShowExtraDetails(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -138,6 +141,43 @@ const CreatePage = () => {
                     w="full"
                   />
                 )}
+
+                <Box w="full">
+                  <Text fontSize="sm" mb={1} color="gray.500">
+                    Additional Images (optional, max 4)
+                  </Text>
+                  <HStack>
+                    <Input
+                      placeholder="Paste additional image URL"
+                      aria-label="Additional Image URL"
+                      value={extraImageInput}
+                      onChange={(e) => setExtraImageInput(e.target.value)}
+                    />
+                    <Button
+                      colorScheme="blue" variant="outline" px={6}
+                      isDisabled={!extraImageInput.trim() || newProduct.images.length >= 4}
+                      onClick={() => {
+                        if (extraImageInput.trim()) {
+                          setNewProduct({ ...newProduct, images: [...newProduct.images, extraImageInput.trim()] });
+                          setExtraImageInput("");
+                        }
+                      }}
+                    >Add</Button>
+                  </HStack>
+                  {newProduct.images.length > 0 && (
+                    <VStack align="stretch" mt={2} spacing={1}>
+                      {newProduct.images.map((url, idx) => (
+                        <HStack key={idx} bg={toggleBg} px={3} py={1} borderRadius="md" fontSize="sm">
+                          <Text flex={1} noOfLines={1} color={infoColor}>{url}</Text>
+                          <Button size="xs" colorScheme="red" variant="ghost"
+                            onClick={() => setNewProduct({ ...newProduct, images: newProduct.images.filter((_, i) => i !== idx) })}
+                          >✕</Button>
+                        </HStack>
+                      ))}
+                      <Text fontSize="xs" color="gray.400">{newProduct.images.length}/4 additional images</Text>
+                    </VStack>
+                  )}
+                </Box>
               </VStack>
             </Box>
 
@@ -234,7 +274,16 @@ const CreatePage = () => {
               </VStack>
             </Collapse>
 
-            <Button colorScheme="blue" onClick={handleAddProduct} w="full" size="lg" mt={4}>
+            <Button 
+              colorScheme='blue' 
+              onClick={handleAddProduct} 
+              w='full'
+              size="lg"
+              mt={4}
+              isLoading={isSubmitting}
+              loadingText="Creating Product..."
+              spinnerPlacement="start"
+            >
               Add Product
             </Button>
           </VStack>
