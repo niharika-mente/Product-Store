@@ -1,6 +1,3 @@
-//const express = require('express');
-
-// Import the app configured in app.js and start the server
 import app from "./app.js";
 
 const PORT = process.env.PORT || 5000;

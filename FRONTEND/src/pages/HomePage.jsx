@@ -25,7 +25,6 @@ const HomePage = () => {
   }, [fetchProducts, sort]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
-
   const filteredProducts = products.filter((product) =>
     (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
   );
@@ -33,17 +32,16 @@ const HomePage = () => {
   return (
     <>
       <Container maxW="container.xl" py={12}>
-        <VStack spacing={5}>
+        <VStack spacing={8}>
           <Text
-            fontSize="30px"
-            fontWeight="bold"
-            bgGradient="linear(to-r,cyan.400,blue.500)"
-            bgClip="text"
-            textAlign="center"
+            fontSize={"30"}
+            fontWeight={"bold"}
+            bgGradient={"linear(to-r,cyan.400,blue.500)"}
+            bgClip={"text"}
+            textAlign={"center"}
           >
             Current Products🚀
           </Text>
-
           <Select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -55,7 +53,6 @@ const HomePage = () => {
             <option value="price_desc">Price: High to Low</option>
             <option value="newest">Newest First</option>
           </Select>
-
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}
@@ -67,10 +64,13 @@ const HomePage = () => {
               Discover Amazing Products 🚀
             </Text>
 
-            <Text color={labelColor} textAlign="center" maxW="600px">
+            <Text
+              color={labelColor}
+              textAlign="center"
+              maxW="600px"
+            >
               Browse and manage your product collection with ease.
             </Text>
-
             <Box
               display="inline-block"
               bg="blue.500"
@@ -87,7 +87,6 @@ const HomePage = () => {
               }}
             >
               <Text fontSize="sm">Products</Text>
-
               <Text fontSize="2xl" fontWeight="bold">
                 {filteredProducts.length}
               </Text>
@@ -101,7 +100,7 @@ const HomePage = () => {
               lg: 3,
             }}
             spacing={10}
-            w="full"
+            w={"full"}
           >
             {filteredProducts.map((product) => (
               <ProductCard key={product._id} product={product} />
@@ -111,9 +110,9 @@ const HomePage = () => {
           {products.length === 0 && (
             <VStack gap={4} py={12}>
               <Image
-                  src="/empty-state.svg"
-                  alt="Empty products"
-                  width={{
+                src="/empty-state.svg"
+                alt="Empty products"
+                width={{
                   base: "200px",
                   md: "300px",
                   lg: "400px",
@@ -148,7 +147,7 @@ const HomePage = () => {
                     },
                   }}
                 >
-                  Create Product 
+                  Create Product
                 </Button>
               </Link>
             </VStack>
@@ -170,7 +169,7 @@ const HomePage = () => {
         </VStack>
       </Container>
 
-    {recentlyViewed.length > 0 && (
+      {recentlyViewed.length > 0 && (
         <Button
           position="fixed" bottom="20px" right="20px"
           zIndex={99} colorScheme="teal" size="sm" shadow="lg"
