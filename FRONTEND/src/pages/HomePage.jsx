@@ -1,17 +1,34 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
-  Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
-  HStack, useDisclosure, Skeleton
+  Box,
+  Button,
+  Container,
+  Select,
+  SimpleGrid,
+  Text,
+  VStack,
+  useColorModeValue,
+  Image,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerFooter,
+  HStack,
+  useDisclosure,
+  Skeleton
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
+import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
-  const { fetchProducts, products, isLoading, searchQuery } = useProductStore();
+  const { fetchProducts, products, isLoading, searchQuery, searchProducts } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
@@ -20,64 +37,38 @@ const HomePage = () => {
   const drawerBorder = useColorModeValue("gray.200", "gray.600");
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
 
+  const debounceSearch = useDebounce(searchQuery, 500);
+
+  // When sort or debounceSearch changes, fetch or search products via API
   useEffect(() => {
-    fetchProducts(sort);
-  }, [fetchProducts, sort]);
+    if (debounceSearch.trim() === "") {
+      fetchProducts(sort);
+    } else {
+      searchProducts(debounceSearch);
+    }
+  }, [debounceSearch, sort, fetchProducts, searchProducts]);
 
+  // Client-side fallback filter
   const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  const filteredProducts = products.filter((product) =>
-    (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  );
-
-  // Show loading skeletons when isLoading is true
-  if (isLoading) {
-    return (
-      <>
-        <Container maxW='container.xl' py={12}>
-          <VStack spacing={8}>
-            <Skeleton height="40px" width="250px" />
-            <Skeleton height="40px" width="250px" />
-            
-            <VStack gap={2}>
-              <Skeleton height="60px" width="400px" />
-              <Skeleton height="40px" width="300px" />
-              <Skeleton height="60px" width="140px" />
-            </VStack>
-
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w={"full"}>
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <Box key={item} p={4} borderWidth="1px" borderRadius="lg">
-                  <Skeleton height="200px" mb={4} />
-                  <Skeleton height="24px" width="80%" mb={2} />
-                  <Skeleton height="20px" width="60%" mb={2} />
-                  <Skeleton height="20px" width="40%" mb={4} />
-                  <Skeleton height="36px" width="100%" />
-                </Box>
-              ))}
-            </SimpleGrid>
-          </VStack>
-        </Container>
-        <Footer />
-        <ScrollToTop />
-      </>
-    );
-  }
+  const filteredProducts = debounceSearch.trim()
+    ? products
+    : products.filter((product) =>
+        (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
+      );
 
   return (
     <>
       <Container maxW="container.xl" py={12}>
-        <VStack spacing={5}>
+        <VStack spacing={8}>
           <Text
-            fontSize="30px"
-            fontWeight="bold"
-            bgGradient="linear(to-r,cyan.400,blue.500)"
-            bgClip="text"
-            textAlign="center"
+            fontSize={"30"}
+            fontWeight={"bold"}
+            bgGradient={"linear(to-r,cyan.400,blue.500)"}
+            bgClip={"text"}
+            textAlign={"center"}
           >
             Current Products🚀
           </Text>
-
           <Select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -89,7 +80,6 @@ const HomePage = () => {
             <option value="price_desc">Price: High to Low</option>
             <option value="newest">Newest First</option>
           </Select>
-
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}
@@ -101,10 +91,13 @@ const HomePage = () => {
               Discover Amazing Products 🚀
             </Text>
 
-            <Text color={labelColor} textAlign="center" maxW="600px">
+            <Text
+              color={labelColor}
+              textAlign="center"
+              maxW="600px"
+            >
               Browse and manage your product collection with ease.
             </Text>
-
             <Box
               display="inline-block"
               bg="blue.500"
@@ -121,7 +114,6 @@ const HomePage = () => {
               }}
             >
               <Text fontSize="sm">Products</Text>
-
               <Text fontSize="2xl" fontWeight="bold">
                 {filteredProducts.length}
               </Text>
@@ -135,19 +127,25 @@ const HomePage = () => {
               lg: 3,
             }}
             spacing={10}
-            w="full"
+            w={"full"}
           >
-            {filteredProducts.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} height="300px" borderRadius="xl" />
+              ))
+            ) : (
+              filteredProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+            )}
           </SimpleGrid>
 
-          {products.length === 0 && (
+          {!isLoading && products.length === 0 && (
             <VStack gap={4} py={12}>
               <Image
-                  src="/empty-state.svg"
-                  alt="Empty products"
-                  width={{
+                src="/empty-state.svg"
+                alt="Empty products"
+                width={{
                   base: "200px",
                   md: "300px",
                   lg: "400px",
@@ -162,6 +160,7 @@ const HomePage = () => {
               <Text color={labelColor} textAlign="center">
                 Start building your store by adding your first product.
               </Text>
+
               <Link to="/create">
                 <Button
                   colorScheme="blue"
@@ -182,13 +181,13 @@ const HomePage = () => {
                     },
                   }}
                 >
-                  Create Product 
+                  Create Product
                 </Button>
               </Link>
             </VStack>
           )}
 
-          {products.length > 0 && filteredProducts.length === 0 && (
+          {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
             <VStack gap={4} py={12}>
               <Text fontSize="6xl">🔎</Text>
 

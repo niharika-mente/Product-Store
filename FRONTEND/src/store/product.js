@@ -17,171 +17,164 @@ export const useRecentlyViewed = create(
   )
 );
 
-export const useProductStore = create((set, get) => ({
-  products: [],
-  isLoading: false,
-  isSubmitting: false,
-  isDeleting: false,
-  error: null,
-  searchQuery: "",
+export const useProductStore = create((set) =>({
+    products: [],
+    isLoading: false,
+    isSubmitting: false,
+    isDeleting: false,
+    error: null,
+    searchQuery: "",
+    setProducts: (products) => set({ products }),
+    setSearchQuery: (searchQuery) => set({ searchQuery }),
+    clearError: () => set({ error: null }),
 
-  setProducts: (products) => set({ products }),
-  setSearchQuery: (searchQuery) => set({ searchQuery }),
+    createProduct: async (newProduct) => {
+        if (!newProduct.name || !newProduct.price) {
+            return { success: false, message: "Please fill in all fields." };
+        }
+        if (!newProduct.imageFile && !newProduct.image) {
+            return { success: false, message: "Please provide a product image." };
+        }
 
-  createProduct: async (newProduct) => {
-    if (!newProduct.name || !newProduct.image || !newProduct.price) {
-      return { success: false, message: "Please fill in all fields." };
+        set({ isSubmitting: true, error: null });
+        try {
+            const formData = new FormData();
+            formData.append("name", newProduct.name);
+            formData.append("price", newProduct.price);
+
+            if (newProduct.imageFile) {
+                formData.append("image", newProduct.imageFile);
+            } else {
+                formData.append("image", newProduct.image);
+            }
+
+            if (newProduct.description) formData.append("description", newProduct.description);
+            if (newProduct.category) formData.append("category", newProduct.category);
+            if (newProduct.brand) formData.append("brand", newProduct.brand);
+            if (newProduct.stock !== undefined && newProduct.stock !== '') formData.append("stock", newProduct.stock);
+            if (newProduct.originalPrice !== undefined && newProduct.originalPrice !== '') formData.append("originalPrice", newProduct.originalPrice);
+            if (newProduct.discount !== undefined && newProduct.discount !== '') formData.append("discount", newProduct.discount);
+
+            const res = await fetch(`${API}/api/products`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                set({ isSubmitting: false });
+                return { success: false, message: errorData.message || "Failed to create product." };
+            }
+
+            const data = await res.json();
+            set((state) => ({ products: [...state.products, data.data], isSubmitting: false }));
+            return { success: true, message: "Product created successfully" };
+        } catch (error) {
+            console.error("Network error creating product:", error);
+            set({ isSubmitting: false, error: "Network error - could not reach API" });
+            return { success: false, message: "Network error - could not reach API" };
+        }
+    },
+
+    fetchProducts: async (sort = "") => {
+        set({ isLoading: true, error: null });
+        try {
+            const url = sort
+                ? `${API}/api/products?sort=${sort}`
+                : `${API}/api/products`;
+
+            const res = await fetch(url);
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                console.error("Failed to fetch products:", errorData.message);
+                set({ isLoading: false, error: errorData.message || "Failed to fetch products" });
+                return;
+            }
+            const data = await res.json();
+            set({ products: data.data, isLoading: false });
+        } catch (error) {
+            console.error("Network error fetching products:", error);
+            set({ isLoading: false, error: "Network error - could not reach API" });
+        }
+    },
+
+    deleteProduct: async (pid) => {
+        set({ isDeleting: true, error: null });
+        try {
+            const res = await fetch(`${API}/api/products/${pid}`, {
+                method: "DELETE",
+            });
+            const data = await res.json();
+            if (!data.success) {
+                set({ isDeleting: false });
+                return { success: false, message: data.message };
+            }
+
+            set(state => ({ products: state.products.filter(product => product._id !== pid), isDeleting: false }));
+            return { success: true, message: data.message };
+        } catch (error) {
+            console.error("Network error deleting product:", error);
+            set({ isDeleting: false, error: "Network error - could not reach API" });
+            return { success: false, message: "Network error - could not reach API" };
+        }
+    },
+
+    updateProduct: async (pid, updatedProduct) => {
+        set({ isSubmitting: true, error: null });
+        try {
+            const formData = new FormData();
+            formData.append("name", updatedProduct.name);
+            formData.append("price", updatedProduct.price);
+
+            if (updatedProduct.imageFile) {
+                formData.append("image", updatedProduct.imageFile);
+            } else if (updatedProduct.image) {
+                formData.append("image", updatedProduct.image);
+            }
+
+            if (updatedProduct.description !== undefined) formData.append("description", updatedProduct.description);
+            if (updatedProduct.category !== undefined) formData.append("category", updatedProduct.category);
+            if (updatedProduct.brand !== undefined) formData.append("brand", updatedProduct.brand);
+            if (updatedProduct.stock !== undefined && updatedProduct.stock !== '') formData.append("stock", updatedProduct.stock);
+            if (updatedProduct.originalPrice !== undefined && updatedProduct.originalPrice !== '') formData.append("originalPrice", updatedProduct.originalPrice);
+            if (updatedProduct.discount !== undefined && updatedProduct.discount !== '') formData.append("discount", updatedProduct.discount);
+
+            const res = await fetch(`${API}/api/products/${pid}`, {
+                method: "PUT",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                set({ isSubmitting: false });
+                return { success: false, message: data.message };
+            }
+
+            set(state => ({
+                products: state.products.map(product => product._id === pid ? data.data : product),
+                isSubmitting: false
+            }));
+            return { success: true, message: data.message };
+        } catch (error) {
+            console.error("Network error updating product:", error);
+            set({ isSubmitting: false, error: "Network error - could not reach API" });
+            return { success: false, message: "Network error - could not reach API" };
+        }
+    },
+    
+    searchProducts: async(query) => {
+        try {
+            const res = await fetch(`${API}/api/products/search?q=${encodeURIComponent(query)}`);
+            if(!res.ok){
+                return {success:false,message:"Failed to search products."};
+            }
+            const data = await res.json();
+            set({products:data.data});
+            return {success:true};
+        }
+        catch(error){
+            console.error("Network error searching products:", error);
+            return {success:false,message:"Network error - could not reach API"};
+        }
     }
-
-    set({ isSubmitting: true, error: null });
-
-    try {
-      const res = await fetch(`${API}/api/products`, {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newProduct),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        set({ isSubmitting: false });
-        return { success: false, message: errorData.message || "Failed to create product." };
-      }
-
-      const data = await res.json();
-      set((state) => ({
-        products: [...state.products, data.data],
-        isSubmitting: false
-      }));
-      return { success: true, message: "Product created successfully" };
-
-    } catch (error) {
-      console.error("Network error creating product:", error);
-      set({
-        isSubmitting: false,
-        error: "Network error - could not reach API"
-      });
-      return { success: false, message: "Network error - could not reach API" };
-    }
-  },
-
-  fetchProducts: async (sort = "") => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const url = sort
-        ? `${API}/api/products?sort=${sort}`
-        : `${API}/api/products`;
-
-      const res = await fetch(url);
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("Failed to fetch products:", errorData.message);
-        set({
-          isLoading: false,
-          error: errorData.message || "Failed to fetch products"
-        });
-        return;
-      }
-
-      const data = await res.json();
-      set({
-        products: data.data,
-        isLoading: false
-      });
-
-    } catch (error) {
-      console.error("Network error fetching products:", error);
-      set({
-        isLoading: false,
-        error: "Network error - could not reach API"
-      });
-    }
-  },
-
-  deleteProduct: async (pid) => {
-    set({ isDeleting: true, error: null });
-
-    try {
-      const res = await fetch(`${API}/api/products/${pid}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        set({ isDeleting: false });
-        return { success: false, message: data.message };
-      }
-
-      set(state => ({
-        products: state.products.filter(product => product._id !== pid),
-        isDeleting: false
-      }));
-      return { success: true, message: data.message };
-
-    } catch (error) {
-      console.error("Network error deleting product:", error);
-      set({
-        isDeleting: false,
-        error: "Network error - could not reach API"
-      });
-      return { success: false, message: "Network error - could not reach API" };
-    }
-  },
-
-  updateProduct: async (pid, updatedProduct) => {
-    set({ isSubmitting: true, error: null });
-
-    try {
-      const res = await fetch(`${API}/api/products/${pid}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedProduct),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        set({ isSubmitting: false });
-        return { success: false, message: data.message };
-      }
-
-      set(state => ({
-        products: state.products.map(product => product._id === pid ? data.data : product),
-        isSubmitting: false
-      }));
-      return { success: true, message: data.message };
-
-    } catch (error) {
-      console.error("Network error updating product:", error);
-      set({
-        isSubmitting: false,
-        error: "Network error - could not reach API"
-      });
-      return { success: false, message: "Network error - could not reach API" };
-    }
-  },
-
-  searchProducts: async (query) => {
-    try {
-      const res = await fetch(`${API}/api/products/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) {
-        return { success: false, message: "Failed to search products." };
-      }
-      const data = await res.json();
-      set({ products: data.data });
-      return { success: true };
-    } catch (error) {
-      console.error("Network error searching products:", error);
-      return { success: false, message: "Network error - could not reach API" };
-    }
-  },
-
-  clearError: () => set({ error: null }),
 }));
