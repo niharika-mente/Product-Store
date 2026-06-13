@@ -9,9 +9,18 @@ import {
   VStack,
   useColorModeValue,
   Image,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerFooter,
+  HStack,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { useProductStore } from "../store/product";
+import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
@@ -19,8 +28,13 @@ import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
   const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
+  const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+  const drawerBg = useColorModeValue("white", "gray.800");
+  const drawerTagBg = useColorModeValue("gray.50", "gray.700");
+  const drawerBorder = useColorModeValue("gray.200", "gray.600");
+  const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
 
   const debounceSearch = useDebounce(searchQuery, 500);
 
@@ -44,17 +58,16 @@ const HomePage = () => {
   return (
     <>
       <Container maxW="container.xl" py={12}>
-        <VStack spacing={5}>
+        <VStack spacing={8}>
           <Text
-            fontSize="30px"
-            fontWeight="bold"
-            bgGradient="linear(to-r,cyan.400,blue.500)"
-            bgClip="text"
-            textAlign="center"
+            fontSize={"30"}
+            fontWeight={"bold"}
+            bgGradient={"linear(to-r,cyan.400,blue.500)"}
+            bgClip={"text"}
+            textAlign={"center"}
           >
             Current Products🚀
           </Text>
-
           <Select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -66,7 +79,6 @@ const HomePage = () => {
             <option value="price_desc">Price: High to Low</option>
             <option value="newest">Newest First</option>
           </Select>
-
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}
@@ -78,10 +90,13 @@ const HomePage = () => {
               Discover Amazing Products 🚀
             </Text>
 
-            <Text color={labelColor} textAlign="center" maxW="600px">
+            <Text
+              color={labelColor}
+              textAlign="center"
+              maxW="600px"
+            >
               Browse and manage your product collection with ease.
             </Text>
-
             <Box
               display="inline-block"
               bg="blue.500"
@@ -111,7 +126,7 @@ const HomePage = () => {
               lg: 3,
             }}
             spacing={10}
-            w="full"
+            w={"full"}
           >
             {filteredProducts.map((product) => (
               <ProductCard key={product._id} product={product} />
@@ -180,6 +195,49 @@ const HomePage = () => {
           )}
         </VStack>
       </Container>
+
+      {recentlyViewed.length > 0 && (
+        <Button
+          position="fixed" bottom="20px" right="20px"
+          zIndex={99} colorScheme="teal" size="sm" shadow="lg"
+          onClick={onDrawerOpen}
+        >
+          Recently Viewed ({recentlyViewed.length})
+        </Button>
+      )}
+
+      <Drawer isOpen={isDrawerOpen} onClose={onDrawerClose} placement="right" size="sm">
+        <DrawerOverlay />
+        <DrawerContent bg={drawerBg}>
+          <DrawerCloseButton />
+          <DrawerHeader borderBottomWidth="1px">Recently Viewed</DrawerHeader>
+          <DrawerBody px={3} py={4}>
+            <VStack spacing={3} align="stretch">
+              {recentlyViewed.map((p) => (
+                <HStack
+                  key={p._id} spacing={3} p={3}
+                  bg={drawerTagBg} borderRadius="md"
+                  border="1px solid" borderColor={drawerBorder}
+                  as="a" href={`/product/${p._id}`}
+                  _hover={{ textDecoration: "none", borderColor: "teal.400" }}
+                  transition="all 0.2s"
+                >
+                  <Image src={p.image} alt={p.name} boxSize="48px" objectFit="cover" borderRadius="md" />
+                  <VStack align="start" spacing={0} flex={1} minW={0}>
+                    <Text fontSize="sm" fontWeight="bold" noOfLines={1}>{p.name}</Text>
+                    <Text fontSize="sm" color="teal.400">${p.price}</Text>
+                  </VStack>
+                </HStack>
+              ))}
+            </VStack>
+          </DrawerBody>
+          <DrawerFooter borderTopWidth="1px">
+            <Button size="sm" variant="ghost" colorScheme="red" onClick={clearRecentlyViewed}>
+              Clear History
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <Footer />
       <ScrollToTop />
