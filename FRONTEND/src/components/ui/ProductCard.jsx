@@ -203,7 +203,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
           ${product.price}
         </Text>
 
-<HStack spacing={2}>
+        <HStack spacing={2}>
           <IconButton
             icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
             onClick={handleWishlistToggle}

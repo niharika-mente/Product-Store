@@ -8,12 +8,13 @@ import {
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
+import Pagination from '../components/ui/Pagination';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
-const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare, isLoading } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare, isLoading } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
@@ -25,15 +26,35 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
   const compareBg = useColorModeValue("white", "gray.800");
   const compareTagBg = useColorModeValue("gray.100", "gray.700");
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const limit = 10;
+
   const debounceSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
-    if (debounceSearch.trim() === "") {
-      fetchProducts(sort);
-    } else {
-      searchProducts(debounceSearch);
-    }
-  }, [debounceSearch, sort, fetchProducts, searchProducts]);
+    const loadProducts = async () => {
+      if (debounceSearch.trim() !== "") {
+        searchProducts(debounceSearch);
+        return;
+      }
+      
+      const response = await fetchProducts(page, limit, sort);
+      if (response && response.success) {
+        const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
+        if (page !== normalizedPage) {
+          setPage(normalizedPage);
+          return;
+        }
+
+        setTotalPages(response.totalPages);
+        setTotalProducts(response.totalProducts);
+      }
+    };
+
+    loadProducts();
+  }, [fetchProducts, page, sort, debounceSearch]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredProducts = debounceSearch.trim()
@@ -92,11 +113,13 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
               _hover={{ transform: "translateY(-3px)", boxShadow: "lg" }}
             >
               <Text fontSize="sm">Products</Text>
-              <Text fontSize="2xl" fontWeight="bold">{filteredProducts.length}</Text>
+              <Text fontSize="2xl" fontWeight="bold">
+                {totalProducts > 0 ? totalProducts : filteredProducts.length}
+              </Text>
             </Box>
           </VStack>
 
-<SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w={"full"}>
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w={"full"}>
             {isLoading ? (
               Array.from({ length: 6 }).map((_, index) => (
                 <Skeleton key={index} height="300px" borderRadius="xl" />
@@ -108,7 +131,7 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
             )}
           </SimpleGrid>
 
-          {!isLoading && products.length === 0 && (
+          {!isLoading && products.length === 0 && !searchQuery && (
             <VStack gap={4} py={12}>
               <Image
                 src="/empty-state.svg"
@@ -140,6 +163,18 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
                 </Button>
               </Link>
             </VStack>
+          )}
+
+          {!isLoading && products.length > 0 && !searchQuery && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(newPage) => {
+                if ( newPage >= 1 && newPage <= totalPages ) {
+                  setPage(newPage);
+                }
+              }}
+            />
           )}
 
           {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
