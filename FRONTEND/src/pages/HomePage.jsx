@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-import { Container, Text, VStack, Box, SimpleGrid } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import React, { useEffect } from 'react';
-import { useProductStore } from '../store/product';
-import ProductCard from '../components/ui/ProductCard';
-import Footer from "../components/ui/footer";
-
-const HomePage = () => {
-  const { t } = useTranslation();
-  const { fetchProducts, products } = useProductStore();
-=======
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -34,6 +21,7 @@ import {
   Skeleton
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
@@ -41,6 +29,7 @@ import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const { fetchProducts, products, isLoading, searchQuery, searchProducts } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
@@ -49,21 +38,10 @@ const HomePage = () => {
   const drawerTagBg = useColorModeValue("gray.50", "gray.700");
   const drawerBorder = useColorModeValue("gray.200", "gray.600");
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
 
   const debounceSearch = useDebounce(searchQuery, 500);
 
-  // When sort or debounceSearch changes, fetch or search products via API
   useEffect(() => {
-<<<<<<< HEAD
-    fetchProducts();
-  }, [fetchProducts]);
-
-  return (
-    <>
-      <Container maxW='container.xl' py={12}>
-        <VStack spacing={8}>
-=======
     if (debounceSearch.trim() === "") {
       fetchProducts(sort);
     } else {
@@ -71,7 +49,6 @@ const HomePage = () => {
     }
   }, [debounceSearch, sort, fetchProducts, searchProducts]);
 
-  // Client-side fallback filter
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredProducts = debounceSearch.trim()
     ? products
@@ -90,20 +67,21 @@ const HomePage = () => {
             bgClip={"text"}
             textAlign={"center"}
           >
-            Current Products🚀
+            {t('products.title')} 🚀
           </Text>
+
           <Select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             maxW="250px"
-            aria-label="Sort products"
+            aria-label={t('products.sort')}
           >
-            <option value="">Default</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="newest">Newest First</option>
+            <option value="">{t('products.default')}</option>
+            <option value="price_asc">{t('products.priceLowToHigh')}</option>
+            <option value="price_desc">{t('products.priceHighToLow')}</option>
+            <option value="newest">{t('products.newestFirst')}</option>
           </Select>
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
+
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}
@@ -115,18 +93,14 @@ const HomePage = () => {
               {t('products.title')} 🚀
             </Text>
 
-<<<<<<< HEAD
-            <Text color="gray.500" textAlign="center" maxW="600px">
-              {t('products.subtitle')}
-=======
             <Text
               color={labelColor}
               textAlign="center"
               maxW="600px"
             >
-              Browse and manage your product collection with ease.
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
+              {t('products.subtitle')}
             </Text>
+
             <Box
               display="inline-block"
               bg="blue.500"
@@ -142,11 +116,7 @@ const HomePage = () => {
                 boxShadow: "lg",
               }}
             >
-<<<<<<< HEAD
               <Text fontSize="sm">{t('products.productsCount')}</Text>
-=======
-              <Text fontSize="sm">Products</Text>
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
               <Text fontSize="2xl" fontWeight="bold">
                 {products.length}
               </Text>
@@ -162,11 +132,6 @@ const HomePage = () => {
             spacing={10}
             w={"full"}
           >
-<<<<<<< HEAD
-            {products.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
-=======
             {isLoading ? (
               Array.from({ length: 6 }).map((_, index) => (
                 <Skeleton key={index} height="300px" borderRadius="xl" />
@@ -176,17 +141,13 @@ const HomePage = () => {
                 <ProductCard key={product._id} product={product} />
               ))
             )}
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
           </SimpleGrid>
 
           {!isLoading && products.length === 0 && (
             <VStack gap={4} py={12}>
-<<<<<<< HEAD
-              <Text fontSize="6xl">📪</Text>
-=======
               <Image
                 src="/empty-state.svg"
-                alt="Empty products"
+                alt={t('products.noProducts')}
                 width={{
                   base: "200px",
                   md: "300px",
@@ -194,36 +155,15 @@ const HomePage = () => {
                 }}
                 objectFit="contain"
               />
-
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
               <Text fontSize="2xl" fontWeight="bold">
                 {t('products.noProducts')}
               </Text>
               <Text color="gray.500" textAlign="center">
                 {t('products.noProductsDesc')}
               </Text>
-
               <Link to="/create">
-                <Text
-                  color="blue.500"
-                  fontWeight="bold"
-                  display="inline-block"
-                  transition="all 0.2s"
-                  _hover={{
-                    color: "blue.600",
-                    transform: "translateY(-2px)",
-                  }}
-                >
-<<<<<<< HEAD
+                <Button colorScheme="blue" size="lg">
                   {t('products.createProduct')} ✨
-                </Text>
-              </Link>
-            </VStack>
-          )}
-        </VStack>
-      </Container>
-=======
-                  Create Product
                 </Button>
               </Link>
             </VStack>
@@ -231,14 +171,12 @@ const HomePage = () => {
 
           {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
             <VStack gap={4} py={12}>
-              <Text fontSize="6xl">🔎</Text>
-
+              <Text fontSize="6xl">🔍</Text>
               <Text fontSize="2xl" fontWeight="bold">
-                No matching products
+                {t('products.noProductsFound')}
               </Text>
-
               <Text color={labelColor} textAlign="center">
-                Try a different search term.
+                {t('products.noProductsFoundDesc')}
               </Text>
             </VStack>
           )}
@@ -251,7 +189,7 @@ const HomePage = () => {
           zIndex={99} colorScheme="teal" size="sm" shadow="lg"
           onClick={onDrawerOpen}
         >
-          Recently Viewed ({recentlyViewed.length})
+          {t('products.recentlyViewed')} ({recentlyViewed.length})
         </Button>
       )}
 
@@ -259,7 +197,7 @@ const HomePage = () => {
         <DrawerOverlay />
         <DrawerContent bg={drawerBg}>
           <DrawerCloseButton />
-          <DrawerHeader borderBottomWidth="1px">Recently Viewed</DrawerHeader>
+          <DrawerHeader borderBottomWidth="1px">{t('products.recentlyViewed')}</DrawerHeader>
           <DrawerBody px={3} py={4}>
             <VStack spacing={3} align="stretch">
               {recentlyViewed.map((p) => (
@@ -282,14 +220,14 @@ const HomePage = () => {
           </DrawerBody>
           <DrawerFooter borderTopWidth="1px">
             <Button size="sm" variant="ghost" colorScheme="red" onClick={clearRecentlyViewed}>
-              Clear History
+              {t('products.clearHistory')}
             </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
->>>>>>> 8f9f4d8803cb1baa7daf0674fff47d6e1728d1a8
       <Footer />
+      <ScrollToTop />
     </>
   );
 };
