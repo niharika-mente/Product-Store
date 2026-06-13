@@ -3,6 +3,7 @@ import {
   Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,} from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore } from "../store/product";
+import { useAuthStore } from "../store/auth";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
@@ -10,6 +11,7 @@ import useDebounce from '../hooks/useDebounce';
 
 const HomePage = () => {
   const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
+  const { user } = useAuthStore();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
 
@@ -121,29 +123,31 @@ const HomePage = () => {
               <Text color={labelColor} textAlign="center">
                 Start building your store by adding your first product.
               </Text>
-              <Link to="/create">
-                <Button
-                  colorScheme="blue"
-                  animation="pulse 2s infinite"
-                  transition="all 0.25s ease"
-                  _hover={{
-                    transform: "translateY(-3px) scale(1.05)",
-                    boxShadow: "xl",
-                  }}
-                  _active={{
-                    transform: "scale(0.98)",
-                  }}
-                  sx={{
-                    "@keyframes pulse": {
-                      "0%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0.6)" },
-                      "70%": { boxShadow: "0 0 0 10px rgba(66, 153, 225, 0)" },
-                      "100%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0)" },
-                    },
-                  }}
-                >
-                  Create Product 
-                </Button>
-              </Link>
+              {user?.role === "admin" && (
+                <Link to="/create">
+                  <Button
+                    colorScheme="blue"
+                    animation="pulse 2s infinite"
+                    transition="all 0.25s ease"
+                    _hover={{
+                      transform: "translateY(-3px) scale(1.05)",
+                      boxShadow: "xl",
+                    }}
+                    _active={{
+                      transform: "scale(0.98)",
+                    }}
+                    sx={{
+                      "@keyframes pulse": {
+                        "0%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0.6)" },
+                        "70%": { boxShadow: "0 0 0 10px rgba(66, 153, 225, 0)" },
+                        "100%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0)" },
+                      },
+                    }}
+                  >
+                    Create Product 
+                  </Button>
+                </Link>
+              )}
             </VStack>
           )}
 
@@ -275,20 +279,22 @@ const HomePage = () => {
       Start building your store by adding your first product.
     </Text>
 
-    <Link to="/create">
-      <Text
-        color="blue.500"
-        fontWeight="bold"
-        display="inline-block"
-        transition="all 0.2s"
-        _hover={{
-          color: "blue.600",
-          transform: "translateY(-2px)",
-        }}
-      >
-        Create Product ✨
-      </Text>
-    </Link>
+    {user?.role === "admin" && (
+      <Link to="/create">
+        <Text
+          color="blue.500"
+          fontWeight="bold"
+          display="inline-block"
+          transition="all 0.2s"
+          _hover={{
+            color: "blue.600",
+            transform: "translateY(-2px)",
+          }}
+        >
+          Create Product ✨
+        </Text>
+      </Link>
+    )}
   </VStack>
 )}
 

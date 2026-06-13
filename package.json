@@ -12,20 +12,22 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^8.13.2",
     "serverless-http": "^4.0.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "nodemon": "^3.1.9",
     "eslint": "^10.4.1",
-    "prettier": "^3.2.5",
     "husky": "^9.1.7",
-    "lint-staged": "^15.2.9"
+    "lint-staged": "^15.2.9",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.2.5"
   },
   "lint-staged": {
     "*.{js,jsx}": [

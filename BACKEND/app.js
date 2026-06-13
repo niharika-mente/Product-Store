@@ -6,6 +6,7 @@ import cors from "cors";
 import express from "express";
 import path from "path";
 import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import reviewRoutes from "./routes/review.route.js";
@@ -55,6 +56,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", limiter);
 
 
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);

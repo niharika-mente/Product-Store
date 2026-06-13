@@ -4,6 +4,8 @@ import CreatePage from "./pages/CreatePage";
 import HomePage from "./pages/HomePage";
 import SuccessPage from "./pages/SuccessPage";
 import ProductPage from "./pages/ProductPage";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
 import Navbar from "./components/ui/Navbar";
 
 function App() {
@@ -13,6 +15,8 @@ function App() {
       <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/create" element={<CreatePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/product/:id" element={<ProductPage />} />
       </Routes>

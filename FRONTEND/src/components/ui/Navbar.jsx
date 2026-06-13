@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { 
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast
+  VStack, Box, Badge, Avatar, Menu, MenuButton, MenuList, MenuItem, useColorModeValue, useToast
 } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
-import { LuSun, LuShoppingCart } from "react-icons/lu"; // Added LuShoppingCart
+import { LuSun, LuShoppingCart } from "react-icons/lu";
 
 import { useCart } from "../../store/cart";
 import { useProductStore } from "../../store/product";
+import { useAuthStore } from "../../store/auth";
 
 
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const { isOpen, onOpen, onClose } = useDisclosure(); // Controls Drawer sliding state
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const { cartItems, removeFromCart, emptyCart, totalPrice } = useCart();
   const { searchQuery, setSearchQuery } = useProductStore();
+  const { user, token, logout } = useAuthStore();
   const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -36,7 +38,10 @@ const Navbar = () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ items: cartItems }),
       });
       const data = await res.json();
@@ -105,13 +110,14 @@ _hover={{
           </Box>
 
           <HStack spacing={2} alignItems={"center"}>
-            <Link to={"/create"}>
-              <Button aria-label="Create new product">
-                <PlusSquareIcon fontSize={20} />
-              </Button>
-            </Link>
+            {user?.role === "admin" && (
+              <Link to={"/create"}>
+                <Button aria-label="Create new product">
+                  <PlusSquareIcon fontSize={20} />
+                </Button>
+              </Link>
+            )}
 
-            {/* Shopping Cart Button with Dynamic Badge Count */}
             <Button onClick={onOpen} position="relative" aria-label="Open cart">
               <LuShoppingCart size="20" />
               {totalItemsCount > 0 && (
@@ -128,6 +134,19 @@ _hover={{
               )}
             </Button>
 
+            {user ? (
+              <Menu>
+                <MenuButton as={Button} variant="ghost" borderRadius="full" p={0}>
+                  <Avatar size="sm" name={user.name} />
+                </MenuButton>
+                <MenuList>
+                  <MenuItem fontSize="sm" isDisabled>{user.email}</MenuItem>
+                  <MenuItem onClick={() => { logout(); navigate("/"); }}>Sign Out</MenuItem>
+                </MenuList>
+              </Menu>
+            ) : (
+              <Button size="sm" colorScheme="blue" onClick={() => navigate("/login")}>Sign In</Button>
+            )}
             <Button onClick={toggleColorMode} aria-label="Toggle color mode">
               {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
             </Button>
