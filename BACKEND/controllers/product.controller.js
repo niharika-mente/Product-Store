@@ -255,13 +255,21 @@ export const getRelatedProducts = async (req, res) => {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        const targetTags = new Set((product.tags || []).map(t => t.toLowerCase()));
+        const targetTagsSet = new Set((product.tags || []).map(t => t.toLowerCase()));
         const targetWords = new Set(tokenize(product.name));
 
-        const candidates = await Product.find({
+        const orConditions = [];
+        if (product.category) orConditions.push({ category: product.category });
+        if (product.brand) orConditions.push({ brand: product.brand });
+        if (targetTagsSet.size > 0) orConditions.push({ tags: { $in: [ ...targetTagsSet ] } });
+
+        const query = {
             _id: { $ne: product._id },
-            isDeleted: { $ne: true }
-        }).limit(50);
+            isDeleted: { $ne: true },
+        };
+        if (orConditions.length > 0) query.$or = orConditions;
+
+        const candidates = await Product.find(query).sort({ updatedAt: -1 }).limit(50);
 
         const scored = candidates.map(c => {
             let score = 0;
