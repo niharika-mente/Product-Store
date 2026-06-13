@@ -6,7 +6,9 @@ import {
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
-import { useCart } from '../store/cart';
+import {useCart}  from "../store/cart.js";
+import { useRecentlyViewed } from "../store/product";
+
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
 
@@ -20,6 +22,7 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   
   const { addToCart } = useCart();
+  const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
   
   const textColor = useColorModeValue("gray.700", "gray.300");
@@ -51,6 +54,7 @@ const ProductPage = () => {
         
         if (data.success) {
           setProduct(data.data);
+          addRecentlyViewed(data.data);
         } else {
           throw new Error(data.message || "Failed to fetch product details");
         }
@@ -64,7 +68,7 @@ const ProductPage = () => {
     if (id) {
       fetchProduct();
     }
-  }, [id]);
+  }, [id, addRecentlyViewed]);
 
   const handleAddToCart = () => {
     if (product) {
