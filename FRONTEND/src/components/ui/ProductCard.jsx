@@ -259,7 +259,7 @@ const ProductCard = ({ product }) => {
                 type='number'
                 aria-label="Stock Quantity"
                 value={updatedProduct.stock || ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: Number(e.target.value) })}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })}
               />
               
               <Input
