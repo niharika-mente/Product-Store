@@ -72,25 +72,30 @@
  *             schema:
  *               type: object
  *               properties:
- *                 mainProduct:
- *                   $ref: '#/components/schemas/Product'
- *                 items:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       product:
- *                         $ref: '#/components/schemas/Product'
- *                       reason:
- *                         type: string
- *                 bundleTotal:
- *                   type: number
- *                 bundleDiscount:
- *                   type: number
- *                 bundlePrice:
- *                   type: number
- *                 savings:
- *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     mainProduct:
+ *                       $ref: '#/components/schemas/Product'
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           product:
+ *                             $ref: '#/components/schemas/Product'
+ *                           reason:
+ *                             type: string
+ *                     bundleTotal:
+ *                       type: number
+ *                     bundleDiscount:
+ *                       type: number
+ *                     bundlePrice:
+ *                       type: number
+ *                     savings:
+ *                       type: number
  *       404:
  *         description: Product not found
  * 

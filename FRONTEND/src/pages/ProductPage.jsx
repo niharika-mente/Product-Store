@@ -83,12 +83,19 @@ const ProductPage = () => {
     const fetchBundle = async () => {
       try {
         const res = await fetch(`${API}/api/products/${id}/bundle`);
+        if (!res.ok) {
+           console.error("Failed to fetch bundle, status:", res.status);
+           setBundleData(null);
+           return;
+        }
         const data = await res.json();
-        if (data.success && data.data.items.length > 0) {
+        if (data.success && data.data && data.data.items.length > 0) {
           setBundleData(data.data);
           setSelectedBundleItems(data.data.items.map(i => i.product._id));
         }
-      } catch {
+      } catch (err) {
+        console.error("Error fetching bundle:", err);
+        setBundleData(null);
       }
     };
     fetchBundle();
@@ -551,7 +558,8 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                         .filter(i => selectedBundleItems.includes(i.product._id))
                         .map(i => i.product)]
                         .reduce((sum, p) => sum + p.price, 0);
-                      const discount = selectedTotal === bundleData.bundleTotal
+                      const isFullBundle = selectedBundleItems.length === bundleData.items.length;
+                      const discount = isFullBundle
                         ? bundleData.bundleDiscount
                         : 0;
                       return (selectedTotal * (1 - discount)).toFixed(2);

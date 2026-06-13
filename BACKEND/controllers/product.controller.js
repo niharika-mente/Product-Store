@@ -282,18 +282,16 @@ export const getProductBundle = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).json({ success: false, message: "Invalid Product Id" });
+        return res.status(400).json({ success: false, message: "Invalid Product Id" });
     }
 
     try {
-        const product = await Product.findById(id);
+        const product = await Product.findById(id).populate('complementaryItems.product');
         if (!product || product.isDeleted === true) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        const populated = await Product.findById(id).populate('complementaryItems.product');
-
-        const items = populated.complementaryItems
+        const items = product.complementaryItems
             .filter(ci => ci.product && !ci.product.isDeleted)
             .slice(0, 3);
 
