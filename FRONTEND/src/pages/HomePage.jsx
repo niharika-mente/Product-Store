@@ -6,7 +6,6 @@ import {
   Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure, Skeleton, SkeletonText
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { useTranslation } from 'react-i18next';
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Pagination from '../components/ui/Pagination';
@@ -38,7 +37,6 @@ const ProductCardSkeleton = () => {
 };
 
 const HomePage = () => {
-  const { t } = useTranslation();
   const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
