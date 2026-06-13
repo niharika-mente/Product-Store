@@ -1,17 +1,33 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
-  Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
-  HStack, useDisclosure,
+  Box,
+  Button,
+  Container,
+  Select,
+  SimpleGrid,
+  Text,
+  VStack,
+  useColorModeValue,
+  Image,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerFooter,
+  HStack,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
+import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
@@ -20,30 +36,38 @@ const HomePage = () => {
   const drawerBorder = useColorModeValue("gray.200", "gray.600");
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
 
+  const debounceSearch = useDebounce(searchQuery, 500);
+
+  // When sort or debounceSearch changes, fetch or search products via API
   useEffect(() => {
-    fetchProducts(sort);
-  }, [fetchProducts, sort]);
+    if (debounceSearch.trim() === "") {
+      fetchProducts(sort);
+    } else {
+      searchProducts(debounceSearch);
+    }
+  }, [debounceSearch, sort, fetchProducts, searchProducts]);
 
+  // Client-side fallback filter
   const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  const filteredProducts = products.filter((product) =>
-    (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  );
+  const filteredProducts = debounceSearch.trim()
+    ? products
+    : products.filter((product) =>
+        (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
+      );
 
   return (
     <>
       <Container maxW="container.xl" py={12}>
-        <VStack spacing={5}>
+        <VStack spacing={8}>
           <Text
-            fontSize="30px"
-            fontWeight="bold"
-            bgGradient="linear(to-r,cyan.400,blue.500)"
-            bgClip="text"
-            textAlign="center"
+            fontSize={"30"}
+            fontWeight={"bold"}
+            bgGradient={"linear(to-r,cyan.400,blue.500)"}
+            bgClip={"text"}
+            textAlign={"center"}
           >
             Current Products🚀
           </Text>
-
           <Select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -55,7 +79,6 @@ const HomePage = () => {
             <option value="price_desc">Price: High to Low</option>
             <option value="newest">Newest First</option>
           </Select>
-
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}
@@ -67,10 +90,13 @@ const HomePage = () => {
               Discover Amazing Products 🚀
             </Text>
 
-            <Text color={labelColor} textAlign="center" maxW="600px">
+            <Text
+              color={labelColor}
+              textAlign="center"
+              maxW="600px"
+            >
               Browse and manage your product collection with ease.
             </Text>
-
             <Box
               display="inline-block"
               bg="blue.500"
@@ -87,7 +113,6 @@ const HomePage = () => {
               }}
             >
               <Text fontSize="sm">Products</Text>
-
               <Text fontSize="2xl" fontWeight="bold">
                 {filteredProducts.length}
               </Text>
@@ -101,7 +126,7 @@ const HomePage = () => {
               lg: 3,
             }}
             spacing={10}
-            w="full"
+            w={"full"}
           >
             {filteredProducts.map((product) => (
               <ProductCard key={product._id} product={product} />
@@ -128,6 +153,7 @@ const HomePage = () => {
               <Text color={labelColor} textAlign="center">
                 Start building your store by adding your first product.
               </Text>
+
               <Link to="/create">
                 <Button
                   colorScheme="blue"
@@ -170,7 +196,7 @@ const HomePage = () => {
         </VStack>
       </Container>
 
-    {recentlyViewed.length > 0 && (
+      {recentlyViewed.length > 0 && (
         <Button
           position="fixed" bottom="20px" right="20px"
           zIndex={99} colorScheme="teal" size="sm" shadow="lg"
