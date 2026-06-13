@@ -1,3 +1,5 @@
+import { createContext, useState } from 'react';
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({
@@ -16,6 +18,7 @@ export const AuthProvider = ({
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         login,
         signup,
         logout,

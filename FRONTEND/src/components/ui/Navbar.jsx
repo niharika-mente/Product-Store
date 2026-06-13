@@ -4,7 +4,7 @@ import {
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
@@ -15,10 +15,10 @@ import { useProductStore } from "../../store/product";
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, emptyCart, updatedTotalPrice } = useCart();
+  const { cartItems, removeFromCart, updatedTotalPrice } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -49,13 +49,21 @@ const Navbar = () => {
         toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
         return;
       }
+    } catch (error) {
+      toast({ title: "Checkout Error", description: error.message || "Something went wrong", status: "error", duration: 3000, isClosable: true });
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
 
+  /*
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
     navigate("/login");
     window.location.reload();
   };
+  */
 
   return (
     <Box
