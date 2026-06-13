@@ -1,27 +1,36 @@
-import { Box, Container, Select, SimpleGrid, Text, VStack } from '@chakra-ui/react';
+import { Box, Container, Select, SimpleGrid, Text, VStack, useColorModeValue } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import { SimpleGrid } from "@chakra-ui/react"
-import React,{ useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useProductStore } from '../store/product';
 import ProductCard from '../components/ui/ProductCard';
 import Pagination from '../components/ui/Pagination';
+import Footer from "../components/ui/footer";
+import ScrollToTop from "../components/ui/ScrollToTop";
+import useDebounce from '../hooks/useDebounce';
 
 const HomePage = () => {
-  const { fetchProducts, products } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
+  const [sort, setSort] = useState("");
+  const labelColor = useColorModeValue("gray.600", "gray.300");
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const limit = 10;
 
+  const debounceSearch = useDebounce(searchQuery, 500);
+
   useEffect(() => {
     const loadProducts = async () => {
-      const response = await fetchProducts(page, limit);
-      if ( response.success )
-      {
-        // Keep pagination state aligned with backend metadata.
+      if (debounceSearch.trim() !== "") {
+        searchProducts(debounceSearch);
+        return;
+      }
+      
+      const response = await fetchProducts(page, limit, sort);
+      if (response && response.success) {
         const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
-        if ( page !== normalizedPage )
-        {
+        if (page !== normalizedPage) {
           setPage(normalizedPage);
           return;
         }
@@ -32,38 +41,7 @@ const HomePage = () => {
     };
 
     loadProducts();
-  }, [fetchProducts, page]);
-import React, { useEffect, useState } from 'react';
-import { useProductStore } from '../store/product';
-import ProductCard from '../components/ui/ProductCard';
-import Footer from "../components/ui/footer";
-import ScrollToTop from "../components/ui/ScrollToTop";
-import useDebounce from '../hooks/useDebounce';
-
-const HomePage = () => {
-  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
-  const [sort, setSort] = useState("");
-  const labelColor = useColorModeValue("gray.600", "gray.300");
-
-  useEffect(() => {
-  fetchProducts(sort);
-}, [fetchProducts, sort]);
-
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  // const filteredProducts = products.filter((product) =>
-  //   (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  // );
-
-  const debounceSearch=useDebounce(searchQuery,500);
-
-  useEffect(() => {
-    if (debounceSearch.trim() === "") {
-      fetchProducts(sort);
-    } else {
-      searchProducts(debounceSearch);
-    }
-  }, [debounceSearch] );
-
+  }, [fetchProducts, page, sort, debounceSearch]);
 
   return (
     <>
@@ -90,44 +68,44 @@ const HomePage = () => {
           <option value="newest">Newest First</option>
         </Select>
         <VStack gap={2}>
-  <Text
-    fontSize={{ base: "3xl", md: "5xl" }}
-    fontWeight="extrabold"
-    bgGradient="linear(to-r, cyan.400, blue.500)"
-    bgClip="text"
-    textAlign="center"
-  >
-    Discover Amazing Products 🚀
-  </Text>
+          <Text
+            fontSize={{ base: "3xl", md: "5xl" }}
+            fontWeight="extrabold"
+            bgGradient="linear(to-r, cyan.400, blue.500)"
+            bgClip="text"
+            textAlign="center"
+          >
+            Discover Amazing Products 🚀
+          </Text>
 
-  <Text
-    color={labelColor}
-    textAlign="center"
-    maxW="600px"
-  >
-    Browse and manage your product collection with ease.
-  </Text>
-  <Box
-  display="inline-block"
-  bg="blue.500"
-  color="white"
-  px={6}
-  py={3}
-  borderRadius="xl"
-  minW="140px"
-  textAlign="center"
-  transition="all 0.3s"
-  _hover={{
-    transform: "translateY(-3px)",
-    boxShadow: "lg",
-  }}
->
-    <Text fontSize="sm">Products</Text>
-    <Text fontSize="2xl" fontWeight="bold">
-      {products.length}
-    </Text>
-  </Box>
-</VStack>
+          <Text
+            color={labelColor}
+            textAlign="center"
+            maxW="600px"
+          >
+            Browse and manage your product collection with ease.
+          </Text>
+          <Box
+            display="inline-block"
+            bg="blue.500"
+            color="white"
+            px={6}
+            py={3}
+            borderRadius="xl"
+            minW="140px"
+            textAlign="center"
+            transition="all 0.3s"
+            _hover={{
+              transform: "translateY(-3px)",
+              boxShadow: "lg",
+            }}
+          >
+            <Text fontSize="sm">Products</Text>
+            <Text fontSize="2xl" fontWeight="bold">
+              {totalProducts > 0 ? totalProducts : products.length}
+            </Text>
+          </Box>
+        </VStack>
 
         <SimpleGrid
           columns={{
@@ -141,81 +119,62 @@ const HomePage = () => {
           {products.map((product) =>(
             <ProductCard key={product._id} product={product} />
           ))}
-          
         </SimpleGrid>
 
-        {products.length === 0 && (
-          <Text fontSize='xl' textAlign={"center"} fontWeight='bold' color='gray.500'>
-          No products found😢{" "}
-          <Link to={"/create"}>
-            <Text as='span' color='blue.500' _hover={{ textDecoration: "underline"}}>
-              Create a product✨
+        {products.length === 0 && !searchQuery && (
+          <VStack gap={4} py={12}>
+            <Text fontSize="6xl">📦</Text>
+            <Text fontSize="2xl" fontWeight="bold">
+              No Products Yet
             </Text>
-          </Link>
-        </Text>
+            <Text color={labelColor} textAlign="center">
+              Start building your store by adding your first product.
+            </Text>
+            <Link to="/create">
+              <Text
+                color="blue.500"
+                fontWeight="bold"
+                display="inline-block"
+                transition="all 0.2s"
+                _hover={{
+                  color: "blue.600",
+                  transform: "translateY(-2px)",
+                }}
+              >
+                Create Product ✨
+              </Text>
+            </Link>
+          </VStack>
         )}
 
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={(newPage) => {
-            if ( newPage >= 1 && newPage <= totalPages ) {
-              setPage(newPage);
-            }
-          }}
-        />
-  <VStack gap={4} py={12}>
-    <Text fontSize="6xl">📦</Text>
+        {products.length > 0 && !searchQuery && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(newPage) => {
+              if ( newPage >= 1 && newPage <= totalPages ) {
+                setPage(newPage);
+              }
+            }}
+          />
+        )}
 
-    <Text
-      fontSize="2xl"
-      fontWeight="bold"
-    >
-      No Products Yet
-    </Text>
-
-    <Text color={labelColor} textAlign="center">
-      Start building your store by adding your first product.
-    </Text>
-
-    <Link to="/create">
-      <Text
-        color="blue.500"
-        fontWeight="bold"
-        display="inline-block"
-        transition="all 0.2s"
-        _hover={{
-          color: "blue.600",
-          transform: "translateY(-2px)",
-        }}
-      >
-        Create Product ✨
-      </Text>
-    </Link>
-  </VStack>
-)}
-
-        {products.length > 0 && searchQuery && (
-  <VStack gap={4} py={12}>
-    <Text fontSize="6xl">🔎</Text>
-
-    <Text
-      fontSize="2xl"  
-      fontWeight="bold"
-    >
-      No matching products
-    </Text>
-
-    <Text color={labelColor} textAlign="center">
-      Try a different search term.
-    </Text>
-  </VStack>
-)}
+        {products.length === 0 && searchQuery && (
+          <VStack gap={4} py={12}>
+            <Text fontSize="6xl">🔎</Text>
+            <Text fontSize="2xl" fontWeight="bold">
+              No matching products
+            </Text>
+            <Text color={labelColor} textAlign="center">
+              Try a different search term.
+            </Text>
+          </VStack>
+        )}
       </VStack>
     </Container>
     <Footer />
     <ScrollToTop />
-</>
+    </>
   );
 };
 

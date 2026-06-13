@@ -37,18 +37,13 @@ export const useProductStore = create((set) =>({
             return { success: false, message: "Network error - could not reach API" };
         }
         },
-    fetchProducts: async( page = 1, limit = 10 ) =>{
-        try
-        {
-            const res = await fetch( `${ API }/api/products?page=${ page }&limit=${ limit }` );
-    fetchProducts: async (sort = "") => {
-        try
-        {
-            const url = sort
-    ? `${API}/api/products?sort=${sort}`
-    : `${API}/api/products`;
-
-const res = await fetch(url);
+    fetchProducts: async (page = 1, limit = 10, sort = "") => {
+        try {
+            let url = `${API}/api/products?page=${page}&limit=${limit}`;
+            if (sort) {
+                url += `&sort=${sort}`;
+            }
+            const res = await fetch(url);
             if ( !res.ok )
             {
                 const errorData = await res.json().catch( () => ( {} ) );
