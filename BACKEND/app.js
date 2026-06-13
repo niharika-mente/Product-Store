@@ -8,6 +8,7 @@ import path from "path";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import checkoutRoutes from "./routes/checkout.route.js";
+import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -60,6 +61,7 @@ app.use("/api", limiter);
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 app.use("/api/*", (req, res) => {
     res.status(404).json({ success: false, message: "API route not found" });

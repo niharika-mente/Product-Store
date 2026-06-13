@@ -7,14 +7,16 @@ import {
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from "react-router-dom";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../store/cart";
+import { useWishlist } from "../../context/WishlistContext.jsx";
 import { FaBalanceScale } from "react-icons/fa";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
   const [imagePreview, setImagePreview] = useState(product.image);
+  const [isInWishlist, setIsInWishlist] = useState(false);
   const fileInputRef = useRef(null);
 
   const textColor = useColorModeValue("gray.600", "gray.200");
@@ -23,10 +25,19 @@ const ProductCard = ({ product }) => {
 const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = useRef();
+
+  useEffect(() => {
+    const checkWishlist = async () => {
+      const inWishlist = await checkInWishlist(product._id);
+      setIsInWishlist(inWishlist);
+    };
+    checkWishlist();
+  }, [product._id, checkInWishlist]);
 
   useEffect(() => {
     setUpdatedProduct(product);
@@ -63,6 +74,46 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
       duration: 2000,
       isClosable: true,
     });
+  };
+
+  const handleWishlistToggle = async () => {
+    if (isInWishlist) {
+      const result = await removeFromWishlist(product._id);
+      if (result.success) {
+        setIsInWishlist(false);
+        toast({
+          title: "Removed from Wishlist",
+          description: `${product.name} has been removed from your wishlist.`,
+          status: "info",
+          duration: 2000,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to remove from wishlist",
+          status: "error",
+          duration: 2000,
+        });
+      }
+    } else {
+      const result = await addToWishlist(product._id);
+      if (result.success) {
+        setIsInWishlist(true);
+        toast({
+          title: "Added to Wishlist",
+          description: `${product.name} has been added to your wishlist. ❤️`,
+          status: "success",
+          duration: 2000,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to add to wishlist",
+          status: "error",
+          duration: 2000,
+        });
+      }
+    }
   };
 
   const handleDeleteProduct = async () => {
@@ -153,6 +204,18 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
         </Text>
 
 <HStack spacing={2}>
+          <IconButton
+            icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
+            onClick={handleWishlistToggle}
+            colorScheme={isInWishlist ? "red" : "gray"}
+            variant="ghost"
+            aria-label='Add to Wishlist'
+            transition="all 0.2s"
+            _hover={{
+              transform: "scale(1.1)",
+            }}
+          />
+
           <IconButton
             icon={<FaEdit />}
             onClick={handleModalOpen}
