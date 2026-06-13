@@ -27,7 +27,6 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
 
   const debounceSearch = useDebounce(searchQuery, 500);
 
-  // When sort or debounceSearch changes, fetch or search products via API
   useEffect(() => {
     if (debounceSearch.trim() === "") {
       fetchProducts(sort);
@@ -36,7 +35,6 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
     }
   }, [debounceSearch, sort, fetchProducts, searchProducts]);
 
-  // Client-side fallback filter
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredProducts = debounceSearch.trim()
     ? products
