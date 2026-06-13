@@ -22,7 +22,19 @@ export const processCheckout = async (req, res) => {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
+            if (product.stock < item.quantity) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for ${product.name}. Available: ${product.stock}, requested: ${item.quantity}`
+                });
+            }
+
             calculatedTotal += product.price * item.quantity;
+        }
+
+        // Decrement stock for each purchased item
+        for (const item of items) {
+            await Product.findByIdAndUpdate(item._id, { $inc: { stock: -item.quantity } });
         }
 
         // Mock a successful payment
