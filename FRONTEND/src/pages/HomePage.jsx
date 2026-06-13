@@ -1,17 +1,33 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
-  Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
-  HStack, useDisclosure,
+  Box,
+  Button,
+  Container,
+  Select,
+  SimpleGrid,
+  Text,
+  VStack,
+  useColorModeValue,
+  Image,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerFooter,
+  HStack,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
+import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
@@ -20,14 +36,24 @@ const HomePage = () => {
   const drawerBorder = useColorModeValue("gray.200", "gray.600");
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
 
-  useEffect(() => {
-    fetchProducts(sort);
-  }, [fetchProducts, sort]);
+  const debounceSearch = useDebounce(searchQuery, 500);
 
+  // When sort or debounceSearch changes, fetch or search products via API
+  useEffect(() => {
+    if (debounceSearch.trim() === "") {
+      fetchProducts(sort);
+    } else {
+      searchProducts(debounceSearch);
+    }
+  }, [debounceSearch, sort, fetchProducts, searchProducts]);
+
+  // Client-side fallback filter
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filteredProducts = products.filter((product) =>
-    (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-  );
+  const filteredProducts = debounceSearch.trim()
+    ? products
+    : products.filter((product) =>
+        (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
+      );
 
   return (
     <>
@@ -127,6 +153,7 @@ const HomePage = () => {
               <Text color={labelColor} textAlign="center">
                 Start building your store by adding your first product.
               </Text>
+
               <Link to="/create">
                 <Button
                   colorScheme="blue"
