@@ -24,7 +24,7 @@ const CreatePage = () => {
   const fileInputRef = useRef(null);
 
   const toast = useToast();
-  const { createProduct } = useProductStore();
+  const { createProduct, isSubmitting } = useProductStore();
 
   useEffect(() => {
     const url = preview;
@@ -234,7 +234,16 @@ const CreatePage = () => {
               </VStack>
             </Collapse>
 
-            <Button colorScheme="blue" onClick={handleAddProduct} w="full" size="lg" mt={4}>
+            <Button 
+              colorScheme='blue' 
+              onClick={handleAddProduct} 
+              w='full'
+              size="lg"
+              mt={4}
+              isLoading={isSubmitting}
+              loadingText="Creating Product..."
+              spinnerPlacement="start"
+            >
               Add Product
             </Button>
           </VStack>
