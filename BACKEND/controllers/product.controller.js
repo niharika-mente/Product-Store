@@ -1,16 +1,41 @@
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
 
+const cloudinaryConfigured = () =>
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET;
+
+const uploadToCloudinary = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: 'product-store' },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+        stream.end(buffer);
+    });
+};
+
+const extractCloudinaryPublicId = (url) => {
+    if (!url || !url.includes('res.cloudinary.com')) return null;
+    const parts = url.split('/');
+    const uploadIdx = parts.indexOf('upload');
+    if (uploadIdx === -1) return null;
+    const afterUpload = parts.slice(uploadIdx + 1);
+    if (afterUpload[0] && /^v\d+$/.test(afterUpload[0])) afterUpload.shift();
+    return afterUpload.join('/').replace(/\.[^.]+$/, '');
+};
+
 // @desc    Get all products
-// @route   GET /api/products
-// @access  Public
 export const getProducts = async (req, res, next) => {
     try {
         const { sort } = req.query;
-
         let sortOption = {};
-
         if (sort === "price_asc") {
             sortOption = { price: 1 };
         } else if (sort === "price_desc") {
@@ -18,35 +43,54 @@ export const getProducts = async (req, res, next) => {
         } else if (sort === "newest") {
             sortOption = { createdAt: -1 };
         }
-
-        const products = await Product.find({
-            isDeleted: { $ne: true }
-        }).sort(sortOption);
-        
-        res.status(200).json({
-            success: true,
-            data: products
-        });
+        const products = await Product.find({ isDeleted: { $ne: true } }).sort(sortOption);
+        res.status(200).json({ success: true, data: products });
     } catch (error) {
         next(error);
     }
 };
 
 // @desc    Create a new product
-// @route   POST /api/products
-// @access  Public
 export const createProduct = async (req, res, next) => {
-    const product = req.body;
+    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
 
-    if (!product.name || !product.price || !product.image) {
-        return next(new AppError("Please provide all fields: name, price, image", 400));
+    if (!name || price === undefined || price === null || price === '' || isNaN(Number(price))) {
+        return next(new AppError("Please provide all fields", 400));
     }
 
-    if (product.price < 0) {
+    if (Number(price) < 0) {
         return next(new AppError("Price cannot be negative", 400));
     }
 
-    const newProduct = new Product(product);
+    let finalImageUrl = imageUrl || '';
+
+    if (req.file) {
+        if (!cloudinaryConfigured()) {
+            return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
+        }
+        try {
+            const result = await uploadToCloudinary(req.file.buffer);
+            finalImageUrl = result.secure_url;
+        } catch (error) {
+            return next(new AppError("Image upload failed", 500));
+        }
+    }
+
+    if (!finalImageUrl) {
+        return next(new AppError("Please provide a product image", 400));
+    }
+
+    const newProduct = new Product({
+        name,
+        price: Number(price),
+        image: finalImageUrl,
+        description,
+        category,
+        brand,
+        ...(stock !== undefined && { stock: Number(stock) }),
+        ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
+        ...(discount !== undefined && { discount: Number(discount) }),
+    });
 
     try {
         await newProduct.save();
@@ -57,30 +101,68 @@ export const createProduct = async (req, res, next) => {
 };
 
 // @desc    Update a product
-// @route   PUT /api/products/:id
-// @access  Public
 export const updateProduct = async (req, res, next) => {
     const { id } = req.params;
-    const product = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return next(new AppError("Invalid Product Id format", 404));
     }
 
-    if (!product || Object.keys(product).length === 0) {
+    if ((!req.body || Object.keys(req.body).length === 0) && !req.file) {
         return next(new AppError("No update fields provided", 400));
     }
 
+    let existing;
     try {
-        const updatedProduct = await Product.findByIdAndUpdate(id, product, { 
-            new: true, 
-            runValidators: true 
-        });
+        existing = await Product.findById(id);
+    } catch (error) {
+        return next(error);
+    }
+    if (!existing) {
+        return next(new AppError("Product not found", 404));
+    }
 
-        if (!updatedProduct || updatedProduct.isDeleted === true) {
+    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (price !== undefined) {
+        if (price === '' || isNaN(Number(price))) {
+            return next(new AppError("Invalid price value", 400));
+        }
+        updateData.price = Number(price);
+    }
+    if (imageUrl !== undefined) updateData.image = imageUrl;
+    if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    if (brand !== undefined) updateData.brand = brand;
+    if (stock !== undefined) updateData.stock = Number(stock);
+    if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
+    if (discount !== undefined) updateData.discount = Number(discount);
+
+    if (req.file) {
+        if (!cloudinaryConfigured()) {
+            return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
+        }
+        try {
+            const result = await uploadToCloudinary(req.file.buffer);
+            updateData.image = result.secure_url;
+
+            const oldPublicId = extractCloudinaryPublicId(existing.image);
+            if (oldPublicId) {
+                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                    console.warn("Old image cleanup failed:", err.message);
+                });
+            }
+        } catch (error) {
+            return next(new AppError("Image upload failed", 500));
+        }
+    }
+
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+        if (!updatedProduct) {
             return next(new AppError("Product not found", 404));
         }
-
         res.status(200).json({ success: true, data: updatedProduct });
     } catch (error) {
         next(error);
@@ -88,55 +170,37 @@ export const updateProduct = async (req, res, next) => {
 };
 
 // @desc    Delete a product (soft delete)
-// @route   DELETE /api/products/:id
-// @access  Public
 export const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id", 404));
+        return next(new AppError("Invalid Product Id format", 404));
     }
 
     try {
-        const deletedProduct = await Product.findByIdAndUpdate(
-            id, 
-            { isDeleted: true }, 
-            { new: true }
-        );
-
-        if (!deletedProduct) {
+        const product = await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+        if (!product) {
             return next(new AppError("Product not found", 404));
         }
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Product deleted successfully" 
-        });
+        res.status(200).json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
         next(error);
     }
 };
 
 // @desc    Get product by ID
-// @route   GET /api/products/:id
-// @access  Public
 export const getProductById = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id", 404));
+        return next(new AppError("Invalid Product Id format", 404));
     }
 
     try {
-        const product = await Product.findOne({ 
-            _id: id, 
-            isDeleted: { $ne: true } 
-        });
-
+        const product = await Product.findOne({ _id: id, isDeleted: { $ne: true } });
         if (!product) {
             return next(new AppError("Product not found", 404));
         }
-
         res.status(200).json({ success: true, data: product });
     } catch (error) {
         next(error);
@@ -144,13 +208,11 @@ export const getProductById = async (req, res, next) => {
 };
 
 // @desc    Get related products
-// @route   GET /api/products/:id/related
-// @access  Public
 export const getRelatedProducts = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id", 404));
+        return next(new AppError("Invalid Product Id format", 404));
     }
 
     try {
@@ -193,8 +255,6 @@ export const getRelatedProducts = async (req, res, next) => {
 };
 
 // @desc    Search products
-// @route   GET /api/products/search
-// @access  Public
 export const searchProducts = async (req, res, next) => {
     const { q } = req.query;
 
