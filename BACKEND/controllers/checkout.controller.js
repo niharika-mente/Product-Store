@@ -13,6 +13,10 @@ export const processCheckout = async (req, res) => {
 
         // Calculate total on the server to ensure accuracy
         for (const item of items) {
+            if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+                return res.status(400).json({ success: false, message: "Item quantity must be a positive number" });
+            }
+
             if (!mongoose.Types.ObjectId.isValid(item._id)) {
                 return res.status(400).json({ success: false, message: `Invalid Product Id: ${item._id}` });
             }
