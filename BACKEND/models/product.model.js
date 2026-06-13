@@ -27,7 +27,10 @@ const productSchema = new mongoose.Schema({
       type: String,
       required: [true, "Image URL is required"],
       trim: true,
-     
+    },
+    images: {
+      type: [String],
+      default: [],
     },
     
     // Optional Fields - Extra Product Details
@@ -79,9 +82,21 @@ const productSchema = new mongoose.Schema({
     isDeleted: {
         type: Boolean,
         default: false
-    }
+    },
+
+    complementaryItems: [{
+        product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product'
+        },
+        reason: {
+            type: String,
+            trim: true,
+            default: ''
+        }
+    }]
 },{
-   timestamps: true //createdAt,updatedAt
+   timestamps: true
 });
 
 const Product = mongoose.model("Product", productSchema);

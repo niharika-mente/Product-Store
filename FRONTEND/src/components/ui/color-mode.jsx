@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 'use client'
 
 import { ClientOnly, IconButton, Skeleton, Span } from '@chakra-ui/react'
@@ -87,3 +88,4 @@ export const DarkMode = React.forwardRef(function DarkMode(props, ref) {
     />
   )
 })
+
