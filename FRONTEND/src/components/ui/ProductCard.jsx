@@ -58,8 +58,8 @@ const ProductCard = ({ product }) => {
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    const result = addToCart(product);
-    if (result === 'capped') {
+    const { status } = addToCart(product);
+    if (status === 'capped') {
       toast({
         title: "Stock limit reached",
         description: `Only ${product.stock} unit(s) of ${product.name} are available.`,
@@ -69,6 +69,7 @@ const ProductCard = ({ product }) => {
       });
       return;
     }
+    if (status === 'out_of_stock') return;
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your shopping cart.`,

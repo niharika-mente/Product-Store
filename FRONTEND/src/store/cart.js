@@ -6,27 +6,41 @@ export const useCartStore = create(
     (set) => ({
       cartItems: [],
 
-      addToCart: (product) => {
+      addToCart: (product, quantity = 1) => {
         const stockTracked = product.stock != null;
-        if (stockTracked && product.stock === 0) return 'out_of_stock';
+        if (stockTracked && product.stock === 0) return { status: 'out_of_stock', added: 0 };
 
-        let result = 'added';
+        let status = 'added';
+        let added = 0;
+
         set((state) => {
           const existingItem = state.cartItems.find((item) => item._id === product._id);
-          if (existingItem) {
-            if (stockTracked && existingItem.quantity >= product.stock) {
-              result = 'capped';
+          const currentQty = existingItem ? existingItem.quantity : 0;
+
+          let canAdd = quantity;
+          if (stockTracked) {
+            const available = product.stock - currentQty;
+            if (available <= 0) {
+              status = 'capped';
+              added = 0;
               return state;
             }
+            canAdd = Math.min(quantity, available);
+            if (canAdd < quantity) status = 'capped';
+          }
+          added = canAdd;
+
+          if (existingItem) {
             return {
               cartItems: state.cartItems.map((item) =>
-                item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+                item._id === product._id ? { ...item, quantity: item.quantity + canAdd } : item
               ),
             };
           }
-          return { cartItems: [...state.cartItems, { ...product, quantity: 1 }] };
+          return { cartItems: [...state.cartItems, { ...product, quantity: canAdd }] };
         });
-        return result;
+
+        return { status, added };
       },
 
       removeFromCart: (id) => {

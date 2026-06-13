@@ -76,16 +76,7 @@ const ProductPage = () => {
 
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;
-    let added = 0;
-    let capped = false;
-    for (let i = 0; i < quantity; i++) {
-      const result = addToCart(product);
-      if (result === 'capped') {
-        capped = true;
-        break;
-      }
-      added++;
-    }
+    const { status, added } = addToCart(product, quantity);
     if (added === 0) {
       toast({
         title: "Stock limit reached",
@@ -97,7 +88,7 @@ const ProductPage = () => {
       });
       return;
     }
-    if (capped) {
+    if (status === 'capped') {
       toast({
         title: "Stock limit reached",
         description: `Only ${added} item${added !== 1 ? 's were' : ' was'} added — you've reached the available stock for ${product.name}.`,
