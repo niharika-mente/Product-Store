@@ -5,8 +5,9 @@ import {
   Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid, Checkbox
 } from '@chakra-ui/react';
-import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift } from 'react-icons/fa';
+import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import {useCart}  from "../store/cart.js";
+import { useRecentlyViewed } from "../store/product";
 
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
@@ -21,8 +22,10 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [bundleData, setBundleData] = useState(null);
   const [selectedBundleItems, setSelectedBundleItems] = useState([]);
+  const [activeImg, setActiveImg] = useState(0);
   
   const { addToCart, addBundleToCart } = useCart();
+  const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
   
   const textColor = useColorModeValue("gray.700", "gray.300");
@@ -54,6 +57,8 @@ const ProductPage = () => {
         
         if (data.success) {
           setProduct(data.data);
+          setActiveImg(0);
+          addRecentlyViewed(data.data);
         } else {
           throw new Error(data.message || "Failed to fetch product details");
         }
@@ -67,7 +72,11 @@ const ProductPage = () => {
     if (id) {
       fetchProduct();
     }
-  }, [id]);
+  }, [id, addRecentlyViewed]);
+
+  const hasStock = product && product.stock !== undefined && product.stock !== null;
+  const isOutOfStock = hasStock && product.stock === 0;
+  const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
 
   useEffect(() => {
     if (!id) return;
@@ -86,19 +95,38 @@ const ProductPage = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    if (product) {
-      for (let i = 0; i < quantity; i++) {
-        addToCart(product);
-      }
+    if (!product || isOutOfStock) return;
+    const { status, added } = addToCart(product, quantity);
+    if (added === 0) {
       toast({
-        title: "Added to Cart",
-        description: `${quantity} x ${product.name} added to your cart.`,
-        status: "success",
+        title: "Stock limit reached",
+        description: `You already have the maximum available stock of ${product.name} in your cart.`,
+        status: "warning",
         duration: 2500,
         isClosable: true,
         position: "top-right",
       });
+      return;
     }
+    if (status === 'capped') {
+      toast({
+        title: "Stock limit reached",
+        description: `Only ${added} item${added !== 1 ? 's were' : ' was'} added — you've reached the available stock for ${product.name}.`,
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    }
+    toast({
+      title: "Added to Cart",
+      description: `${added} x ${product.name} added to your cart.`,
+      status: "success",
+      duration: 2500,
+      isClosable: true,
+      position: "top-right",
+    });
   };
 
   const handleAddBundleToCart = () => {
@@ -157,6 +185,8 @@ const ProductPage = () => {
     );
   }
 
+const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
+
   return (
     <>
       <Container maxW="container.xl" py={8}>
@@ -180,29 +210,53 @@ const ProductPage = () => {
         >
           {/* Product Image Section */}
           <GridItem>
-            <Box 
-              position="sticky"
-              top="100px"
-              w="full" 
-              h={{ base: "400px", md: "550px" }}
-              overflow="hidden" 
-              borderRadius="2xl" 
-              border="1px solid" 
-              borderColor={borderCol}
-              boxShadow="2xl"
-              bg={cardBg}
-              transition="all 0.3s"
-              _hover={{ boxShadow: "dark-lg" }}
-            >
-              <Image 
-                src={product.image} 
-                alt={product.name} 
-                objectFit="contain" 
-                w="full" 
-                h="full" 
-                p={4}
-                fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
-              />
+            <Box position="sticky" top="100px">
+              <Box
+                w="full" h={{ base: "400px", md: "550px" }}
+                overflow="hidden" borderRadius="2xl"
+                border="1px solid" borderColor={borderCol}
+                boxShadow="2xl" bg={cardBg} position="relative"
+                transition="all 0.3s" _hover={{ boxShadow: "dark-lg" }}
+              >
+                <Image
+                  src={allImages[activeImg]}
+                  alt={`${product.name} image ${activeImg + 1}`}
+                  objectFit="contain" w="full" h="full" p={4}
+                  fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
+                />
+                {allImages.length > 1 && (
+                  <>
+                    <Button
+                      position="absolute" left={2} top="50%" transform="translateY(-50%)"
+                      size="sm" borderRadius="full" zIndex={1}
+                      onClick={() => setActiveImg((prev) => (prev - 1 + allImages.length) % allImages.length)}
+                      aria-label="Previous image"
+                    ><Icon as={FaChevronLeft} /></Button>
+                    <Button
+                      position="absolute" right={2} top="50%" transform="translateY(-50%)"
+                      size="sm" borderRadius="full" zIndex={1}
+                      onClick={() => setActiveImg((prev) => (prev + 1) % allImages.length)}
+                      aria-label="Next image"
+                    ><Icon as={FaChevronRight} /></Button>
+                  </>
+                )}
+              </Box>
+              {allImages.length > 1 && (
+                <HStack spacing={2} mt={3} justify="center" flexWrap="wrap">
+                  {allImages.map((img, idx) => (
+                    <Box
+                      key={idx} as="button" onClick={() => setActiveImg(idx)}
+                      borderRadius="md" overflow="hidden" border="2px solid"
+                      borderColor={activeImg === idx ? "blue.400" : borderCol}
+                      w="60px" h="60px" transition="all 0.2s"
+                      _hover={{ borderColor: "blue.300" }}
+                      aria-label={`View image ${idx + 1}`}
+                    >
+                      <Image src={img} alt={`thumb ${idx}`} objectFit="cover" w="full" h="full" />
+                    </Box>
+                  ))}
+                </HStack>
+              )}
             </Box>
           </GridItem>
 
@@ -319,10 +373,10 @@ const ProductPage = () => {
               <Box>
                 <Text fontWeight="semibold" mb={2}>Quantity</Text>
                 <HStack spacing={3}>
-                  <Button 
-                    size="md" 
+                  <Button
+                    size="md"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    isDisabled={quantity <= 1}
+                    isDisabled={quantity <= 1 || isOutOfStock}
                     aria-label="Decrease quantity"
                   >
                     -
@@ -330,10 +384,10 @@ const ProductPage = () => {
                   <Text fontSize="xl" fontWeight="bold" minW="50px" textAlign="center">
                     {quantity}
                   </Text>
-                  <Button 
-                    size="md" 
-                    onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                    isDisabled={quantity >= 10}
+                  <Button
+                    size="md"
+                    onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                    isDisabled={quantity >= maxQty || isOutOfStock}
                     aria-label="Increase quantity"
                   >
                     +
@@ -342,22 +396,23 @@ const ProductPage = () => {
               </Box>
 
               {/* Add to Cart Button */}
-              <Button 
-                colorScheme="blue" 
-                size="lg" 
+              <Button
+                colorScheme="blue"
+                size="lg"
                 fontSize="lg"
                 h="60px"
                 onClick={handleAddToCart}
+                isDisabled={isOutOfStock}
                 leftIcon={<FaShoppingCart />}
                 boxShadow="lg"
-                _hover={{ 
-                  transform: "translateY(-3px)", 
-                  boxShadow: "2xl" 
+                _hover={{
+                  transform: isOutOfStock ? "none" : "translateY(-3px)",
+                  boxShadow: isOutOfStock ? "lg" : "2xl"
                 }}
                 _active={{ transform: "translateY(0)" }}
                 transition="all 0.2s"
               >
-                Add {quantity > 1 ? `${quantity} items` : ''} to Cart
+                {isOutOfStock ? "Out of Stock" : `Add ${quantity > 1 ? `${quantity} items` : ''} to Cart`}
               </Button>
 
               {/* Features Grid */}

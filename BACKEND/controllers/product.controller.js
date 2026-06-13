@@ -1,12 +1,51 @@
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import cloudinary from '../config/cloudinary.js';
+import { AppError } from "../middleware/errorMiddleware.js";
 
-export const getProducts = async (req, res) => {
+const cloudinaryConfigured = () =>
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET;
+
+const uploadToCloudinary = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: 'product-store' },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+        stream.end(buffer);
+    });
+};
+
+const extractCloudinaryPublicId = (url) => {
+    if (!url || !url.includes('res.cloudinary.com')) return null;
+    const parts = url.split('/');
+    const uploadIdx = parts.indexOf('upload');
+    if (uploadIdx === -1) return null;
+    const afterUpload = parts.slice(uploadIdx + 1);
+    if (afterUpload[0] && /^v\d+$/.test(afterUpload[0])) afterUpload.shift();
+    return afterUpload.join('/').replace(/\.[^.]+$/, '');
+};
+
+// @desc    Get all products
+export const getProducts = async (req, res, next) => {
     try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
         const { sort } = req.query;
 
-        let sortOption = {};
+        if (page < 1 || limit < 1) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid pagination parameters. page and limit must be positive integers.",
+            });
+        }
 
+        let sortOption = {};
         if (sort === "price_asc") {
             sortOption = { price: 1 };
         } else if (sort === "price_desc") {
@@ -15,161 +54,198 @@ export const getProducts = async (req, res) => {
             sortOption = { createdAt: -1 };
         }
 
-        // Query: Find all products where isDeleted is NOT true (handles both missing and false)
-        const products = await Product.find({
-            isDeleted: { $ne: true }
-        }).sort(sortOption);
-        
+        const skip = (page - 1) * limit;
+        const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
+        const products = await Product.find({ isDeleted: { $ne: true } }).sort(sortOption).skip(skip).limit(limit);
+        const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
+
         res.status(200).json({
             success: true,
-            data: products
+            currentPage: page,
+            totalPages,
+            totalProducts,
+            limit,
+            data: products,
         });
     } catch (error) {
-        console.log("error in fetching products:", error.message);
-        res.status(500).json({
-            success: false,
-            message: "Server Error"
-        });
+        next(error);
     }
 };
 
-export const createProduct = async (req, res) => {
-  const product = req.body;
+// @desc    Create a new product
+export const createProduct = async (req, res, next) => {
+    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
 
-  if (!product.name || !product.price || !product.image) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please provide all fields" });
-  }
-
-  const newProduct = new Product(product);
-
-  try {
-    await newProduct.save();
-    res.status(201).json({ success: true, data: newProduct });
-  } catch (error) {
-    console.error("Error in Create product:", error.message);
-
-    if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: errors,
-      });
+    if (!name || price === undefined || price === null || price === '' || isNaN(Number(price))) {
+        return next(new AppError("Please provide all fields", 400));
     }
 
-    const newProduct = new Product(product);
+    if (Number(price) < 0) {
+        return next(new AppError("Price cannot be negative", 400));
+    }
 
-    try
-    {
+    let finalImageUrl = imageUrl || '';
+
+    if (req.file) {
+        if (!cloudinaryConfigured()) {
+            return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
+        }
+        try {
+            const result = await uploadToCloudinary(req.file.buffer);
+            finalImageUrl = result.secure_url;
+        } catch (error) {
+            return next(new AppError("Image upload failed", 500));
+        }
+    }
+
+    if (!finalImageUrl) {
+        return next(new AppError("Please provide a product image", 400));
+    }
+
+    const newProduct = new Product({
+        name,
+        price: Number(price),
+        image: finalImageUrl,
+        images: Array.isArray(req.body.images) ? req.body.images : [],
+        description,
+        category,
+        brand,
+        ...(stock !== undefined && { stock: Number(stock) }),
+        ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
+        ...(discount !== undefined && { discount: Number(discount) }),
+    });
+
+    try {
         await newProduct.save();
-        res.status( 201 ).json( { success: true, data: newProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Create product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+        res.status(201).json({ success: true, data: newProduct });
+    } catch (error) {
+        next(error);
     }
 };
 
-
-export const updateProduct = async ( req, res ) =>
-{
-    const { id } = req.params;
-    const product = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res
-            .status(404)
-            .json({ success: false, message: "Invalid Product Id" });
-    }
-
-    if ( !product || Object.keys( product ).length === 0 )
-    {
-        return res.status( 400 ).json( { success: false, message: "No update fields provided" } );
-    }
-
-    try
-    {
-        const updatedProduct = await Product.findByIdAndUpdate( id, product, { new: true, runValidators: true } );
-        if ( !updatedProduct )
-        {
-            return res.status( 404 ).json( { success: false, message: "Product not found" } );
-        }
-        res.status( 200 ).json( { success: true, data: updatedProduct } );
-    } catch ( error )
-    {
-        console.error( "Error in Update product:", error.message );
-        if ( error.name === 'ValidationError' )
-        {
-            const messages = Object.values( error.errors ).map( err => err.message );
-            return res.status( 400 ).json( { success: false, message: messages.join( ', ' ) } );
-        }
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
-    }
-};
-
-export const deleteProduct = async (req, res) => {
+// @desc    Update a product
+export const updateProduct = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res
-            .status(404)
-            .json({ success: false, message: "Invalid Product Id" });
+        return next(new AppError("Invalid Product Id format", 404));
+    }
+
+    if ((!req.body || Object.keys(req.body).length === 0) && !req.file) {
+        return next(new AppError("No update fields provided", 400));
+    }
+
+    let existing;
+    try {
+        existing = await Product.findById(id);
+    } catch (error) {
+        return next(error);
+    }
+    if (!existing) {
+        return next(new AppError("Product not found", 404));
+    }
+
+    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (price !== undefined) {
+        if (price === '' || isNaN(Number(price))) {
+            return next(new AppError("Invalid price value", 400));
+        }
+        updateData.price = Number(price);
+    }
+    if (imageUrl !== undefined) updateData.image = imageUrl;
+    if (req.body.images !== undefined) updateData.images = Array.isArray(req.body.images) ? req.body.images : [];
+    if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    if (brand !== undefined) updateData.brand = brand;
+    if (stock !== undefined) updateData.stock = Number(stock);
+    if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
+    if (discount !== undefined) updateData.discount = Number(discount);
+
+    if (req.file) {
+        if (!cloudinaryConfigured()) {
+            return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
+        }
+        try {
+            const result = await uploadToCloudinary(req.file.buffer);
+            updateData.image = result.secure_url;
+
+            const oldPublicId = extractCloudinaryPublicId(existing.image);
+            if (oldPublicId) {
+                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                    console.warn("Old image cleanup failed:", err.message);
+                });
+            }
+        } catch (error) {
+            return next(new AppError("Image upload failed", 500));
+        }
     }
 
     try {
-        await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+        if (!updatedProduct) {
+            return next(new AppError("Product not found", 404));
+        }
+        res.status(200).json({ success: true, data: updatedProduct });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Delete a product (soft delete)
+export const deleteProduct = async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError("Invalid Product Id format", 404));
+    }
+
+    try {
+        const product = await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+        if (!product) {
+            return next(new AppError("Product not found", 404));
+        }
         res.status(200).json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
-        console.log("error in deleting product:", error.message);
-        res.status(500).json({ success: false, message: "Server Error" });
+        next(error);
     }
 };
 
-export const getProductById = async (req, res) => {
+// @desc    Get product by ID
+export const getProductById = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).json({ success: false, message: "Invalid Product Id" });
+        return next(new AppError("Invalid Product Id format", 404));
     }
 
-    try
-    {
-        // Query: Find by ID and ensure NOT deleted (handles both missing and false values)
+    try {
         const product = await Product.findOne({ _id: id, isDeleted: { $ne: true } });
-        
-        if ( !product )
-        {
-            return res.status( 404 ).json( { success: false, message: "Product not found" } );
+        if (!product) {
+            return next(new AppError("Product not found", 404));
         }
-        res.status( 200 ).json( { success: true, data: product } );
-    } catch ( error )
-    {
-        console.error( "Error in fetching product:", error.message );
-        res.status( 500 ).json( { success: false, message: "Server Error" } );
+        res.status(200).json({ success: true, data: product });
+    } catch (error) {
+        next(error);
     }
 };
 
-export const getRelatedProducts = async (req, res) => {
+// @desc    Get related products
+export const getRelatedProducts = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).json({ success: false, message: "Invalid Product Id" });
+        return next(new AppError("Invalid Product Id format", 404));
     }
 
     try {
         const product = await Product.findById(id);
+
         if (!product || product.isDeleted === true) {
-            return res.status(404).json({ success: false, message: "Product not found" });
+            return next(new AppError("Product not found", 404));
         }
 
-        // Tokenize product name into keywords for similarity matching
         const stopWords = new Set(["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of"]);
         const words = product.name
             .toLowerCase()
@@ -184,24 +260,21 @@ export const getRelatedProducts = async (req, res) => {
                 _id: { $ne: product._id },
                 name: { $in: regexes },
                 isDeleted: { $ne: true }
-            } ).limit( 5 );
+            }).limit(5);
         }
 
-        // Pad if less than 4 related products are found
-        if ( related.length < 4 )
-        {
-            const excludeIds = [ product._id, ...related.map( p => p._id ) ];
-            const padding = await Product.find( {
+        if (related.length < 4) {
+            const excludeIds = [product._id, ...related.map(p => p._id)];
+            const padding = await Product.find({
                 _id: { $nin: excludeIds },
                 isDeleted: { $ne: true }
-            } ).limit( 5 - related.length );
-            related = [ ...related, ...padding ];
+            }).limit(5 - related.length);
+            related = [...related, ...padding];
         }
 
         res.status(200).json({ success: true, data: related.slice(0, 5) });
     } catch (error) {
-        console.error("Error in fetching related products:", error.message);
-        res.status(500).json({ success: false, message: "Server Error" });
+        next(error);
     }
 };
 
@@ -251,17 +324,15 @@ export const getProductBundle = async (req, res) => {
     }
 };
 
-export const searchProducts=async(req,res)=>{
-    const {q}=req.query;
-    console.log("Search query:", q);
+// @desc    Search products
+export const searchProducts = async (req, res, next) => {
+    const { q } = req.query;
 
     try {
         const regex = new RegExp(q, 'i');
-        console.log("Constructed regex:", regex); 
-        const products=await Product.find({name:regex});
-        res.status(200).json({success:true,data:products});
+        const products = await Product.find({ name: regex });
+        res.status(200).json({ success: true, data: products });
     } catch (error) {
-        console.error("Error in searching products:", error.message);
-        res.status(500).json({ success: false, message: "Server Error" });
+        next(error);
     }
-}
+};
