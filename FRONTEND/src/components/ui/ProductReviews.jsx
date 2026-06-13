@@ -406,6 +406,7 @@ const ProductReviews = ({ productId }) => {
 
     useEffect(() => {
         if (productId) fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [productId]);
 
     return (
