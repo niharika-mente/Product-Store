@@ -133,15 +133,29 @@ const ProductPage = () => {
     const allItems = [product, ...bundleData.items
       .filter(i => selectedBundleItems.includes(i.product._id))
       .map(i => i.product)];
-    addBundleToCart(allItems);
-    toast({
-      title: "Bundle Added!",
-      description: `${allItems.length} items added to your cart.`,
-      status: "success",
-      duration: 2500,
-      isClosable: true,
-      position: "top-right",
-    });
+    const { addedCount, skippedCount } = addBundleToCart(allItems);
+    
+    if (addedCount > 0) {
+      toast({
+        title: "Bundle Added!",
+        description: `${addedCount} item${addedCount !== 1 ? 's' : ''} added to your cart.`,
+        status: "success",
+        duration: 2500,
+        isClosable: true,
+        position: "top-right",
+      });
+    }
+
+    if (skippedCount > 0) {
+      toast({
+        title: "Stock limit reached",
+        description: `${skippedCount} item${skippedCount !== 1 ? 's' : ''} couldn't be added due to stock limits.`,
+        status: "warning",
+        duration: 3500,
+        isClosable: true,
+        position: "top-right",
+      });
+    }
   };
 
   const toggleBundleItem = (productId) => {
