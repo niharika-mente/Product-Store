@@ -7,7 +7,9 @@
     "login": "Iniciar Sesión",
     "register": "Registrarse",
     "logout": "Cerrar Sesión",
-    "dashboard": "Panel"
+    "dashboard": "Panel",
+    "addProduct": "Agregar Producto",
+    "createProduct": "Crear Nuevo Producto"
   },
   "common": {
     "loading": "Cargando...",
@@ -19,16 +21,31 @@
     "edit": "Editar",
     "search": "Buscar",
     "filter": "Filtrar",
-    "language": "Idioma"
+    "language": "Idioma",
+    "toggleTheme": "Cambiar tema"
   },
   "products": {
-    "title": "Nuestros Productos",
+    "title": "Descubre Productos Increíbles",
+    "subtitle": "Explora y gestiona tu colección de productos fácilmente.",
+    "productsCount": "Productos",
     "price": "Precio",
     "addToCart": "Agregar al Carrito",
     "outOfStock": "Agotado",
     "description": "Descripción",
     "reviews": "Opiniones",
-    "related": "Productos Relacionados"
+    "related": "Productos Relacionados",
+    "noProducts": "No Hay Productos",
+    "noProductsDesc": "Comienza a construir tu tienda agregando tu primer producto.",
+    "createProduct": "Crear Producto",
+    "name": "Nombre del Producto",
+    "imageUrl": "URL de la Imagen",
+    "noProductsFound": "No hay productos coincidentes",
+    "noProductsFoundDesc": "Ajusta tu búsqueda o filtros para encontrar lo que buscas.",
+    "extraDetails": "Detalles Adicionales",
+    "category": "Categoría",
+    "brand": "Marca",
+    "stock": "Inventario",
+    "processing": "Procesando..."
   },
   "cart": {
     "title": "Carrito de Compras",
@@ -37,7 +54,9 @@
     "total": "Monto Total",
     "remove": "Eliminar",
     "quantity": "Cantidad",
-    "update": "Actualizar Carrito"
+    "update": "Actualizar Carrito",
+    "openCart": "Abrir carrito",
+    "processing": "Procesando Pago..."
   },
   "footer": {
     "rights": "Todos los Derechos Reservados",
@@ -45,5 +64,11 @@
     "contact": "Contacto",
     "privacy": "Política de Privacidad",
     "terms": "Términos de Servicio"
+  },
+  "categories": {
+    "electronics": "Electrónicos",
+    "clothing": "Ropa",
+    "books": "Libros",
+    "home": "Hogar"
   }
 }

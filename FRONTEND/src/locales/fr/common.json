@@ -7,7 +7,9 @@
     "login": "Connexion",
     "register": "S'inscrire",
     "logout": "Déconnexion",
-    "dashboard": "Tableau de Bord"
+    "dashboard": "Tableau de Bord",
+    "addProduct": "Ajouter un Produit",
+    "createProduct": "Créer un Nouveau Produit"
   },
   "common": {
     "loading": "Chargement...",
@@ -19,16 +21,31 @@
     "edit": "Modifier",
     "search": "Rechercher",
     "filter": "Filtrer",
-    "language": "Langue"
+    "language": "Langue",
+    "toggleTheme": "Changer de thème"
   },
   "products": {
-    "title": "Nos Produits",
+    "title": "Découvrez des Produits Incroyables",
+    "subtitle": "Parcourez et gérez votre collection de produits facilement.",
+    "productsCount": "Produits",
     "price": "Prix",
     "addToCart": "Ajouter au Panier",
     "outOfStock": "Rupture de Stock",
     "description": "Description",
     "reviews": "Avis",
-    "related": "Produits Associés"
+    "related": "Produits Associés",
+    "noProducts": "Aucun Produit",
+    "noProductsDesc": "Commencez à construire votre boutique en ajoutant votre premier produit.",
+    "createProduct": "Créer un Produit",
+    "name": "Nom du Produit",
+    "imageUrl": "URL de l'Image",
+    "noProductsFound": "Aucun produit correspondant",
+    "noProductsFoundDesc": "Essayez d'ajuster votre recherche ou vos filtres pour trouver ce que vous cherchez.",
+    "extraDetails": "Détails Supplémentaires",
+    "category": "Catégorie",
+    "brand": "Marque",
+    "stock": "Stock",
+    "processing": "Traitement..."
   },
   "cart": {
     "title": "Panier d'Achat",
@@ -37,7 +54,9 @@
     "total": "Montant Total",
     "remove": "Supprimer",
     "quantity": "Quantité",
-    "update": "Mettre à Jour le Panier"
+    "update": "Mettre à Jour le Panier",
+    "openCart": "Ouvrir le panier",
+    "processing": "Traitement de la Commande..."
   },
   "footer": {
     "rights": "Tous Droits Réservés",
@@ -45,5 +64,11 @@
     "contact": "Contact",
     "privacy": "Politique de Confidentialité",
     "terms": "Conditions d'Utilisation"
+  },
+  "categories": {
+    "electronics": "Électronique",
+    "clothing": "Vêtements",
+    "books": "Livres",
+    "home": "Maison"
   }
 }

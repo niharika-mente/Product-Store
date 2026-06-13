@@ -7,7 +7,9 @@
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "addProduct": "Add Product",
+    "createProduct": "Create New Product"
   },
   "common": {
     "loading": "Loading...",
@@ -19,16 +21,31 @@
     "edit": "Edit",
     "search": "Search",
     "filter": "Filter",
-    "language": "Language"
+    "language": "Language",
+    "toggleTheme": "Toggle theme"
   },
   "products": {
-    "title": "Our Products",
+    "title": "Discover Amazing Products",
+    "subtitle": "Browse and manage your product collection with ease.",
+    "productsCount": "Products",
     "price": "Price",
     "addToCart": "Add to Cart",
     "outOfStock": "Out of Stock",
     "description": "Description",
     "reviews": "Reviews",
-    "related": "Related Products"
+    "related": "Related Products",
+    "noProducts": "No Products Yet",
+    "noProductsDesc": "Start building your store by adding your first product.",
+    "createProduct": "Create Product",
+    "name": "Product Name",
+    "imageUrl": "Image URL",
+    "noProductsFound": "No matching products",
+    "noProductsFoundDesc": "Try adjusting your search or filters to find what you're looking for.",
+    "extraDetails": "Extra Details",
+    "category": "Category",
+    "brand": "Brand",
+    "stock": "Stock",
+    "processing": "Processing..."
   },
   "cart": {
     "title": "Shopping Cart",
@@ -37,7 +54,9 @@
     "total": "Total Amount",
     "remove": "Remove",
     "quantity": "Quantity",
-    "update": "Update Cart"
+    "update": "Update Cart",
+    "openCart": "Open shopping cart",
+    "processing": "Processing Checkout..."
   },
   "footer": {
     "rights": "All Rights Reserved",
@@ -45,5 +64,11 @@
     "contact": "Contact",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "categories": {
+    "electronics": "Electronics",
+    "clothing": "Clothing",
+    "books": "Books",
+    "home": "Home & Living"
   }
 }
