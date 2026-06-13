@@ -161,8 +161,18 @@ export const useProductStore = create((set) =>({
             return { success: false, message: "Network error - could not reach API" };
         }
     },
-    
-    searchProducts: async(query) => {
+compareList: [],
+    addToCompare: (product) => set((state) => {
+      if (state.compareList.find((p) => p._id === product._id)) return state;
+      if (state.compareList.length >= 2) return state;
+      return { compareList: [...state.compareList, product] };
+    }),
+    removeFromCompare: (pid) => set((state) => ({
+      compareList: state.compareList.filter((p) => p._id !== pid),
+    })),
+    clearCompare: () => set({ compareList: [] }),
+
+    searchProducts: async (query) => {
         try {
             const res = await fetch(`${API}/api/products/search?q=${encodeURIComponent(query)}`);
             if(!res.ok){

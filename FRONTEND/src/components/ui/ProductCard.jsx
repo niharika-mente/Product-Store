@@ -11,6 +11,7 @@ import { FaEdit, FaTrash, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
+import { FaBalanceScale } from "react-icons/fa";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
@@ -21,7 +22,8 @@ const ProductCard = ({ product }) => {
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
 
-  const { deleteProduct, updateProduct, isSubmitting, isDeleting } = useProductStore();
+const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
+  const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
@@ -201,7 +203,7 @@ const ProductCard = ({ product }) => {
           ${product.price}
         </Text>
 
-        <HStack spacing={2}>
+<HStack spacing={2}>
           <IconButton
             icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
             onClick={handleWishlistToggle}
@@ -222,7 +224,6 @@ const ProductCard = ({ product }) => {
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}
           />
-
           <IconButton
             icon={<FaTrash />}
             onClick={onDeleteOpen}
@@ -231,7 +232,16 @@ const ProductCard = ({ product }) => {
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}
           />
-
+          <IconButton
+            icon={<FaBalanceScale />}
+            onClick={() => addToCompare(product)}
+            colorScheme={isInCompare ? "purple" : "gray"}
+            aria-label="Add to compare"
+            isDisabled={!isInCompare && compareList.length >= 2}
+            title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
+            transition="all 0.2s"
+            _hover={{ transform: "scale(1.1)" }}
+          />
           <Button
             colorScheme="teal"
             onClick={handleAddToCart}
