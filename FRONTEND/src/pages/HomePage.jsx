@@ -3,7 +3,7 @@ import {
   Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
   Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
-  Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure,
+  Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure, Skeleton
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";

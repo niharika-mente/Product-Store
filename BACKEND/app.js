@@ -16,13 +16,14 @@ import swaggerSpec from './swagger.js';
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
+import { validateEnv } from "./config/env.js";
 
 // These are necessary in ES modules to get __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, ".env") });
-
+validateEnv();
 const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']
     .filter((key) => !process.env[key]);
 if (missingCloudinary.length > 0) {

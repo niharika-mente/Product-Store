@@ -1,5 +1,9 @@
-import { Button, Container, Flex, HStack, Text } from '@chakra-ui/react';
-import React from 'react'
+import React, { useState } from 'react';
+import {
+  Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
+  Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
+  VStack, Box, Badge, useColorModeValue, useToast
+} from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
@@ -11,9 +15,9 @@ import { useProductStore } from "../../store/product";
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, emptyCart, totalPrice } = useCart();
+  const { cartItems, removeFromCart, emptyCart, updatedTotalPrice } = useCart();
   const { wishlistCount } = useWishlist();
-  const { searchQuery, setSearchQuery } = useProductStore();
+  const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -23,6 +27,11 @@ const Navbar = () => {
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+
+  const handleCartOpen = async () => {
+    await fetchProducts();
+    onOpen();
+  };
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
@@ -105,12 +114,12 @@ const Navbar = () => {
                 <Button position="relative" aria-label="Open wishlist">
                   <LuHeart size="20" />
                   {wishlistCount > 0 && (
-                    <Badge 
-                      colorScheme="pink" 
-                      borderRadius="full" 
-                      position="absolute" 
-                      top="-5px" 
-                      right="-5px" 
+                    <Badge
+                      colorScheme="pink"
+                      borderRadius="full"
+                      position="absolute"
+                      top="-5px"
+                      right="-5px"
                       px={2}
                     >
                       {wishlistCount}
@@ -119,15 +128,15 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              <Button onClick={onOpen} position="relative" aria-label="Open cart">
+              <Button onClick={handleCartOpen} position="relative" aria-label="Open cart">
                 <LuShoppingCart size="20" />
                 {totalItemsCount > 0 && (
-                  <Badge 
-                    colorScheme="teal" 
-                    borderRadius="full" 
-                    position="absolute" 
-                    top="-5px" 
-                    right="-5px" 
+                  <Badge
+                    colorScheme="teal"
+                    borderRadius="full"
+                    position="absolute"
+                    top="-5px"
+                    right="-5px"
                     px={2}
                   >
                     {totalItemsCount}
@@ -153,24 +162,41 @@ const Navbar = () => {
                 <Text textAlign="center" mt={10} color={labelColor}>Your cart is empty.</Text>
               ) : (
                 <VStack align="stretch" spacing={4} mt={4}>
-                  {cartItems.map((item) => (
-                    <HStack key={item._id} justify="space-between" p={3} borderWidth="1px" borderRadius="lg" borderColor={colorMode === "light" ? "gray.200" : "gray.600"}>
-                      <Box>
-                        <Text fontWeight="bold">{item.name}</Text>
-                        <Text fontSize="sm" color={labelColor}>
-                          Qty: {item.quantity} × ${item.price}
-                        </Text>
-                      </Box>
-                      <Button 
-                        size="sm" 
-                        colorScheme="red" 
-                        variant="ghost" 
-                        onClick={() => removeFromCart(item._id)}
+                  {cartItems.map((item) => {
+                    const latestProduct = products.find(
+                      (p) => p._id === item._id
+                    );
+
+                    const currentPrice =
+                      latestProduct?.price ?? item.price;
+
+                    return (
+                      <HStack
+                        key={item._id}
+                        justify="space-between"
+                        p={3}
+                        borderWidth="1px"
+                        borderRadius="lg"
+                        borderColor={colorMode === "light" ? "gray.200" : "gray.600"}
                       >
-                        Remove
-                      </Button>
-                    </HStack>
-                  ))}
+                        <Box>
+                          <Text fontWeight="bold">{item.name}</Text>
+                          <Text fontSize="sm" color={labelColor}>
+                            Qty: {item.quantity} × ${currentPrice}
+                          </Text>
+                        </Box>
+
+                        <Button
+                          size="sm"
+                          colorScheme="red"
+                          variant="ghost"
+                          onClick={() => removeFromCart(item._id)}
+                        >
+                          Remove
+                        </Button>
+                      </HStack>
+                    );
+                  })}
                 </VStack>
               )}
             </DrawerBody>
@@ -178,7 +204,7 @@ const Navbar = () => {
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">Total Amount:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${totalPrice.toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${updatedTotalPrice.toFixed(2)}</Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
