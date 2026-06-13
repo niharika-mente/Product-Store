@@ -90,7 +90,7 @@
 
 // export default WishlistPage;
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box, Heading, Text, SimpleGrid, Image, VStack, Button, useToast,
   useColorModeValue, Container, Spinner, HStack
@@ -107,6 +107,7 @@ const WishlistPage = () => {
 
   useEffect(() => {
     fetchWishlist();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRemove = async (productId, productName) => {

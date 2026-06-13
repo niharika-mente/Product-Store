@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
-import { useCart } from "../../context/CartContext.jsx";
+import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
 
