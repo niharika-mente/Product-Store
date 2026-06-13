@@ -13,7 +13,7 @@ import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
-const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
+const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare, isLoading } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
