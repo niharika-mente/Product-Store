@@ -13,9 +13,12 @@ import reviewRoutes from "./routes/review.route.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 
+// Import error handlers
+import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
+
 // These are necessary in ES modules to get __dirname
-const __filename = fileURLToPath( import.meta.url );
-const __dirname = path.dirname( __filename );
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
@@ -24,19 +27,19 @@ const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUD
 if (missingCloudinary.length > 0) {
     console.warn(`Cloudinary credentials not configured (${missingCloudinary.join(', ')}). File uploads will be unavailable; URL-based images still work.`);
 }
-
 if (process.env.NODE_ENV !== 'test') {
     connectDB();
 }
 
 const app = express();
 app.use(helmet());
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("trust proxy", 1);
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Too many requests from this IP, please try again later."
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again later.",
 });
 const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
 
@@ -53,26 +56,31 @@ app.use(cors({
     },
     credentials: true
 }));
+
 app.use(express.json());
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", limiter);
 
-
+// ============= API ROUTES =============
 app.use("/api/products", productRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 
-app.use("/api/*", (req, res) => {
-    res.status(404).json({ success: false, message: "API route not found" });
-});
+// ============= PRODUCTION STATIC FILES & REACT APP =============
+if (process.env.NODE_ENV === "production") {
+  // Serve static files from FRONTEND/dist
+  app.use(express.static(path.join(__dirname, "..", "FRONTEND", "dist")));
 
-if(process.env.NODE_ENV === "production") {
-   app.use(express.static(path.join(__dirname,"..","FRONTEND","dist")));
-
-   app.get("/*",(req,res) =>{
-      res.sendFile(path.join(__dirname,"..","FRONTEND","dist","index.html"));
-   });
+  // Catch-all route for React app (client-side routing)
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "FRONTEND", "dist", "index.html"));
+  });
 }
+
+// ============= ERROR HANDLERS (ALWAYS AT THE BOTTOM) =============
+// 404 handler for unmatched routes (API routes that don't exist)
+app.use(notFoundHandler);
+// Global error handler
+app.use(errorHandler);
 
 export default app;
