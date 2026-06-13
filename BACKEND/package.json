@@ -7,13 +7,18 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.3",
     "helmet": "^8.2.0",
     "mongodb-memory-server": "^11.0.1",
     "mongoose": "^8.13.2",
+    "multer": "^2.1.1",
     "serverless-http": "^3.0.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

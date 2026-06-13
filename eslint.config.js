@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist", "node_modules", "build", ".husky"] },
+  { ignores: ["dist", "node_modules", "build", ".husky", "FRONTEND/**", "BACKEND/demo.js", "*.js"] },
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
@@ -11,6 +11,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
+        ...globals.jest,
       },
     },
     rules: {
