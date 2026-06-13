@@ -87,3 +87,5 @@ export const DarkMode = React.forwardRef(function DarkMode(props, ref) {
     />
   )
 })
+
+/* eslint-disable react-refresh/only-export-components */
