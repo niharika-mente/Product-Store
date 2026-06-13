@@ -31,7 +31,6 @@ import {
   HStack,
   Badge,
   useDisclosure,
-  Skeleton,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
