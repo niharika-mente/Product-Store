@@ -7,6 +7,7 @@ import {
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
 import {useCart}  from "../store/cart.js";
+import { useRecentlyViewed } from "../store/product";
 
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
@@ -21,6 +22,7 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   
   const { addToCart } = useCart();
+  const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
   
   const textColor = useColorModeValue("gray.700", "gray.300");
@@ -52,6 +54,7 @@ const ProductPage = () => {
         
         if (data.success) {
           setProduct(data.data);
+          addRecentlyViewed(data.data);
         } else {
           throw new Error(data.message || "Failed to fetch product details");
         }
@@ -65,26 +68,54 @@ const ProductPage = () => {
     if (id) {
       fetchProduct();
     }
-  }, [id]);
+  }, [id, addRecentlyViewed]);
 
   const hasStock = product && product.stock !== undefined && product.stock !== null;
   const isOutOfStock = hasStock && product.stock === 0;
   const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
 
   const handleAddToCart = () => {
-    if (product && !isOutOfStock) {
-      for (let i = 0; i < quantity; i++) {
-        addToCart(product);
+    if (!product || isOutOfStock) return;
+    let added = 0;
+    let capped = false;
+    for (let i = 0; i < quantity; i++) {
+      const result = addToCart(product);
+      if (result === 'capped') {
+        capped = true;
+        break;
       }
+      added++;
+    }
+    if (added === 0) {
       toast({
-        title: "Added to Cart",
-        description: `${quantity} x ${product.name} added to your cart.`,
-        status: "success",
+        title: "Stock limit reached",
+        description: `You already have the maximum available stock of ${product.name} in your cart.`,
+        status: "warning",
         duration: 2500,
         isClosable: true,
         position: "top-right",
       });
+      return;
     }
+    if (capped) {
+      toast({
+        title: "Stock limit reached",
+        description: `Only ${added} item${added !== 1 ? 's were' : ' was'} added — you've reached the available stock for ${product.name}.`,
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    }
+    toast({
+      title: "Added to Cart",
+      description: `${added} x ${product.name} added to your cart.`,
+      status: "success",
+      duration: 2500,
+      isClosable: true,
+      position: "top-right",
+    });
   };
 
   if (loading) {

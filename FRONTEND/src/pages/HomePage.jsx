@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
+  Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
+  HStack, useDisclosure,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { useProductStore } from "../store/product";
+import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 
 const HomePage = () => {
   const { fetchProducts, products, searchQuery } = useProductStore();
+  const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+  const drawerBg = useColorModeValue("white", "gray.800");
+  const drawerTagBg = useColorModeValue("gray.50", "gray.700");
+  const drawerBorder = useColorModeValue("gray.200", "gray.600");
+  const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
 
   useEffect(() => {
     fetchProducts(sort);
@@ -162,6 +169,49 @@ const HomePage = () => {
           )}
         </VStack>
       </Container>
+
+    {recentlyViewed.length > 0 && (
+        <Button
+          position="fixed" bottom="20px" right="20px"
+          zIndex={99} colorScheme="teal" size="sm" shadow="lg"
+          onClick={onDrawerOpen}
+        >
+          Recently Viewed ({recentlyViewed.length})
+        </Button>
+      )}
+
+      <Drawer isOpen={isDrawerOpen} onClose={onDrawerClose} placement="right" size="sm">
+        <DrawerOverlay />
+        <DrawerContent bg={drawerBg}>
+          <DrawerCloseButton />
+          <DrawerHeader borderBottomWidth="1px">Recently Viewed</DrawerHeader>
+          <DrawerBody px={3} py={4}>
+            <VStack spacing={3} align="stretch">
+              {recentlyViewed.map((p) => (
+                <HStack
+                  key={p._id} spacing={3} p={3}
+                  bg={drawerTagBg} borderRadius="md"
+                  border="1px solid" borderColor={drawerBorder}
+                  as="a" href={`/product/${p._id}`}
+                  _hover={{ textDecoration: "none", borderColor: "teal.400" }}
+                  transition="all 0.2s"
+                >
+                  <Image src={p.image} alt={p.name} boxSize="48px" objectFit="cover" borderRadius="md" />
+                  <VStack align="start" spacing={0} flex={1} minW={0}>
+                    <Text fontSize="sm" fontWeight="bold" noOfLines={1}>{p.name}</Text>
+                    <Text fontSize="sm" color="teal.400">${p.price}</Text>
+                  </VStack>
+                </HStack>
+              ))}
+            </VStack>
+          </DrawerBody>
+          <DrawerFooter borderTopWidth="1px">
+            <Button size="sm" variant="ghost" colorScheme="red" onClick={clearRecentlyViewed}>
+              Clear History
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <Footer />
       <ScrollToTop />
