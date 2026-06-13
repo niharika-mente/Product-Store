@@ -99,13 +99,19 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
             </Box>
           </VStack>
 
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w={"full"}>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
+<SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w={"full"}>
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} height="300px" borderRadius="xl" />
+              ))
+            ) : (
+              filteredProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+            )}
           </SimpleGrid>
 
-          {products.length === 0 && (
+          {!isLoading && products.length === 0 && (
             <VStack gap={4} py={12}>
               <Image
                 src="/empty-state.svg"
@@ -139,7 +145,7 @@ const { fetchProducts, products, searchQuery, searchProducts, compareList, remov
             </VStack>
           )}
 
-          {products.length > 0 && filteredProducts.length === 0 && (
+          {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
             <VStack gap={4} py={12}>
               <Text fontSize="6xl">🔎</Text>
               <Text fontSize="2xl" fontWeight="bold">No matching products</Text>
