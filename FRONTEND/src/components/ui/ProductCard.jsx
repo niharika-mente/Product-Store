@@ -21,7 +21,7 @@ const ProductCard = ({ product }) => {
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
 
-  const { deleteProduct, updateProduct } = useProductStore();
+  const { deleteProduct, updateProduct, isSubmitting, isDeleting } = useProductStore();
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
@@ -266,7 +266,13 @@ const ProductCard = ({ product }) => {
               <Button ref={cancelRef} onClick={onDeleteClose}>
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={handleDeleteProduct} ml={3}>
+              <Button 
+                colorScheme="red" 
+                onClick={handleDeleteProduct} 
+                ml={3}
+                isLoading={isDeleting}
+                loadingText="Deleting..."
+              >
                 Delete
               </Button>
             </AlertDialogFooter>
@@ -398,6 +404,8 @@ const ProductCard = ({ product }) => {
               colorScheme="blue"
               mr={3}
               onClick={() => handleUpdateProduct(product._id, updatedProduct)}
+              isLoading={isSubmitting}
+              loadingText="Updating..."
             >
               Update
             </Button>

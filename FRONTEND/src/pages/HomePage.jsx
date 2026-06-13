@@ -18,6 +18,7 @@ import {
   DrawerFooter,
   HStack,
   useDisclosure,
+  Skeleton
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
@@ -27,7 +28,7 @@ import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery, searchProducts } = useProductStore();
+  const { fetchProducts, products, isLoading, searchQuery, searchProducts } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const [sort, setSort] = useState("");
   const labelColor = useColorModeValue("gray.600", "gray.300");
@@ -128,12 +129,18 @@ const HomePage = () => {
             spacing={10}
             w={"full"}
           >
-            {filteredProducts.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} height="300px" borderRadius="xl" />
+              ))
+            ) : (
+              filteredProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+            )}
           </SimpleGrid>
 
-          {products.length === 0 && (
+          {!isLoading && products.length === 0 && (
             <VStack gap={4} py={12}>
               <Image
                 src="/empty-state.svg"
@@ -180,7 +187,7 @@ const HomePage = () => {
             </VStack>
           )}
 
-          {products.length > 0 && filteredProducts.length === 0 && (
+          {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
             <VStack gap={4} py={12}>
               <Text fontSize="6xl">🔎</Text>
 
