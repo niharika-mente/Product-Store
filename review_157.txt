@@ -1,0 +1,8 @@
+﻿This PR introduces a significant regression by accidentally reverting several recently merged features! It looks like you may have branched off an outdated version of \main\ or accidentally overwritten these files with older versions while adding translations.
+
+Specifically:
+1. **\Navbar.jsx\**: The entire **Search Bar** has been deleted. The checkout logic (\handleCheckout\, \isCheckoutLoading\, \emptyCart\) in the shopping cart drawer has also been completely removed.
+2. **\CreatePage.jsx\**: The expanded "Extra Details" section (which included description, category, brand, stock, etc.) and its toggle button have been entirely deleted, reverting the page to only accept \
+ame\, \price\, and \image\.
+
+While the i18n translation work itself is great, you cannot merge this without restoring all the lost features. Please rebase your branch on the latest \main\ and carefully restore the Search Bar, Checkout logic, and the extra product fields in \CreatePage.jsx\, then apply your \useTranslation\ hooks to the updated code.
