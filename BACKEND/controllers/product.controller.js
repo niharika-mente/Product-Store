@@ -84,6 +84,7 @@ export const createProduct = async (req, res, next) => {
         name,
         price: Number(price),
         image: finalImageUrl,
+        images: Array.isArray(req.body.images) ? req.body.images : [],
         description,
         category,
         brand,
@@ -132,6 +133,7 @@ export const updateProduct = async (req, res, next) => {
         updateData.price = Number(price);
     }
     if (imageUrl !== undefined) updateData.image = imageUrl;
+    if (req.body.images !== undefined) updateData.images = Array.isArray(req.body.images) ? req.body.images : [];
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) updateData.category = category;
     if (brand !== undefined) updateData.brand = brand;

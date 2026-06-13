@@ -27,7 +27,10 @@ const productSchema = new mongoose.Schema({
       type: String,
       required: [true, "Image URL is required"],
       trim: true,
-     
+    },
+    images: {
+      type: [String],
+      default: [],
     },
     
     // Optional Fields - Extra Product Details

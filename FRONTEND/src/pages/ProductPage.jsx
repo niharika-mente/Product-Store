@@ -5,7 +5,7 @@ import {
   Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
 } from '@chakra-ui/react';
-import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import {useCart}  from "../store/cart.js";
 import { useRecentlyViewed } from "../store/product";
 
@@ -20,6 +20,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [activeImg, setActiveImg] = useState(0);
   
   const { addToCart } = useCart();
   const { addRecentlyViewed } = useRecentlyViewed();
@@ -54,6 +55,7 @@ const ProductPage = () => {
         
         if (data.success) {
           setProduct(data.data);
+          setActiveImg(0);
           addRecentlyViewed(data.data);
         } else {
           throw new Error(data.message || "Failed to fetch product details");
@@ -119,6 +121,8 @@ const ProductPage = () => {
     );
   }
 
+const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
+
   return (
     <>
       <Container maxW="container.xl" py={8}>
@@ -142,29 +146,53 @@ const ProductPage = () => {
         >
           {/* Product Image Section */}
           <GridItem>
-            <Box 
-              position="sticky"
-              top="100px"
-              w="full" 
-              h={{ base: "400px", md: "550px" }}
-              overflow="hidden" 
-              borderRadius="2xl" 
-              border="1px solid" 
-              borderColor={borderCol}
-              boxShadow="2xl"
-              bg={cardBg}
-              transition="all 0.3s"
-              _hover={{ boxShadow: "dark-lg" }}
-            >
-              <Image 
-                src={product.image} 
-                alt={product.name} 
-                objectFit="contain" 
-                w="full" 
-                h="full" 
-                p={4}
-                fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
-              />
+            <Box position="sticky" top="100px">
+              <Box
+                w="full" h={{ base: "400px", md: "550px" }}
+                overflow="hidden" borderRadius="2xl"
+                border="1px solid" borderColor={borderCol}
+                boxShadow="2xl" bg={cardBg} position="relative"
+                transition="all 0.3s" _hover={{ boxShadow: "dark-lg" }}
+              >
+                <Image
+                  src={allImages[activeImg]}
+                  alt={`${product.name} image ${activeImg + 1}`}
+                  objectFit="contain" w="full" h="full" p={4}
+                  fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
+                />
+                {allImages.length > 1 && (
+                  <>
+                    <Button
+                      position="absolute" left={2} top="50%" transform="translateY(-50%)"
+                      size="sm" borderRadius="full" zIndex={1}
+                      onClick={() => setActiveImg((prev) => (prev - 1 + allImages.length) % allImages.length)}
+                      aria-label="Previous image"
+                    ><Icon as={FaChevronLeft} /></Button>
+                    <Button
+                      position="absolute" right={2} top="50%" transform="translateY(-50%)"
+                      size="sm" borderRadius="full" zIndex={1}
+                      onClick={() => setActiveImg((prev) => (prev + 1) % allImages.length)}
+                      aria-label="Next image"
+                    ><Icon as={FaChevronRight} /></Button>
+                  </>
+                )}
+              </Box>
+              {allImages.length > 1 && (
+                <HStack spacing={2} mt={3} justify="center" flexWrap="wrap">
+                  {allImages.map((img, idx) => (
+                    <Box
+                      key={idx} as="button" onClick={() => setActiveImg(idx)}
+                      borderRadius="md" overflow="hidden" border="2px solid"
+                      borderColor={activeImg === idx ? "blue.400" : borderCol}
+                      w="60px" h="60px" transition="all 0.2s"
+                      _hover={{ borderColor: "blue.300" }}
+                      aria-label={`View image ${idx + 1}`}
+                    >
+                      <Image src={img} alt={`thumb ${idx}`} objectFit="cover" w="full" h="full" />
+                    </Box>
+                  ))}
+                </HStack>
+              )}
             </Box>
           </GridItem>
 
