@@ -73,8 +73,8 @@ const ProductReviews = ({ productId }) => {
         try {
             const res = await fetch(`${API}/api/products/${productId}/reviews`);
             if (!res.ok) {
-            throw new Error(`Server error: ${res.status} ${res.statusText}`);
-         }
+                throw new Error(`Server error: ${res.status} ${res.statusText}`);
+            }
             const data = await res.json();
             if (data.success) setReviews(data.data);
         } catch (err) {
@@ -108,9 +108,11 @@ const ProductReviews = ({ productId }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)
             });
-                if (!res.ok) {
+            
+            if (!res.ok) {
                 throw new Error(`Server error: ${res.status} ${res.statusText}`);
             }
+            
             const data = await res.json();
             if (!data.success) {
                 toast({ title: 'Error', description: data.message, status: 'error', isClosable: true, duration: 3000 });
@@ -120,17 +122,15 @@ const ProductReviews = ({ productId }) => {
                 fetchReviews();
             }
         } catch (err) {
-              console.error("Failed to submit review:", err);
+            console.error("Failed to submit review:", err);
 
-              let message;
-               if (err instanceof TypeError) {
-               message = "Network error — please check your connection";
-               }
-                else if (err.message) {
-                message = err.message;
-                }
-                 else {
-                message = "Network error. Please try again.";
+            let message;
+            if (err instanceof TypeError) {
+                message = "Network error — please check your connection";
+            } else if (err.message && err.message.startsWith("Server error:")) {
+                message = "Something went wrong on our end. Please try again later.";
+            } else {
+                message = "Failed to submit review. Please try again.";
             }
 
             toast({ title: "Error", description: message, status: "error", isClosable: true, duration: 3000 });
