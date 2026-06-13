@@ -389,7 +389,7 @@ const ProductReviews = ({ productId }) => {
     const [loading, setLoading] = useState(true);
 
     const textColor = useColorModeValue('gray.500', 'gray.400');
-    const borderCol = useColorModeValue('gray.200', 'gray.700');
+
 
     const fetchReviews = async () => {
         setLoading(true);
