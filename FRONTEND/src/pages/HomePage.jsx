@@ -3,7 +3,7 @@ import {
   Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
   Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
-  Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure, Skeleton
+  Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure, Skeleton, SkeletonText
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
@@ -13,12 +13,42 @@ import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 
+const ProductCardSkeleton = () => {
+  const bg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+
+  return (
+    <Box
+      shadow="lg"
+      rounded="lg"
+      overflow="hidden"
+      borderWidth="1px"
+      borderColor={borderColor}
+      bg={bg}
+    >
+      <Skeleton height="192px" />
+      <Box p={4}>
+        <Skeleton height="20px" mb={3} />
+        <SkeletonText noOfLines={1} width="40%" mb={4} />
+        <Skeleton height="36px" borderRadius="md" />
+      </Box>
+    </Box>
+  );
+};
+
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare, isLoading } = useProductStore();
+  const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
+  
   const [sort, setSort] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const limit = 10;
+
   const labelColor = useColorModeValue("gray.600", "gray.300");
   const drawerBg = useColorModeValue("white", "gray.800");
   const drawerTagBg = useColorModeValue("gray.50", "gray.700");
@@ -26,42 +56,51 @@ const HomePage = () => {
   const compareBg = useColorModeValue("white", "gray.800");
   const compareTagBg = useColorModeValue("gray.100", "gray.700");
 
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const limit = 10;
-
-  const debounceSearch = useDebounce(searchQuery, 500);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      if (debounceSearch.trim() !== "") {
-        searchProducts(debounceSearch);
-        return;
-      }
-      
-      const response = await fetchProducts(page, limit, sort);
-      if (response && response.success) {
-        const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
-        if (page !== normalizedPage) {
-          setPage(normalizedPage);
+    let ignore = false;
+
+    const run = async () => {
+      setLoading(true);
+
+      try {
+        const query = debouncedSearch.trim();
+
+        if (query !== "") {
+          await searchProducts(query);
           return;
         }
 
-        setTotalPages(response.totalPages);
-        setTotalProducts(response.totalProducts);
+        const response = await fetchProducts(page, limit, sort);
+        if (response && response.success && !ignore) {
+          const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
+          if (page !== normalizedPage) {
+            setPage(normalizedPage);
+            return;
+          }
+
+          setTotalPages(response.totalPages);
+          setTotalProducts(response.totalProducts);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        if (!ignore) setLoading(false);
       }
     };
 
-    loadProducts();
-  }, [fetchProducts, page, sort, debounceSearch]);
+    run();
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filteredProducts = debounceSearch.trim()
-    ? products
-    : products.filter((product) =>
-        (product.name?.toLowerCase() ?? "").includes(normalizedQuery)
-      );
+    return () => {
+      ignore = true;
+    };
+  }, [debouncedSearch, sort, page, fetchProducts, searchProducts]);
+
+  const isSearching = debouncedSearch.trim() !== "";
+  const hasNoProducts = !loading && products.length === 0 && !isSearching;
+  const hasNoSearchMatch = !loading && products.length === 0 && isSearching;
+  const displayCount = isSearching ? products.length : (totalProducts > 0 ? totalProducts : products.length);
 
   return (
     <>
@@ -114,32 +153,34 @@ const HomePage = () => {
             >
               <Text fontSize="sm">Products</Text>
               <Text fontSize="2xl" fontWeight="bold">
-                {totalProducts > 0 ? totalProducts : filteredProducts.length}
+                {loading ? "-" : displayCount}
               </Text>
             </Box>
           </VStack>
 
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w={"full"}>
-            {isLoading ? (
-              Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton key={index} height="300px" borderRadius="xl" />
-              ))
-            ) : (
-              filteredProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))
-            )}
+          {/* Product grid — skeletons while loading, real cards when ready */}
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w="full">
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))
+              : products.map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
           </SimpleGrid>
 
-          {!isLoading && products.length === 0 && !searchQuery && (
+          {/* Empty state — no products in store */}
+          {hasNoProducts && (
             <VStack gap={4} py={12}>
               <Image
                 src="/empty-state.svg"
-                alt="Empty products"
+                alt="No products"
                 width={{ base: "200px", md: "300px", lg: "400px" }}
                 objectFit="contain"
               />
-              <Text fontSize="2xl" fontWeight="bold">No Products Yet</Text>
+              <Text fontSize="2xl" fontWeight="bold">
+                No Products Yet
+              </Text>
               <Text color={labelColor} textAlign="center">
                 Start building your store by adding your first product.
               </Text>
@@ -153,9 +194,9 @@ const HomePage = () => {
                   _active={{ transform: "scale(0.98)" }}
                   sx={{
                     "@keyframes pulse": {
-                      "0%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0.6)" },
-                      "70%": { boxShadow: "0 0 0 10px rgba(66, 153, 225, 0)" },
-                      "100%": { boxShadow: "0 0 0 0 rgba(66, 153, 225, 0)" },
+                      "0%":   { boxShadow: "0 0 0 0 rgba(66,153,225,0.6)" },
+                      "70%":  { boxShadow: "0 0 0 10px rgba(66,153,225,0)" },
+                      "100%": { boxShadow: "0 0 0 0 rgba(66,153,225,0)" },
                     },
                   }}
                 >
@@ -165,23 +206,29 @@ const HomePage = () => {
             </VStack>
           )}
 
-          {!isLoading && products.length > 0 && !searchQuery && (
+          {/* Pagination */}
+          {!loading && products.length > 0 && !isSearching && (
             <Pagination
               currentPage={page}
               totalPages={totalPages}
               onPageChange={(newPage) => {
-                if ( newPage >= 1 && newPage <= totalPages ) {
+                if (newPage >= 1 && newPage <= totalPages) {
                   setPage(newPage);
                 }
               }}
             />
           )}
 
-          {!isLoading && products.length > 0 && filteredProducts.length === 0 && (
+          {/* Empty state — search returned nothing */}
+          {hasNoSearchMatch && (
             <VStack gap={4} py={12}>
               <Text fontSize="6xl">🔎</Text>
-              <Text fontSize="2xl" fontWeight="bold">No matching products</Text>
-              <Text color={labelColor} textAlign="center">Try a different search term.</Text>
+              <Text fontSize="2xl" fontWeight="bold">
+                No matching products
+              </Text>
+              <Text color={labelColor} textAlign="center">
+                Try a different search term.
+              </Text>
             </VStack>
           )}
         </VStack>

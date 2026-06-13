@@ -1,8 +1,8 @@
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
   AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
-  IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent,
-  ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue,
+  IconButton, Image, Input, ModalOverlay, ModalHeader, ModalBody, ModalFooter, Modal, ModalCloseButton, ModalContent,
+  Text, useColorModeValue,
   useDisclosure, useToast, VStack
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -18,6 +18,10 @@ const ProductCard = ({ product }) => {
   const [imagePreview, setImagePreview] = useState(product.image);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (product) setUpdatedProduct(product);
+  }, [product]);
 
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
