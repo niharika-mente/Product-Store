@@ -13,6 +13,8 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -41,7 +43,7 @@ const Navbar = () => {
     setIsCheckoutLoading(true);
 
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await fetch(`${API}/api/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
