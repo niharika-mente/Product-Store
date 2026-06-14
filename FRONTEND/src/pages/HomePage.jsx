@@ -5,7 +5,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
   Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure, Skeleton, SkeletonText
 } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Pagination from '../components/ui/Pagination';
@@ -37,7 +37,7 @@ const ProductCardSkeleton = () => {
 };
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
+  const { fetchProducts, products, searchQuery, setSearchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
@@ -48,6 +48,8 @@ const HomePage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const limit = 10;
+  
+  const [searchParams] = useSearchParams();
 
   const labelColor = useColorModeValue("gray.600", "gray.300");
   const drawerBg = useColorModeValue("white", "gray.800");
@@ -57,6 +59,14 @@ const HomePage = () => {
   const compareTagBg = useColorModeValue("gray.100", "gray.700");
 
   const debouncedSearch = useDebounce(searchQuery, 500);
+
+  // Read search query from URL on page load
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
+  }, [searchParams, setSearchQuery]);
 
   useEffect(() => {
     let ignore = false;

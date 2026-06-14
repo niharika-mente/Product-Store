@@ -4,7 +4,7 @@ import {
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -22,6 +22,7 @@ const Navbar = () => {
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -135,6 +136,15 @@ const Navbar = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (location.pathname !== '/') {
+                      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+                    } else {
+                      fetchProducts();
+                    }
+                  }
+                }}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
                 bg={useColorModeValue("gray.50", "gray.700")}
