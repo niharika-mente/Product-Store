@@ -76,13 +76,12 @@ export const useProductStore = create((set) =>({
         }
     },
 
-    fetchProducts: async (page = 1, limit = 10, sort = "") => {
+    fetchProducts: async (page = 1, limit = 10, sort = "", category = "") => {
         set({ isLoading: true, error: null });
         try {
             let url = `${API}/api/products?page=${page}&limit=${limit}`;
-            if (sort) {
-                url += `&sort=${sort}`;
-            }
+            if (sort) url += `&sort=${sort}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
             const res = await fetch(url);
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
@@ -103,6 +102,17 @@ export const useProductStore = create((set) =>({
             console.error("Network error fetching products:", error);
             set({ isLoading: false, error: "Network error - could not reach API" });
             return { success: false, message: "Network error fetching products." };
+        }
+    },
+
+    fetchCategories: async () => {
+        try {
+            const res = await fetch(`${API}/api/products/categories`);
+            if (!res.ok) return { success: false, data: [] };
+            const data = await res.json();
+            return { success: true, data: data.data };
+        } catch (error) {
+            return { success: false, data: [] };
         }
     },
 
