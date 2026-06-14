@@ -48,7 +48,7 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when quantity is negative', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg' });
+            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
 
             const response = await request(app).post('/api/checkout').send({
                 items: [{ _id: product._id, name: product.name, quantity: -5 }]
@@ -56,11 +56,11 @@ describe('Checkout API Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Item quantity must be a positive number');
+            expect(response.body.message).toBe('Item quantity must be a positive integer');
         });
 
         it('should return 400 when quantity is zero', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg' });
+            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
 
             const response = await request(app).post('/api/checkout').send({
                 items: [{ _id: product._id, name: product.name, quantity: 0 }]
@@ -68,11 +68,23 @@ describe('Checkout API Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Item quantity must be a positive number');
+            expect(response.body.message).toBe('Item quantity must be a positive integer');
+        });
+
+        it('should return 400 when quantity is a float', async () => {
+            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
+
+            const response = await request(app).post('/api/checkout').send({
+                items: [{ _id: product._id, name: product.name, quantity: 1.5 }]
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toBe('Item quantity must be a positive integer');
         });
 
         it('should return 400 when quantity is not a number', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg' });
+            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
 
             const response = await request(app).post('/api/checkout').send({
                 items: [{ _id: product._id, name: product.name, quantity: 'two' }]
@@ -80,7 +92,19 @@ describe('Checkout API Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Item quantity must be a positive number');
+            expect(response.body.message).toBe('Item quantity must be a positive integer');
+        });
+
+        it('should return 400 when quantity exceeds available stock', async () => {
+            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 3 });
+
+            const response = await request(app).post('/api/checkout').send({
+                items: [{ _id: product._id, name: product.name, quantity: 5 }]
+            });
+
+            expect(response.status).toBe(400);
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toBe(`Insufficient stock for ${product.name}`);
         });
 
         it('should return 400 for an invalid product ID', async () => {
@@ -104,7 +128,7 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 200 with correct total for valid items', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 50, image: 'img.jpg' });
+            const product = await Product.create({ name: 'Test Product', price: 50, image: 'img.jpg', stock: 10 });
 
             const response = await request(app).post('/api/checkout').send({
                 items: [{ _id: product._id, name: product.name, quantity: 3 }]
@@ -117,8 +141,8 @@ describe('Checkout API Routes', () => {
         });
 
         it('should calculate correct total for multiple items', async () => {
-            const p1 = await Product.create({ name: 'Product A', price: 20, image: 'a.jpg' });
-            const p2 = await Product.create({ name: 'Product B', price: 30, image: 'b.jpg' });
+            const p1 = await Product.create({ name: 'Product A', price: 20, image: 'a.jpg', stock: 10 });
+            const p2 = await Product.create({ name: 'Product B', price: 30, image: 'b.jpg', stock: 10 });
 
             const response = await request(app).post('/api/checkout').send({
                 items: [
