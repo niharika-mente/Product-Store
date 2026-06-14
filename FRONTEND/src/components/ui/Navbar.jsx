@@ -4,7 +4,7 @@ import {
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -20,10 +20,9 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
+  const { cartItems, removeFromCart, updatedTotalPrice } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
-  const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 

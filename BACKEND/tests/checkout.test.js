@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from '../app.js';
 import Product from '../models/product.model.js';
-
 let mongoServer;
 
 beforeAll(async () => {
@@ -162,8 +161,7 @@ describe('Checkout API Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe('Payment successful');
-            expect(response.body.total).toBe(150);
+            expect(response.body.url).toBe('https://checkout.stripe.com/test-url');
         });
 
         it('should calculate correct total for multiple items', async () => {
@@ -179,7 +177,7 @@ describe('Checkout API Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.total).toBe(70);
+            expect(response.body.url).toBe('https://checkout.stripe.com/test-url');
         });
     });
 
