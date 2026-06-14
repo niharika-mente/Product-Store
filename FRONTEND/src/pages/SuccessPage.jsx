@@ -1,18 +1,28 @@
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Container, VStack, Heading, Text, Button, Icon, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { CheckCircleIcon } from "@chakra-ui/icons";
+import { useCartStore } from "../store/cart";
 
 const SuccessPage = () => {
   const bg = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.600", "gray.300");
+  const [params] = useSearchParams();
+  const sessionId = params.get("session_id");
+  const emptyCart = useCartStore((state) => state.emptyCart);
+
+  useEffect(() => {
+    emptyCart();
+  }, [emptyCart]);
 
   return (
     <Container maxW="container.md" py={12}>
-      <VStack 
-        spacing={6} 
-        p={10} 
-        bg={bg} 
-        borderRadius="xl" 
+      <VStack
+        spacing={6}
+        p={10}
+        bg={bg}
+        borderRadius="xl"
         boxShadow="xl"
         textAlign="center"
       >
@@ -21,8 +31,13 @@ const SuccessPage = () => {
           Payment Successful!
         </Heading>
         <Text fontSize="lg" color={textColor}>
-          Thank you for your purchase. Your mock checkout completed successfully.
+          Thank you for your purchase. Your order has been confirmed.
         </Text>
+        {sessionId && (
+          <Text fontSize="sm" color={textColor}>
+            Session: {sessionId}
+          </Text>
+        )}
         <Link to="/">
           <Button colorScheme="blue" size="lg" mt={6} _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }} transition="all 0.2s">
             Continue Shopping

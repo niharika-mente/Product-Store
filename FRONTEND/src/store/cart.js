@@ -93,7 +93,7 @@ export const useCart = () => {
   const removeFromCart = useCartStore((state) => state.removeFromCart);
   const addBundleToCart = useCartStore((state) => state.addBundleToCart);
   const emptyCart = useCartStore((state) => state.emptyCart);
-  
+
   const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   return { cartItems, addToCart, removeFromCart, addBundleToCart, emptyCart, totalPrice };

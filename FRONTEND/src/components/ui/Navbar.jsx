@@ -4,7 +4,7 @@ import {
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -13,6 +13,8 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -22,7 +24,6 @@ const Navbar = () => {
   const { cartItems, removeFromCart, totalPrice } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
-  const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -42,7 +43,7 @@ const Navbar = () => {
     setIsCheckoutLoading(true);
 
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await fetch(`${API}/api/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
@@ -62,9 +63,8 @@ const Navbar = () => {
         });
         return;
       }
-      emptyCart();
       onClose();
-      navigate("/success");
+      window.location.href = data.url;
     } catch (err) {
       console.error("Checkout failed:", err);
 
