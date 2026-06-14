@@ -19,12 +19,26 @@ const ProductCard = ({ product }) => {
   const bg = useColorModeValue("white","gray.800");
 
   const { deleteProduct ,updateProduct}=useProductStore()
-  const { addToCart } = useCart(); 
+  const { addToCart } = useCart();
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
 
+  const isOutOfStock = product.stock != null && product.stock === 0;
+
   const handleAddToCart = () => {
-    addToCart(product);
+    if (isOutOfStock) return;
+    const { status } = addToCart(product);
+    if (status === 'capped') {
+      toast({
+        title: "Stock limit reached",
+        description: `Only ${product.stock} unit(s) of ${product.name} are available.`,
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+    if (status === 'out_of_stock') return;
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your shopping cart.`,
@@ -145,13 +159,16 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
           }}
         />
         
-        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
+        <Button
+          colorScheme='teal'
+          onClick={handleAddToCart}
+          size='sm'
+          flex={1}
+          isDisabled={isOutOfStock}
           transition="all 0.2s"
-          _hover={{
-            transform: "translateY(-2px)",
-          }}
+          _hover={{ transform: isOutOfStock ? "none" : "translateY(-2px)" }}
         >
-          Add to Cart
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
       </HStack>
     </Box>

@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, Container, Flex, Image, Heading, Text, Button, 
   Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle } from 'react-icons/fa';
-import { useCart } from '../context/CartContext.jsx';
+import { useCart } from '../store/cart.js';
 import RelatedProducts from '../components/ui/RelatedProducts';
 
 const API = ( import.meta.env.VITE_API_URL || "" ).replace( /\/$/, "" );
 
 const ProductPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,9 +25,12 @@ const ProductPage = () => {
   const priceColor = useColorModeValue("blue.600", "blue.300");
   const borderCol = useColorModeValue("gray.200", "gray.700");
   const cardBg = useColorModeValue("white", "gray.800");
-  const badgeBg = useColorModeValue("green.50", "green.900");
   const featureBg = useColorModeValue("gray.50", "gray.700");
   const infoColor = useColorModeValue("gray.600", "gray.400");
+
+  const hasStock = product && product.stock !== undefined && product.stock !== null;
+  const isOutOfStock = hasStock && product.stock === 0;
+  const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -68,19 +70,38 @@ const ProductPage = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    if (product) {
-      for (let i = 0; i < quantity; i++) {
-        addToCart(product);
-      }
+    if (!product || isOutOfStock) return;
+    const { status, added } = addToCart(product, quantity);
+    if (added === 0) {
       toast({
-        title: "Added to Cart",
-        description: `${quantity} x ${product.name} added to your cart.`,
-        status: "success",
+        title: "Stock limit reached",
+        description: `You already have the maximum available stock of ${product.name} in your cart.`,
+        status: "warning",
         duration: 2500,
         isClosable: true,
         position: "top-right",
       });
+      return;
     }
+    if (status === 'capped') {
+      toast({
+        title: "Stock limit reached",
+        description: `Only ${added} item${added !== 1 ? 's were' : ' was'} added — you've reached the available stock for ${product.name}.`,
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+        position: "top-right",
+      });
+      return;
+    }
+    toast({
+      title: "Added to Cart",
+      description: `${added} x ${product.name} added to your cart.`,
+      status: "success",
+      duration: 2500,
+      isClosable: true,
+      position: "top-right",
+    });
   };
 
   if (loading) {
@@ -264,20 +285,20 @@ const ProductPage = () => {
               <Box>
                 <Text fontWeight="semibold" mb={2}>Quantity</Text>
                 <HStack spacing={3}>
-                  <Button 
-                    size="md" 
+                  <Button
+                    size="md"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    isDisabled={quantity <= 1}
+                    isDisabled={quantity <= 1 || isOutOfStock}
                   >
                     -
                   </Button>
                   <Text fontSize="xl" fontWeight="bold" minW="50px" textAlign="center">
                     {quantity}
                   </Text>
-                  <Button 
-                    size="md" 
-                    onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                    isDisabled={quantity >= 10}
+                  <Button
+                    size="md"
+                    onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                    isDisabled={quantity >= maxQty || isOutOfStock}
                   >
                     +
                   </Button>
@@ -285,22 +306,23 @@ const ProductPage = () => {
               </Box>
 
               {/* Add to Cart Button */}
-              <Button 
-                colorScheme="blue" 
-                size="lg" 
+              <Button
+                colorScheme="blue"
+                size="lg"
                 fontSize="lg"
                 h="60px"
                 onClick={handleAddToCart}
                 leftIcon={<FaShoppingCart />}
+                isDisabled={isOutOfStock}
                 boxShadow="lg"
-                _hover={{ 
-                  transform: "translateY(-3px)", 
-                  boxShadow: "2xl" 
+                _hover={{
+                  transform: isOutOfStock ? "none" : "translateY(-3px)",
+                  boxShadow: "2xl",
                 }}
                 _active={{ transform: "translateY(0)" }}
                 transition="all 0.2s"
               >
-                Add {quantity > 1 ? `${quantity} items` : ''} to Cart
+                {isOutOfStock ? "Out of Stock" : `Add ${quantity > 1 ? `${quantity} items` : ''} to Cart`}
               </Button>
 
               {/* Features Grid */}
