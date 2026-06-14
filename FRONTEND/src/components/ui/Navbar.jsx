@@ -63,9 +63,8 @@ const Navbar = () => {
         });
         return;
       }
-      emptyCart();
       onClose();
-      navigate("/success");
+      window.location.href = data.url;
     } catch (err) {
       console.error("Checkout failed:", err);
 
