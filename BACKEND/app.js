@@ -14,6 +14,7 @@ import reviewRoutes from "./routes/review.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
+import { stripeWebhook } from "./controllers/checkout.controller.js";
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
@@ -61,10 +62,13 @@ app.use(cors({
     },
     credentials: true
 }));
-
-app.use(express.json());
 app.use(passport.initialize());
 app.use("/api", limiter);
+
+// Stripe webhook needs raw body — must be registered before express.json()
+app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
+
+app.use(express.json());
 
 // ============= API ROUTES =============
 app.use("/api/products", productRoutes);
