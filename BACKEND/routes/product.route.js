@@ -126,6 +126,7 @@
 
 import express from "express";
 import upload, { handleUploadError } from "../middleware/upload.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts, searchProducts, getProductBundle } from "../controllers/product.controller.js";
 
 const router = express.Router();
@@ -135,8 +136,8 @@ router.get("/related/:id", getRelatedProducts);
 router.get("/search", searchProducts);
 router.get("/:id/bundle", getProductBundle);
 router.get("/:id", getProductById);
-router.post("/", upload.single("image"), handleUploadError, createProduct);
-router.put("/:id", upload.single("image"), handleUploadError, updateProduct);
-router.delete("/:id", deleteProduct);
+router.post("/", protect, authorize('admin'), upload.single("image"), handleUploadError, createProduct);
+router.put("/:id", protect, authorize('admin'), upload.single("image"), handleUploadError, updateProduct);
+router.delete("/:id", protect, authorize('admin'), deleteProduct);
 
 export default router;
