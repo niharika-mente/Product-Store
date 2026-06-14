@@ -1,5 +1,6 @@
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import { escapeRegex } from '../utils/escapeRegex.js';
 
 export const getProducts = async (req, res) => {
     try {
@@ -194,7 +195,8 @@ export const searchProducts=async(req,res)=>{
     console.log("Search query:", q);
 
     try {
-        const regex = new RegExp(q, 'i');
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
         console.log("Constructed regex:", regex); 
         const products=await Product.find({name:regex});
         res.status(200).json({success:true,data:products});
