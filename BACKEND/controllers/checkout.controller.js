@@ -20,20 +20,29 @@ export const createCheckoutSession = async (req, res) => {
 
         const lineItems = [];
 
+        // Validate quantities and IDs before hitting the DB
         for (const item of items) {
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                return res.status(400).json({ success: false, message: "Item quantity must be a positive integer" });
+            }
             if (!mongoose.Types.ObjectId.isValid(item._id)) {
                 return res.status(400).json({ success: false, message: `Invalid Product Id: ${item._id}` });
             }
+        }
 
-            const product = await Product.findById(item._id);
+        // Batch fetch all products to avoid N+1 queries; exclude soft-deleted items
+        const ids = items.map((item) => item._id);
+        const products = await Product.find({ _id: { $in: ids }, isDeleted: { $ne: true } });
+        const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+        for (const item of items) {
+            const product = productMap.get(item._id.toString());
             if (!product) {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
-            const quantity = Math.max(1, Math.floor(Number(item.quantity)));
-
-            if (!Number.isFinite(quantity) || quantity < 1) {
-              return res.status(400).json({ success: false, message: `Invalid quantity for product: ${product.name}` });
+            if (item.quantity > product.stock) {
+                return res.status(400).json({ success: false, message: `Insufficient stock for ${product.name}` });
             }
 
             lineItems.push({
@@ -45,7 +54,7 @@ export const createCheckoutSession = async (req, res) => {
                     },
                     unit_amount: Math.round(product.price * 100),
                 },
-                quantity,
+                quantity: item.quantity,
             });
         }
 
