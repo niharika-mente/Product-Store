@@ -18,8 +18,27 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
       minlength: 6,
+      // Not required because OAuth users won't have a password initially
+    },
+
+    googleId: {
+      type: String,
+    },
+
+    githubId: {
+      type: String,
+    },
+
+    avatar: {
+      type: String,
+      default: '',
+    },
+
+    provider: {
+      type: String,
+      enum: ['local', 'google', 'github'],
+      default: 'local',
     },
     themePreference: {
       type: String,
