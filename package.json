@@ -20,7 +20,19 @@
     "serverless-http": "^4.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.22.0",
     "cross-env": "^7.0.3",
-    "nodemon": "^3.1.9"
+    "eslint": "^9.22.0",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.9",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }

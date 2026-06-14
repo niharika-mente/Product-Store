@@ -14,6 +14,7 @@ Whether you're fixing bugs, improving the UI, enhancing API performance, adding 
 - [Getting Started](#getting-started)
   - [Fork & Clone the Repository](#fork--clone-the-repository)
   - [Development Setup](#development-setup)
+  - [Pre-Commit Hooks](#pre-commit-hooks)
 - [Project Structure](#project-structure)
 - [Contribution Areas](#contribution-areas)
 - [Branch Naming Conventions](#branch-naming-conventions)
@@ -147,6 +148,62 @@ Application URLs:
 Backend:  http://localhost:5000
 Frontend: http://localhost:5173
 ```
+
+---
+
+### Pre-Commit Hooks
+
+This project uses **Husky** and **lint-staged** to automatically enforce code quality before commits.
+
+#### What Happens When You Commit
+
+Before each commit, the following checks automatically run on your changed files:
+
+1. **ESLint** — Fixes fixable linting issues (unused variables, formatting, etc.)
+2. **Prettier** — Automatically formats your code
+
+#### If a Commit is Rejected
+
+If your commit is blocked due to unfixable linting errors:
+
+1. **Review the error messages** — they will specify what needs to be fixed
+2. **Fix the issues** — manually resolve any errors that ESLint couldn't auto-fix
+3. **Stage your changes** — `git add .`
+4. **Try committing again** — `git commit -m "your message"`
+
+#### Example Workflow
+
+```bash
+# Make changes to a file
+# Stage changes
+git add .
+
+# Attempt to commit
+git commit -m "Add new feature"
+
+# ✅ If code is clean: Commit succeeds
+# ✖️ If there are errors: Commit is blocked with error details
+#    → Fix the errors
+#    → Run git commit again
+```
+
+#### Reinstalling Hooks (After Cloning)
+
+If hooks don't run after cloning the repository:
+
+```bash
+husky install
+```
+
+#### Bypassing Hooks (Not Recommended)
+
+To skip the pre-commit checks (only when absolutely necessary):
+
+```bash
+git commit --no-verify
+```
+
+**⚠️ Note:** Bypassing hooks can lead to code quality issues and PR review delays. Use only in exceptional cases.
 
 ---
 
