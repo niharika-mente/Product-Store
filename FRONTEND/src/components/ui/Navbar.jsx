@@ -18,7 +18,8 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
+  //const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
+  const { cartItems, removeFromCart, totalPrice } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
@@ -244,7 +245,7 @@ const Navbar = () => {
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${updatedTotalPrice.toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${Number(totalPrice ?? 0).toFixed(2)}</Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
