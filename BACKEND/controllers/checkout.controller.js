@@ -19,9 +19,9 @@ export const processCheckout = async (req, res) => {
             }
         }
 
-        // Batch fetch all products to avoid N+1 queries
+        // Batch fetch all products to avoid N+1 queries; exclude soft-deleted items
         const ids = items.map((item) => item._id);
-        const products = await Product.find({ _id: { $in: ids } });
+        const products = await Product.find({ _id: { $in: ids }, isDeleted: { $ne: true } });
         const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
         let calculatedTotal = 0;

@@ -127,6 +127,32 @@ describe('Checkout API Routes', () => {
             expect(response.body.success).toBe(false);
         });
 
+        it('should return 404 when a cart item has been soft-deleted', async () => {
+            const product = await Product.create({ name: 'Deleted Product', price: 50, image: 'img.jpg', stock: 10, isDeleted: true });
+
+            const response = await request(app).post('/api/checkout').send({
+                items: [{ _id: product._id, name: product.name, quantity: 1 }]
+            });
+
+            expect(response.status).toBe(404);
+            expect(response.body.success).toBe(false);
+        });
+
+        it('should return 404 when one item in a multi-item cart has been soft-deleted', async () => {
+            const active = await Product.create({ name: 'Active Product', price: 30, image: 'a.jpg', stock: 10 });
+            const deleted = await Product.create({ name: 'Removed Product', price: 20, image: 'b.jpg', stock: 10, isDeleted: true });
+
+            const response = await request(app).post('/api/checkout').send({
+                items: [
+                    { _id: active._id, name: active.name, quantity: 1 },
+                    { _id: deleted._id, name: deleted.name, quantity: 1 }
+                ]
+            });
+
+            expect(response.status).toBe(404);
+            expect(response.body.success).toBe(false);
+        });
+
         it('should return 200 with correct total for valid items', async () => {
             const product = await Product.create({ name: 'Test Product', price: 50, image: 'img.jpg', stock: 10 });
 
