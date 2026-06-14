@@ -11,6 +11,7 @@ import authRoutes from "./routes/auth.routes.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 
@@ -62,6 +63,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(passport.initialize());
 app.use("/api", limiter);
 
 // ============= API ROUTES =============

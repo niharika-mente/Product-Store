@@ -4,7 +4,7 @@ import {
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -18,10 +18,10 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, updatedTotalPrice } = useCart();
+  const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -46,14 +46,43 @@ const Navbar = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
       });
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status} ${res.statusText}`);
+      }
       const data = await res.json();
 
       if (!data.success) {
-        toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
+        toast({
+          title: "Checkout Error",
+          description: data.message,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
         return;
       }
-    } catch (error) {
-      toast({ title: "Checkout Error", description: error.message || "Something went wrong", status: "error", duration: 3000, isClosable: true });
+      emptyCart();
+      onClose();
+      navigate("/success");
+    } catch (err) {
+      console.error("Checkout failed:", err);
+
+      let message;
+      if (err instanceof TypeError) {
+        message = "Network error — please check your connection";
+      } else if (err.message && err.message.startsWith("Server error:")) {
+        message = "Something went wrong on our end. Please try again later.";
+      } else {
+        message = "Failed to process checkout";
+      }
+
+      toast({
+        title: "Error",
+        description: message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     } finally {
       setIsCheckoutLoading(false);
     }
