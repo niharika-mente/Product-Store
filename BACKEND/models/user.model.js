@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema(
       default: '',
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     provider: {
       type: String,
       enum: ['local', 'google', 'github'],
