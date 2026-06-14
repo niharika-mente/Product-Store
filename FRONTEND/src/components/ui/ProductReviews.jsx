@@ -52,12 +52,14 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
     );
 };
 
-const RatingSummary = ({ reviews }) => {
+const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     const labelColor = useColorModeValue('gray.600', 'gray.400');
-    const barBg      = useColorModeValue('gray.100', 'gray.700');
-    const barFill    = useColorModeValue('yellow.400', 'yellow.300');
-    const cardBg     = useColorModeValue('gray.50', 'gray.700');
-    const borderCol  = useColorModeValue('gray.200', 'gray.600');
+    const barBg        = useColorModeValue('gray.100', 'gray.700');
+    const barFill      = useColorModeValue('yellow.400', 'yellow.300');
+    const cardBg       = useColorModeValue('gray.50', 'gray.700');
+    const borderCol    = useColorModeValue('gray.200', 'gray.600');
+    const activeRowBg  = useColorModeValue('yellow.50', 'yellow.900');
+    const hoverRowBg   = useColorModeValue('gray.50', 'gray.600');
 
     if (reviews.length === 0) return null;
 
@@ -100,16 +102,27 @@ const RatingSummary = ({ reviews }) => {
                 <VStack spacing={1} flex={1} w="full" align="stretch">
                     {distribution.map(({ star, count }) => {
                         const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                        const isActive = filterStar === star;
                         return (
-                            <HStack key={star} spacing={2}>
-                                <Text fontSize="xs" color={labelColor} w="8px">
-                                    {star}
+                            <HStack
+                                key={star} spacing={2}
+                                as="button" type="button" onClick={() => onFilterChange(star)}
+                                borderRadius="md" px={1}
+                                bg={isActive ? activeRowBg : 'transparent'}
+                                border="1px solid"
+                                borderColor={isActive ? 'yellow.400' : 'transparent'}
+                                transition="all 0.2s"
+                                _hover={{ bg: hoverRowBg, cursor: 'pointer' }}
+                                w="full"
+                            >
+                                <Text fontSize="xs" color={labelColor} minW="14px" textAlign="right">
+                                    {star}★
                                 </Text>
                                 <Box flex={1} bg={barBg} borderRadius="full" h="8px" overflow="hidden">
                                     <Box
                                         w={`${pct}%`}
                                         h="full"
-                                        bg={barFill}
+                                        bg={isActive ? 'yellow.500' : barFill}
                                         borderRadius="full"
                                         transition="width 0.5s ease"
                                     />
@@ -404,6 +417,8 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
 const ProductReviews = ({ productId }) => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filterStar, setFilterStar] = useState(null);
+    const [sortOrder, setSortOrder] = useState('newest');
 
     const textColor = useColorModeValue('gray.500', 'gray.400');
 
@@ -453,8 +468,13 @@ const ProductReviews = ({ productId }) => {
                 )}
             </HStack>
 
-            {/* Rating summary bar (only when there are reviews) */}
-            {!loading && reviews.length > 0 && <RatingSummary reviews={reviews} />}
+                {!loading && reviews.length > 0 && (
+                <RatingSummary
+                    reviews={reviews}
+                    filterStar={filterStar}
+                    onFilterChange={(star) => setFilterStar((prev) => prev === star ? null : star)}
+                />
+            )}
 
             {/* Two-column layout: review list + form */}
             <Flex
@@ -487,9 +507,40 @@ const ProductReviews = ({ productId }) => {
                         </VStack>
                     ) : (
                         <VStack spacing={4} align="stretch">
-                            {reviews.map((r) => (
-                                <ReviewCard key={r._id} review={r} />
-                            ))}
+                            <HStack mb={2} justify="flex-end">
+                                <Button
+                                    size="xs" variant={sortOrder === 'newest' ? 'solid' : 'outline'}
+                                    colorScheme="blue" onClick={() => setSortOrder('newest')}
+                                >Newest</Button>
+                                <Button
+                                    size="xs" variant={sortOrder === 'highest' ? 'solid' : 'outline'}
+                                    colorScheme="blue" onClick={() => setSortOrder('highest')}
+                                >Highest Rated</Button>
+                                <Button
+                                    size="xs" variant={sortOrder === 'lowest' ? 'solid' : 'outline'}
+                                    colorScheme="blue" onClick={() => setSortOrder('lowest')}
+                                >Lowest Rated</Button>
+                            </HStack>
+                            {filterStar && (
+                                <HStack>
+                                    <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="sm">
+                                        Showing {filterStar}★ reviews ({reviews.filter(r => r.rating === filterStar).length})
+                                    </Badge>
+                                    <Button size="xs" variant="ghost" onClick={() => setFilterStar(null)}>
+                                        Clear filter
+                                    </Button>
+                                </HStack>
+                            )}
+                            {reviews
+                                .filter((r) => filterStar ? r.rating === filterStar : true)
+                                .sort((a, b) => {
+                                    if (sortOrder === 'highest') return b.rating - a.rating;
+                                    if (sortOrder === 'lowest') return a.rating - b.rating;
+                                    return new Date(b.createdAt) - new Date(a.createdAt);
+                                })
+                                .map((r) => (
+                                    <ReviewCard key={r._id} review={r} />
+                                ))}
                         </VStack>
                     )}
                 </Box>
