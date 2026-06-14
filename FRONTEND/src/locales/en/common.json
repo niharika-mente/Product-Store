@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "cart": "Cart",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "addProduct": "Add Product",
+    "createProduct": "Create New Product"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "language": "Language",
+    "toggleTheme": "Toggle theme"
+  },
+  "products": {
+    "title": "Discover Amazing Products",
+    "subtitle": "Browse and manage your product collection with ease.",
+    "productsCount": "Products",
+    "price": "Price",
+    "addToCart": "Add to Cart",
+    "outOfStock": "Out of Stock",
+    "description": "Description",
+    "reviews": "Reviews",
+    "related": "Related Products",
+    "noProducts": "No Products Yet",
+    "noProductsDesc": "Start building your store by adding your first product.",
+    "createProduct": "Create Product",
+    "name": "Product Name",
+    "imageUrl": "Image URL",
+    "noProductsFound": "No matching products",
+    "noProductsFoundDesc": "Try adjusting your search or filters to find what you're looking for.",
+    "extraDetails": "Extra Details",
+    "category": "Category",
+    "brand": "Brand",
+    "stock": "Stock",
+    "processing": "Processing..."
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "checkout": "Proceed to Checkout",
+    "total": "Total Amount",
+    "remove": "Remove",
+    "quantity": "Quantity",
+    "update": "Update Cart",
+    "openCart": "Open shopping cart",
+    "processing": "Processing Checkout..."
+  },
+  "footer": {
+    "rights": "All Rights Reserved",
+    "about": "About Us",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "categories": {
+    "electronics": "Electronics",
+    "clothing": "Clothing",
+    "books": "Books",
+    "home": "Home & Living"
+  }
+}

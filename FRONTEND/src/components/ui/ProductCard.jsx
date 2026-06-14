@@ -1,8 +1,8 @@
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
   AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
-  IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent,
-  ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue,
+  IconButton, Image, Input, ModalOverlay, ModalHeader, ModalBody, ModalFooter, Modal, ModalCloseButton, ModalContent,
+  Text, useColorModeValue,
   useDisclosure, useToast, VStack
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -19,8 +19,14 @@ const ProductCard = ({ product }) => {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const fileInputRef = useRef(null);
 
+  useEffect(() => {
+    if (product) setUpdatedProduct(product);
+  }, [product]);
+
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
 const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
@@ -30,6 +36,8 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = useRef();
+
+  const isOutOfStock = product.stock != null && product.stock === 0;
 
   useEffect(() => {
     const checkWishlist = async () => {
@@ -66,7 +74,19 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
   };
 
   const handleAddToCart = () => {
-    addToCart(product);
+    if (isOutOfStock) return;
+    const { status } = addToCart(product);
+    if (status === 'capped') {
+      toast({
+        title: "Stock limit reached",
+        description: `Only ${product.stock} unit(s) of ${product.name} are available.`,
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+    if (status === 'out_of_stock') return;
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your shopping cart.`,
@@ -120,21 +140,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
     onDeleteClose();
     const { success, message } = await deleteProduct(product._id);
     if (!success) {
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
     } else {
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Success", description: "Product deleted successfully", status: "success", duration: 3000, isClosable: true });
     }
   };
 
@@ -142,25 +150,11 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
     const { success, message } = await updateProduct(pid, updatedProduct);
     onClose();
     if (!success) {
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
     } else {
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: "Success", description: "Product updated successfully", status: "success", duration: 3000, isClosable: true });
     }
   };
-
-  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
     <Box
@@ -247,11 +241,12 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
             onClick={handleAddToCart}
             size="sm"
             flex={1}
+            isDisabled={isOutOfStock}
             aria-label={`Add ${product.name} to cart`}
             transition="all 0.2s"
-            _hover={{ transform: "translateY(-2px)" }}
+            _hover={{ transform: isOutOfStock ? "none" : "translateY(-2px)" }}
           >
-            Add to Cart
+            {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </Button>
         </HStack>
       </Box>
@@ -267,11 +262,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
               Delete Product
             </AlertDialogHeader>
-
             <AlertDialogBody>
               Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
             </AlertDialogBody>
-
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onDeleteClose}>
                 Cancel
@@ -352,7 +345,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
                 />
               )}
 
-              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={useColorModeValue("gray.600", "gray.300")} mt={2}>
+              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={optionalLabelColor} mt={2}>
                 Optional Details
               </Text>
 
@@ -385,7 +378,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
                 name="stock"
                 type="number"
                 aria-label="Stock Quantity"
-                value={updatedProduct.stock || ''}
+                value={updatedProduct.stock ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })}
               />
 
@@ -394,8 +387,8 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
                 name="originalPrice"
                 type="number"
                 aria-label="Original Price"
-                value={updatedProduct.originalPrice || ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: Number(e.target.value) })}
+                value={updatedProduct.originalPrice ?? ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
               />
 
               <Input
@@ -403,12 +396,11 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
                 name="discount"
                 type="number"
                 aria-label="Discount Percentage"
-                value={updatedProduct.discount || ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: Number(e.target.value) })}
+                value={updatedProduct.discount ?? ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: e.target.value === '' ? '' : Number(e.target.value) })}
               />
             </VStack>
           </ModalBody>
-
           <ModalFooter>
             <Button
               colorScheme="blue"
