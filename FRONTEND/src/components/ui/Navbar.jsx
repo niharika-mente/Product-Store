@@ -13,6 +13,8 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -41,7 +43,7 @@ const Navbar = () => {
     setIsCheckoutLoading(true);
 
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await fetch(`${API}/api/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
@@ -244,7 +246,7 @@ const Navbar = () => {
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${updatedTotalPrice.toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${Number(updatedTotalPrice ?? 0).toFixed(2)}</Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
