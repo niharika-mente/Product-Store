@@ -112,6 +112,7 @@ export const useProductStore = create((set) =>({
             const data = await res.json();
             return { success: true, data: data.data };
         } catch (error) {
+            console.error("Network error fetching categories:", error);
             return { success: false, data: [] };
         }
     },
