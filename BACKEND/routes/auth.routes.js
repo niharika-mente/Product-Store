@@ -9,14 +9,16 @@ import {
 } from "../controllers/auth.controller.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
+import { loginLimiter, logoutLimiter, registerLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
+router.post("/register",registerLimiter, registerUser);
 
-router.post("/login", loginUser);
+router.post("/login",loginLimiter, loginUser);
 
-router.post("/logout", authMiddleware, logoutUser);
+router.post("/logout", logoutLimiter, authMiddleware,logoutUser);
+
 
 // Social OAuth Routes
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
