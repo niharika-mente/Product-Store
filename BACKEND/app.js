@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import path from "path";
+import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/product.route.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -36,6 +37,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 const app = express();
 app.use(helmet());
+app.use(cookieParser());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("trust proxy", 1);
 

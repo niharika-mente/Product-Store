@@ -1,21 +1,14 @@
 import React, { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Container, Spinner, Text, VStack } from '@chakra-ui/react';
 
 const AuthCallbackPage = () => {
-  const [params] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = params.get('token');
-    if (token) {
-      localStorage.setItem('authToken', token);
-      
-      fetch('/api/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+    fetch('/api/auth/me', {
+      credentials: 'include',
+    })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -28,10 +21,7 @@ const AuthCallbackPage = () => {
       .catch(() => {
         navigate('/login');
       });
-    } else {
-      navigate('/login');
-    }
-  }, [navigate, params]);
+  }, [navigate]);
 
   return (
     <Container maxW="md" py={20}>
