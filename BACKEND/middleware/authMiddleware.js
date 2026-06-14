@@ -1,51 +1,62 @@
-import jwt from "jsonwebtoken";
 
-const authMiddleware = (req, res, next) => {
+import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
+
+const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (
-      !authHeader ||
-      !authHeader.startsWith("Bearer ")
-    ) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized access",
+        message: "Access denied. No token provided.",
       });
     }
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    // JWT specific errors alag handle honge
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Token has expired. Please login again.",
+        });
+      }
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token. Authentication failed.",
+      });
+    }
 
-    req.user = decoded;
+    // User existence verify karo DB se
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User no longer exists.",
+      });
+    }
+
+    // Sensitive fields exclude — sirf safe data attach karo
+    req.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      themePreference: user.themePreference,
+    };
 
     next();
   } catch (error) {
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      message: "Invalid token",
+      message: "Internal server error during authentication.",
     });
   }
 };
 
 export default authMiddleware;
-export const protect = async (req, res, next) => {
-  try {
-    let token = req.headers.authorization;
-    
-    if (!token || !token.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Not authorized, no token" });
-    }
-
-    token = token.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { _id: decoded.id };
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Not authorized, token failed" });
-  }
-};
