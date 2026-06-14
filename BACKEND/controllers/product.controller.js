@@ -36,7 +36,7 @@ export const getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
-        const { sort } = req.query;
+        const { sort, category } = req.query;
 
         if (page < 1 || limit < 1) {
             return res.status(400).json({
@@ -54,9 +54,12 @@ export const getProducts = async (req, res, next) => {
             sortOption = { createdAt: -1 };
         }
 
+        const filter = { isDeleted: { $ne: true } };
+        if (category) filter.category = category;
+
         const skip = (page - 1) * limit;
-        const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
-        const products = await Product.find({ isDeleted: { $ne: true } }).sort(sortOption).skip(skip).limit(limit);
+        const totalProducts = await Product.countDocuments(filter);
+        const products = await Product.find(filter).sort(sortOption).skip(skip).limit(limit);
         const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
 
         res.status(200).json({
@@ -67,6 +70,16 @@ export const getProducts = async (req, res, next) => {
             limit,
             data: products,
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get distinct product categories
+export const getProductCategories = async (req, res, next) => {
+    try {
+        const categories = await Product.distinct('category', { isDeleted: { $ne: true }, category: { $ne: '' } });
+        res.status(200).json({ success: true, data: categories.sort() });
     } catch (error) {
         next(error);
     }
