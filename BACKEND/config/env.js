@@ -34,7 +34,7 @@ export const validateEnv = () => {
     if (!value) {
       console.error(`❌ Missing env variable: ${key}`);
       hasError = true;
-    } else if (!vablidate(value)) {
+    } else if (!validate(value)) {
       console.error(`❌ Invalid env variable: ${key} — ${message}`);
       hasError = true;
     } else {
