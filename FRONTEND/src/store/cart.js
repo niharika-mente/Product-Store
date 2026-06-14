@@ -40,7 +40,7 @@ export const useCart = () => {
   const removeFromCart = useCartStore((state) => state.removeFromCart);
   const emptyCart = useCartStore((state) => state.emptyCart);
   
-  const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const totalPrice = cartItems.reduce((total, item) => total + (Number(item.price) || 0) * (item.quantity || 1), 0);
 
   return { cartItems, addToCart, removeFromCart, emptyCart, totalPrice };
 };

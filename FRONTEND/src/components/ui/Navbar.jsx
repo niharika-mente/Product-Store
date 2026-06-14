@@ -11,11 +11,12 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
-
+import { useAuth } from '../../context/AuthContext';
 const Navbar = () => {
+  const { updateThemeInDB } = useAuth();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, updatedTotalPrice } = useCart();
+  const { cartItems, removeFromCart, totalPrice } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   // const navigate = useNavigate();
@@ -27,6 +28,12 @@ const Navbar = () => {
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+
+  const handleThemeToggle = async () => {
+    const newTheme = colorMode === "light" ? "dark" : "light";
+    toggleColorMode();
+    await updateThemeInDB(newTheme);
+  };
 
   const handleCartOpen = async () => {
     await fetchProducts();
@@ -55,16 +62,6 @@ const Navbar = () => {
       setIsCheckoutLoading(false);
     }
   };
-
-  /*
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
-    navigate("/login");
-    window.location.reload();
-  };
-  */
-
   return (
     <Box
       bg={navBg}
@@ -152,7 +149,7 @@ const Navbar = () => {
                 )}
               </Button>
 
-              <Button onClick={toggleColorMode} aria-label="Toggle color mode">
+              <Button onClick={handleThemeToggle} aria-label="Toggle color mode">
                 {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
               </Button>
             </HStack>
@@ -212,7 +209,7 @@ const Navbar = () => {
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">Total Amount:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${updatedTotalPrice.toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${(totalPrice || 0).toFixed(2)}</Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout

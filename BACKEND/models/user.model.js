@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: 6,
     },
+    themePreference: {
+      type: String,
+      enum: {
+        values: ["light", "dark"],
+        message: "Theme must be either 'light' or 'dark'",
+      },
+      default: "dark",
+    },
   },
   {
     timestamps: true,

@@ -18,6 +18,7 @@ import {
 } from '@chakra-ui/react'
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function Signup() {
   const [name, setName] = useState('')
@@ -28,6 +29,7 @@ function Signup() {
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
+  const { signup } = useAuth()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -55,20 +57,7 @@ function Signup() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Unable to register. Please try again.')
-      }
-
+      await signup(name, email, password)
       toast({
         title: 'Account created successfully!',
         description: 'You can now login and start adding premium products.',
@@ -76,15 +65,7 @@ function Signup() {
         duration: 4000,
         isClosable: true,
       })
-
-      setName('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-
-      setTimeout(() => {
-        navigate('/login')
-      }, 1000)
+      setTimeout(() => navigate('/login'), 1000)
     } catch (error) {
       toast({
         title: 'Registration failed.',

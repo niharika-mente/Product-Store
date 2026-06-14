@@ -18,6 +18,7 @@ import {
 } from '@chakra-ui/react'
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -26,7 +27,7 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
-
+  const { login } = useAuth()
   const handleSubmit = async (event) => {
     event.preventDefault()
 
@@ -43,23 +44,7 @@ function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed. Please check your credentials.')
-      }
-
-      localStorage.setItem('authToken', data.token)
-      localStorage.setItem('authUser', JSON.stringify(data.user))
-
+      await login(email, password)  // AuthContext ka login use karo
       toast({
         title: 'Login successful!',
         description: 'Welcome back. Redirecting to your dashboard.',
@@ -67,10 +52,7 @@ function Login() {
         duration: 3000,
         isClosable: true,
       })
-
-      setTimeout(() => {
-        navigate('/')
-      }, 800)
+      setTimeout(() => navigate('/'), 800)
     } catch (error) {
       toast({
         title: 'Login failed.',
