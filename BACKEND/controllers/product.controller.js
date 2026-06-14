@@ -286,7 +286,7 @@ export const getRelatedProducts = async (req, res) => {
 
             if (c.tags && c.tags.length > 0) {
                 for (const tag of c.tags) {
-                    if (targetTags.has(tag.toLowerCase())) {
+                    if (targetTagsSet.has(tag.toLowerCase())) {
                         score += 2;
                     }
                 }
