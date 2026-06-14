@@ -6,6 +6,8 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  updateTheme,
+  getTheme
 } from "../controllers/auth.controller.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -41,5 +43,9 @@ router.get('/me', authMiddleware, async (req, res) => {
         data: { id: req.user._id, name: req.user.name, email: req.user.email, avatar: req.user.avatar, provider: req.user.provider }
     });
 });
+
+router.put("/theme", authMiddleware, updateTheme);
+
+router.get("/theme", authMiddleware, getTheme);
 
 export default router;

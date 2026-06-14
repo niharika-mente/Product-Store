@@ -40,6 +40,14 @@ const userSchema = new mongoose.Schema(
       enum: ['local', 'google', 'github'],
       default: 'local',
     },
+    themePreference: {
+      type: String,
+      enum: {
+        values: ["light", "dark"],
+        message: "Theme must be either 'light' or 'dark'",
+      },
+      default: "dark",
+    },
   },
   {
     timestamps: true,

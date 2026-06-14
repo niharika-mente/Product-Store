@@ -98,6 +98,7 @@ export const loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        themePreference: user.themePreference,
       },
     });
   } catch (error) {
@@ -113,6 +114,52 @@ export const logoutUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Logout successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const updateTheme = async (req, res) => {
+  try {
+    const { themePreference } = req.body;
+    if (!["light", "dark"].includes(themePreference)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid theme value",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { themePreference },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Theme updated successfully",
+      themePreference: user.themePreference,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ✅ Fetch theme from DB
+export const getTheme = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("themePreference");
+
+    res.status(200).json({
+      success: true,
+      themePreference: user.themePreference,
     });
   } catch (error) {
     res.status(500).json({
