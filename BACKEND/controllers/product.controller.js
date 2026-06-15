@@ -185,12 +185,6 @@ export const updateProduct = async (req, res, next) => {
             const result = await uploadToCloudinary(req.file.buffer);
             updateData.image = result.secure_url;
 
-            const oldPublicId = extractCloudinaryPublicId(existing.image);
-            if (oldPublicId) {
-                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-                    console.warn("Old image cleanup failed:", err.message);
-                });
-            }
         } catch (error) {
             return next(new AppError("Image upload failed", 500));
         }
@@ -201,6 +195,15 @@ export const updateProduct = async (req, res, next) => {
         if (!updatedProduct) {
             return next(new AppError("Product not found", 404));
         }
+        if (req.file){
+            const oldPublicId = extractCloudinaryPublicId(existing.image);
+                if (oldPublicId) {
+                    cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                        console.warn("Old image cleanup failed:", err.message);
+                    });
+                }
+        }
+
         res.status(200).json({ success: true, data: updatedProduct });
     } catch (error) {
         next(error);
