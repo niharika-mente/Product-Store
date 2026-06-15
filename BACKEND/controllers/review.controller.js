@@ -47,6 +47,68 @@ export const addReview = async (req, res) => {
     }
 };
 
+export const updateReview = async (req, res) => {
+    const { reviewId } = req.params;
+    const { userName, rating, comment } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+        return res.status(404).json({ success: false, message: 'Invalid review ID' });
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        return res.status(404).json({ success: false, message: 'Review not found' });
+    }
+
+    if (review.userName !== userName?.trim()) {
+        return res.status(403).json({ success: false, message: 'You can only edit your own reviews' });
+    }
+
+    if (rating && (rating < 1 || rating > 5)) {
+        return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+
+    try {
+        const updated = await Review.findByIdAndUpdate(
+            reviewId,
+            { ...(rating && { rating }), ...(comment && { comment: comment.trim() }) },
+            { new: true, runValidators: true }
+        );
+        await recalcProductRating(review.product);
+        return res.status(200).json({ success: true, data: updated });
+    } catch (error) {
+        console.error('Error updating review:', error.message);
+        return res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+export const deleteReview = async (req, res) => {
+    const { reviewId } = req.params;
+    const { userName } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+        return res.status(404).json({ success: false, message: 'Invalid review ID' });
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        return res.status(404).json({ success: false, message: 'Review not found' });
+    }
+
+    if (review.userName !== userName?.trim()) {
+        return res.status(403).json({ success: false, message: 'You can only delete your own reviews' });
+    }
+
+    try {
+        await Review.findByIdAndDelete(reviewId);
+        await recalcProductRating(review.product);
+        return res.status(200).json({ success: true, message: 'Review deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting review:', error.message);
+        return res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 export const getReviews = async (req, res) => {
     const { productId: id } = req.params;
 
