@@ -4,7 +4,7 @@ import {
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast, Tooltip
 } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -13,17 +13,17 @@ import { LuSun, LuShoppingCart, LuHeart, LuPackage } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 
 const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  //const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
-  const { cartItems, removeFromCart, totalPrice } = useCart();
+  const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -45,11 +45,7 @@ const Navbar = () => {
     setIsCheckoutLoading(true);
 
     try {
-      const token = localStorage.getItem('authToken');
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`${API}/api/checkout`, {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers,
         body: JSON.stringify({ items: cartItems }),
@@ -69,8 +65,9 @@ const Navbar = () => {
         });
         return;
       }
+      emptyCart();
       onClose();
-      window.location.href = data.url;
+      navigate("/success");
     } catch (err) {
       console.error("Checkout failed:", err);
 
@@ -142,6 +139,15 @@ const Navbar = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (location.pathname !== '/') {
+                      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+                    } else {
+                      fetchProducts();
+                    }
+                  }
+                }}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
                 bg={useColorModeValue("gray.50", "gray.700")}
@@ -261,7 +267,7 @@ const Navbar = () => {
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${Number(totalPrice ?? 0).toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${updatedTotalPrice.toFixed(2)}</Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
