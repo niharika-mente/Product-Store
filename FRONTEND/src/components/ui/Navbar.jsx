@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast
+  VStack, Box, Badge, useColorModeValue, useToast, Tooltip
 } from '@chakra-ui/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
-import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
+import { LuSun, LuShoppingCart, LuHeart, LuPackage } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
@@ -37,6 +37,8 @@ const Navbar = () => {
     onOpen();
   };
 
+  const isLoggedIn = Boolean(localStorage.getItem('authToken'));
+
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setIsCheckoutLoading(true);
@@ -44,7 +46,7 @@ const Navbar = () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ items: cartItems }),
       });
       if (!res.ok) {
@@ -177,6 +179,16 @@ const Navbar = () => {
                   )}
                 </Button>
               </Link>
+
+              {isLoggedIn && (
+                <Tooltip label="My Orders" hasArrow>
+                  <Link to={"/orders"}>
+                    <Button aria-label="My Orders">
+                      <LuPackage size="20" />
+                    </Button>
+                  </Link>
+                </Tooltip>
+              )}
 
               <Button onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
                 <LuShoppingCart size="20" />

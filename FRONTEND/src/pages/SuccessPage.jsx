@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Container, VStack, Heading, Text, Button, Icon, useColorModeValue } from "@chakra-ui/react";
+import { Container, VStack, HStack, Heading, Text, Button, Icon, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 import { useCartStore } from "../store/cart";
@@ -34,15 +34,22 @@ const SuccessPage = () => {
           Thank you for your purchase. Your order has been confirmed.
         </Text>
         {sessionId && (
-          <Text fontSize="sm" color={textColor}>
+          <Text fontSize="sm" color={textColor} fontFamily="mono">
             Session: {sessionId}
           </Text>
         )}
-        <Link to="/">
-          <Button colorScheme="blue" size="lg" mt={6} _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }} transition="all 0.2s">
-            Continue Shopping
-          </Button>
-        </Link>
+        <HStack spacing={4} mt={6} flexWrap="wrap" justify="center">
+          <Link to="/orders">
+            <Button colorScheme="cyan" size="lg" _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }} transition="all 0.2s">
+              View My Orders
+            </Button>
+          </Link>
+          <Link to="/">
+            <Button variant="outline" colorScheme="blue" size="lg" _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }} transition="all 0.2s">
+              Continue Shopping
+            </Button>
+          </Link>
+        </HStack>
       </VStack>
     </Container>
   );
