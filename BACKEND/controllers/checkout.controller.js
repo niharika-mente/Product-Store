@@ -52,7 +52,10 @@ export const createCheckoutSession = async (req, res) => {
             }
 
             if (item.quantity > product.stock) {
-                return res.status(400).json({ success: false, message: `Insufficient stock for ${product.name}` });
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for ${product.name}. Available: ${product.stock}, requested: ${item.quantity}`
+                });
             }
 
             lineItems.push({
