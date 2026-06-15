@@ -37,12 +37,14 @@ const ProductCardSkeleton = () => {
 };
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
+  const { fetchProducts, fetchCategories, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
-  
+
   const [sort, setSort] = useState("");
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -59,6 +61,12 @@ const HomePage = () => {
   const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
+    fetchCategories().then((res) => {
+      if (res.success) setCategories(res.data);
+    });
+  }, [fetchCategories]);
+
+  useEffect(() => {
     let ignore = false;
 
     const run = async () => {
@@ -72,7 +80,7 @@ const HomePage = () => {
           return;
         }
 
-        const response = await fetchProducts(page, limit, sort);
+        const response = await fetchProducts(page, limit, sort, category);
         if (response && response.success && !ignore) {
           const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
           if (page !== normalizedPage) {
@@ -95,7 +103,7 @@ const HomePage = () => {
     return () => {
       ignore = true;
     };
-  }, [debouncedSearch, sort, page, fetchProducts, searchProducts]);
+  }, [debouncedSearch, sort, category, page, fetchProducts, searchProducts]);
 
   const isSearching = debouncedSearch.trim() !== "";
   const hasNoProducts = !loading && products.length === 0 && !isSearching;
@@ -115,17 +123,30 @@ const HomePage = () => {
           >
             Current Products🚀
           </Text>
-          <Select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            maxW="250px"
-            aria-label="Sort products"
-          >
-            <option value="">Default</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="newest">Newest First</option>
-          </Select>
+          <HStack spacing={3} wrap="wrap" justify="center">
+            <Select
+              value={category}
+              onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+              maxW="220px"
+              aria-label="Filter by category"
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </Select>
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              maxW="220px"
+              aria-label="Sort products"
+            >
+              <option value="">Default</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="newest">Newest First</option>
+            </Select>
+          </HStack>
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}

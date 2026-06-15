@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
-import { 
-  Box, Container, Flex, Image, Heading, Text, Button, 
-  Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue, 
+import {
+  Box, Container, Flex, Image, Heading, Text, Button,
+  Spinner, Alert, AlertIcon, VStack, HStack, useColorModeValue,
   useToast, Badge, Divider, Icon, Grid, GridItem, SimpleGrid, Checkbox
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import {useCart}  from "../store/cart.js";
+import { useCart } from '../store/cart.js';
 import { useRecentlyViewed } from "../store/product";
-
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
 
@@ -23,17 +22,21 @@ const ProductPage = () => {
   const [bundleData, setBundleData] = useState(null);
   const [selectedBundleItems, setSelectedBundleItems] = useState([]);
   const [activeImg, setActiveImg] = useState(0);
-  
+
   const { addToCart, addBundleToCart } = useCart();
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
-  
+
   const textColor = useColorModeValue("gray.700", "gray.300");
   const priceColor = useColorModeValue("blue.600", "blue.300");
   const borderCol = useColorModeValue("gray.200", "gray.700");
   const cardBg = useColorModeValue("white", "gray.800");
   const featureBg = useColorModeValue("gray.50", "gray.700");
   const infoColor = useColorModeValue("gray.700", "gray.300");
+
+  const hasStock = product && product.stock !== undefined && product.stock !== null;
+  const isOutOfStock = hasStock && product.stock === 0;
+  const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -42,7 +45,7 @@ const ProductPage = () => {
       try {
         const url = `${API}/api/products/${id}`;
         const res = await fetch(url);
-        
+
         if (!res.ok) {
           if (res.status === 404) {
             throw new Error("Product not found. It may have been deleted or the link is invalid.");
@@ -52,9 +55,9 @@ const ProductPage = () => {
             throw new Error(`HTTP ${res.status}: Failed to fetch product`);
           }
         }
-        
+
         const data = await res.json();
-        
+
         if (data.success) {
           setProduct(data.data);
           setActiveImg(0);
@@ -73,10 +76,6 @@ const ProductPage = () => {
       fetchProduct();
     }
   }, [id, addRecentlyViewed]);
-
-  const hasStock = product && product.stock !== undefined && product.stock !== null;
-  const isOutOfStock = hasStock && product.stock === 0;
-  const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
 
   useEffect(() => {
     if (!id) return;
@@ -141,7 +140,7 @@ const ProductPage = () => {
       .filter(i => selectedBundleItems.includes(i.product._id))
       .map(i => i.product)];
     const { addedCount, skippedCount } = addBundleToCart(allItems);
-    
+
     if (addedCount > 0) {
       toast({
         title: "Bundle Added!",
@@ -151,6 +150,7 @@ const ProductPage = () => {
         isClosable: true,
         position: "top-right",
       });
+      return;
     }
 
     if (skippedCount > 0) {
@@ -192,11 +192,11 @@ const ProductPage = () => {
             <Text fontSize="sm">{error || "Product not found or has been removed."}</Text>
           </VStack>
         </Alert>
-        <Button 
-          as={RouterLink} 
-          to="/" 
-          mt={6} 
-          colorScheme="blue" 
+        <Button
+          as={RouterLink}
+          to="/"
+          mt={6}
+          colorScheme="blue"
           leftIcon={<FaArrowLeft />}
           size="lg"
         >
@@ -224,9 +224,9 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
           Back to Products
         </Button>
 
-        <Grid 
-          templateColumns={{ base: "1fr", lg: "1fr 1fr" }} 
-          gap={12} 
+        <Grid
+          templateColumns={{ base: "1fr", lg: "1fr 1fr" }}
+          gap={12}
           mb={16}
         >
           {/* Product Image Section */}
@@ -288,20 +288,20 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
               <Box>
                 {/* Stock Badge - Only show if stock data exists */}
                 {product.stock !== undefined && product.stock !== null && (
-                  <Badge 
-                    colorScheme={product.stock > 0 ? "green" : "red"} 
-                    fontSize="sm" 
-                    mb={3} 
-                    px={3} 
-                    py={1} 
+                  <Badge
+                    colorScheme={product.stock > 0 ? "green" : "red"}
+                    fontSize="sm"
+                    mb={3}
+                    px={3}
+                    py={1}
                     borderRadius="full"
                   >
                     {product.stock > 0 ? `In Stock (${product.stock} available)` : "Out of Stock"}
                   </Badge>
                 )}
-                
-                <Heading 
-                  as="h1" 
+
+                <Heading
+                  as="h1"
                   fontSize={{ base: "3xl", md: "4xl", lg: "5xl" }}
                   fontWeight="extrabold"
                   lineHeight="1.2"
@@ -344,7 +344,7 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                 <Text fontSize={{ base: "4xl", md: "5xl" }} fontWeight="bold" color={priceColor}>
                   ${product.price}
                 </Text>
-                
+
                 {/* Show original price and discount only if data exists */}
                 {product.originalPrice && product.originalPrice > product.price && (
                   <>
@@ -370,11 +370,11 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                     {product.description}
                   </Text>
                 ) : (
-                  <Box 
-                    p={4} 
-                    bg={featureBg} 
-                    borderRadius="md" 
-                    borderWidth="1px" 
+                  <Box
+                    p={4}
+                    bg={featureBg}
+                    borderRadius="md"
+                    borderWidth="1px"
                     borderColor={borderCol}
                     borderStyle="dashed"
                   >
@@ -423,12 +423,12 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                 fontSize="lg"
                 h="60px"
                 onClick={handleAddToCart}
-                isDisabled={isOutOfStock}
                 leftIcon={<FaShoppingCart />}
+                isDisabled={isOutOfStock}
                 boxShadow="lg"
                 _hover={{
                   transform: isOutOfStock ? "none" : "translateY(-3px)",
-                  boxShadow: isOutOfStock ? "lg" : "2xl"
+                  boxShadow: isOutOfStock ? "lg" : "2xl",
                 }}
                 _active={{ transform: "translateY(0)" }}
                 transition="all 0.2s"
@@ -438,27 +438,27 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
 
               {/* Features Grid */}
               <SimpleGrid columns={2} spacing={4} mt={4}>
-                <FeatureBox 
-                  icon={FaTruck} 
-                  title="Free Delivery" 
+                <FeatureBox
+                  icon={FaTruck}
+                  title="Free Delivery"
                   desc="On orders over $50"
                   bg={featureBg}
                 />
-                <FeatureBox 
-                  icon={FaShieldAlt} 
-                  title="Secure Payment" 
+                <FeatureBox
+                  icon={FaShieldAlt}
+                  title="Secure Payment"
                   desc="100% protected"
                   bg={featureBg}
                 />
-                <FeatureBox 
-                  icon={FaUndo} 
-                  title="Easy Returns" 
+                <FeatureBox
+                  icon={FaUndo}
+                  title="Easy Returns"
                   desc="30-day guarantee"
                   bg={featureBg}
                 />
-                <FeatureBox 
-                  icon={FaCheckCircle} 
-                  title="Verified Quality" 
+                <FeatureBox
+                  icon={FaCheckCircle}
+                  title="Verified Quality"
                   desc="Premium standard"
                   bg={featureBg}
                 />
@@ -602,12 +602,12 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
 // Feature Box Component
 const FeatureBox = ({ icon, title, desc, bg }) => {
   const textColor = useColorModeValue("gray.700", "gray.300");
-  
+
   return (
-    <HStack 
-      p={4} 
-      bg={bg} 
-      borderRadius="lg" 
+    <HStack
+      p={4}
+      bg={bg}
+      borderRadius="lg"
       spacing={3}
       border="1px solid"
       borderColor={useColorModeValue("gray.200", "gray.600")}
