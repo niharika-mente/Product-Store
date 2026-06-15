@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast, Tooltip
+  VStack, Box, Badge, Avatar, Menu, MenuButton, MenuList, MenuItem, useColorModeValue, useToast, Tooltip
 } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -13,17 +13,19 @@ import { LuSun, LuShoppingCart, LuHeart, LuPackage } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+import { useAuthStore } from "../../store/auth";
 
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  //const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
   const { cartItems, removeFromCart, totalPrice } = useCart();
   const { wishlistCount } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   const toast = useToast();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -38,14 +40,12 @@ const Navbar = () => {
     onOpen();
   };
 
-  const isLoggedIn = Boolean(localStorage.getItem('authToken'));
-
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setIsCheckoutLoading(true);
 
     try {
-      const token = localStorage.getItem('authToken');
+      const token = user?.token || localStorage.getItem('authToken');
       const headers = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -95,14 +95,10 @@ const Navbar = () => {
     }
   };
 
-  /*
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
+    logout();
     navigate("/login");
-    window.location.reload();
   };
-  */
 
   return (
     <Box
@@ -151,11 +147,13 @@ const Navbar = () => {
             </Box>
 
             <HStack spacing={2} alignItems={"center"}>
-              <Link to={"/create"}>
-                <Button aria-label={t('nav.addProduct')}>
-                  <PlusSquareIcon fontSize={20} />
-                </Button>
-              </Link>
+              {user?.role === "admin" && (
+                <Link to={"/create"}>
+                  <Button aria-label={t('nav.addProduct')}>
+                    <PlusSquareIcon fontSize={20} />
+                  </Button>
+                </Link>
+              )}
 
               <Link to={"/wishlist"}>
                 <Button position="relative" aria-label="Open wishlist">
@@ -175,7 +173,7 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              {isLoggedIn && (
+              {user && (
                 <Tooltip label="My Orders" hasArrow>
                   <Link to={"/orders"}>
                     <Button aria-label="My Orders">
@@ -200,6 +198,20 @@ const Navbar = () => {
                   </Badge>
                 )}
               </Button>
+
+              {user ? (
+                <Menu>
+                  <MenuButton as={Button} variant="ghost" borderRadius="full" p={0}>
+                    <Avatar size="sm" name={user.name} />
+                  </MenuButton>
+                  <MenuList>
+                    <MenuItem fontSize="sm" isDisabled>{user.email}</MenuItem>
+                    <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
+                  </MenuList>
+                </Menu>
+              ) : (
+                <Button size="sm" colorScheme="blue" onClick={() => navigate("/login")}>Sign In</Button>
+              )}
 
               <Button onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
                 {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
