@@ -1,5 +1,6 @@
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import { escapeRegex } from '../utils/escapeRegex.js';
 import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
 
@@ -375,7 +376,8 @@ export const searchProducts = async (req, res, next) => {
     const { q } = req.query;
 
     try {
-        const regex = new RegExp(q, 'i');
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
         const products = await Product.find({ name: regex });
         res.status(200).json({ success: true, data: products });
     } catch (error) {
