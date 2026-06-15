@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast, Tooltip
 } from '@chakra-ui/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -20,11 +20,17 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  //const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
-  const { cartItems, removeFromCart, totalPrice } = useCart();
-  const { wishlistCount } = useWishlist();
+  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
+  const navigate = useNavigate();
   const toast = useToast();
+  const location = useLocation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("authToken"));
+  }, [location]);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -37,8 +43,6 @@ const Navbar = () => {
     await fetchProducts();
     onOpen();
   };
-
-  const isLoggedIn = Boolean(localStorage.getItem('authToken'));
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
@@ -95,14 +99,27 @@ const Navbar = () => {
     }
   };
 
-  /*
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (err) {
+        console.error("Failed to call logout API:", err);
+      }
+    }
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
+    emptyCart();
+    clearWishlist();
     navigate("/login");
-    window.location.reload();
   };
-  */
 
   return (
     <Box
@@ -204,6 +221,12 @@ const Navbar = () => {
               <Button onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
                 {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
               </Button>
+
+              {isLoggedIn && (
+                <Button onClick={handleLogout} colorScheme="red" variant="outline">
+                  Logout
+                </Button>
+              )}
             </HStack>
           </HStack>
         </Flex>
