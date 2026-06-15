@@ -365,10 +365,6 @@ export const searchProducts = async (req, res, next) => {
     try {
         const safeQuery = escapeRegex(q);
         const regex = new RegExp(safeQuery, 'i');
-        console.log("Constructed regex:", regex); 
-        const products=await Product.find({name:regex});
-        res.status(200).json({success:true,data:products});
-        const regex = new RegExp(q, 'i');
         const products = await Product.find({ name: regex });
         res.status(200).json({ success: true, data: products });
     } catch (error) {
