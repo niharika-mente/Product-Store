@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -21,7 +22,6 @@
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "bcryptjs": "^2.4.3",
     "serverless-http": "^3.0.0",
     "stripe": "^22.2.0",
     "swagger-jsdoc": "^6.3.0",
