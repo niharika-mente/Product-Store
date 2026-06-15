@@ -94,7 +94,7 @@ describe('Product API Routes', () => {
             
             expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Invalid Product Id');
+            expect(response.body.message).toBe('Invalid Product Id format');
         });
     });
 
@@ -106,10 +106,10 @@ describe('Product API Routes', () => {
             
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe('Product deleted');
+            expect(response.body.message).toBe('Product deleted successfully');
             
             const checkProduct = await Product.findById(product._id);
-            expect(checkProduct).toBeNull();
+            expect(checkProduct.isDeleted).toBe(true);
         });
         
         it('should return 404 for an invalid ID format', async () => {
@@ -117,7 +117,7 @@ describe('Product API Routes', () => {
             
             expect(response.status).toBe(404);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Invalid Product Id');
+            expect(response.body.message).toBe('Invalid Product Id format');
         });
     });
 

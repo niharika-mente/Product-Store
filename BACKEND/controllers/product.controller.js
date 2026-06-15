@@ -36,7 +36,7 @@ export const getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
-        const { sort } = req.query;
+        const { sort, category } = req.query;
 
         if (page < 1 || limit < 1) {
             return res.status(400).json({
@@ -54,9 +54,12 @@ export const getProducts = async (req, res, next) => {
             sortOption = { createdAt: -1 };
         }
 
+        const filter = { isDeleted: { $ne: true } };
+        if (category) filter.category = category;
+
         const skip = (page - 1) * limit;
-        const totalProducts = await Product.countDocuments({ isDeleted: { $ne: true } });
-        const products = await Product.find({ isDeleted: { $ne: true } }).sort(sortOption).skip(skip).limit(limit);
+        const totalProducts = await Product.countDocuments(filter);
+        const products = await Product.find(filter).sort(sortOption).skip(skip).limit(limit);
         const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
 
         res.status(200).json({
@@ -67,6 +70,16 @@ export const getProducts = async (req, res, next) => {
             limit,
             data: products,
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get distinct product categories
+export const getProductCategories = async (req, res, next) => {
+    try {
+        const categories = await Product.distinct('category', { isDeleted: { $ne: true }, category: { $ne: '' } });
+        res.status(200).json({ success: true, data: categories.sort() });
     } catch (error) {
         next(error);
     }
@@ -231,50 +244,85 @@ export const getProductById = async (req, res, next) => {
     }
 };
 
-// @desc    Get related products
-export const getRelatedProducts = async (req, res, next) => {
+const stopWords = new Set(["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of"]);
+
+function tokenize(text) {
+    return text
+        .toLowerCase()
+        .split(/\s+/)
+        .map(w => w.replace(/[^a-z0-9]/g, ""))
+        .filter(w => w.length > 1 && !stopWords.has(w));
+}
+
+export const getRelatedProducts = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return res.status(400).json({ success: false, message: "Invalid Product Id format" });
     }
 
     try {
         const product = await Product.findById(id);
 
         if (!product || product.isDeleted === true) {
-            return next(new AppError("Product not found", 404));
+            return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        const stopWords = new Set(["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of"]);
-        const words = product.name
-            .toLowerCase()
-            .split(/\s+/)
-            .map(w => w.replace(/[^a-z0-9]/g, ""))
-            .filter(w => w.length > 1 && !stopWords.has(w));
+        const targetTagsSet = new Set((product.tags || []).map(t => t.toLowerCase()));
+        const targetWords = new Set(tokenize(product.name));
 
-        let related = [];
-        if (words.length > 0) {
-            const regexes = words.map(word => new RegExp(word, 'i'));
-            related = await Product.find({
-                _id: { $ne: product._id },
-                name: { $in: regexes },
-                isDeleted: { $ne: true }
-            }).limit(5);
-        }
+        const orConditions = [];
+        if (product.category) orConditions.push({ category: product.category });
+        if (product.brand) orConditions.push({ brand: product.brand });
+        if (targetTagsSet.size > 0) orConditions.push({ tags: { $in: [ ...targetTagsSet ] } });
 
-        if (related.length < 4) {
-            const excludeIds = [product._id, ...related.map(p => p._id)];
-            const padding = await Product.find({
-                _id: { $nin: excludeIds },
-                isDeleted: { $ne: true }
-            }).limit(5 - related.length);
-            related = [...related, ...padding];
-        }
+        const query = {
+            _id: { $ne: product._id },
+            isDeleted: { $ne: true },
+        };
+        if (orConditions.length > 0) query.$or = orConditions;
 
-        res.status(200).json({ success: true, data: related.slice(0, 5) });
+        const candidates = await Product.find(query).sort({ updatedAt: -1 }).limit(50);
+
+        const scored = candidates.map(c => {
+            let score = 0;
+
+            if (c.category && product.category &&
+                c.category.toLowerCase() === product.category.toLowerCase()) {
+                score += 3;
+            }
+
+            if (c.brand && product.brand &&
+                c.brand.toLowerCase() === product.brand.toLowerCase()) {
+                score += 1;
+            }
+
+            if (c.tags && c.tags.length > 0) {
+                for (const tag of c.tags) {
+                    if (targetTags.has(tag.toLowerCase())) {
+                        score += 2;
+                    }
+                }
+            }
+
+            const candidateWords = tokenize(c.name);
+            for (const word of candidateWords) {
+                if (targetWords.has(word)) {
+                    score += 0.5;
+                }
+            }
+
+            return { product: c, score };
+        });
+
+        scored.sort((a, b) => b.score - a.score);
+
+        const related = scored.slice(0, 5).map(s => s.product);
+
+        res.status(200).json({ success: true, data: related });
     } catch (error) {
-        next(error);
+        console.error("Error in getRelatedProducts:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 

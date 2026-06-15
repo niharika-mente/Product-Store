@@ -126,11 +126,12 @@
 
 import express from "express";
 import upload, { handleUploadError } from "../middleware/upload.js";
-import { createProduct, deleteProduct, getProducts, updateProduct, getProductById, getRelatedProducts, searchProducts, getProductBundle } from "../controllers/product.controller.js";
+import { createProduct, deleteProduct, getProducts, getProductCategories, updateProduct, getProductById, getRelatedProducts, searchProducts, getProductBundle } from "../controllers/product.controller.js";
 
 const router = express.Router();
 
 router.get("/", getProducts);
+router.get("/categories", getProductCategories);
 router.get("/related/:id", getRelatedProducts);
 router.get("/search", searchProducts);
 router.get("/:id/bundle", getProductBundle);

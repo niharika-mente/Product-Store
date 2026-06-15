@@ -153,6 +153,29 @@ function Login() {
                 >
                   Login to your account
                 </Button>
+
+                <Stack spacing={3} mt={4}>
+                  <Button
+                    variant="outline"
+                    colorScheme="red"
+                    width="100%"
+                    onClick={() => {
+                      window.location.href = '/api/auth/google';
+                    }}
+                  >
+                    Continue with Google
+                  </Button>
+                  <Button
+                    variant="outline"
+                    colorScheme="gray"
+                    width="100%"
+                    onClick={() => {
+                      window.location.href = '/api/auth/github';
+                    }}
+                  >
+                    Continue with GitHub
+                  </Button>
+                </Stack>
               </Stack>
             </form>
           </Box>

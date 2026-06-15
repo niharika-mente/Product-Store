@@ -11,8 +11,11 @@ import authRoutes from "./routes/auth.routes.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import ordersRoutes from "./routes/orders.route.js";
+import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
+import { stripeWebhook } from "./controllers/checkout.controller.js";
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
@@ -23,7 +26,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, ".env") });
-validateEnv();
+if (process.env.NODE_ENV !== 'test') {
+    validateEnv();
+}
 const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']
     .filter((key) => !process.env[key]);
 if (missingCloudinary.length > 0) {
@@ -58,9 +63,13 @@ app.use(cors({
     },
     credentials: true
 }));
+app.use(passport.initialize());
+app.use("/api", limiter);
+
+// Stripe webhook needs raw body — must be registered before express.json()
+app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json());
-app.use("/api", limiter);
 
 // ============= API ROUTES =============
 app.use("/api/products", productRoutes);
@@ -68,6 +77,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/orders", ordersRoutes);
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
 if (process.env.NODE_ENV === "production") {
