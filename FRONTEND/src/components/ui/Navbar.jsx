@@ -21,7 +21,7 @@ const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
-  const { wishlistCount } = useWishlist();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
   const toast = useToast();
@@ -116,8 +116,9 @@ const Navbar = () => {
     }
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
+    emptyCart();
+    clearWishlist();
     navigate("/login");
-    window.location.reload();
   };
 
   return (

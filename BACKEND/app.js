@@ -26,7 +26,7 @@ import { validateEnv } from "./config/env.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, ".env") });
+// dotenv.config is handled conditionally in loadEnv.js
 if (process.env.NODE_ENV !== 'test') {
     validateEnv();
 }
@@ -39,17 +39,31 @@ if (process.env.NODE_ENV !== 'test') {
     connectDB();
 }
 
+const isDev = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+
+const scriptSrc = isDev
+  ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+  : ["'self'"];
+
+const connectSrc = ["'self'", "ws:"];
+if (isDev) {
+  connectSrc.push("http://localhost:5000");
+}
+if (process.env.VITE_API_URL) {
+  connectSrc.push(process.env.VITE_API_URL);
+}
+
 const app = express();
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrc,
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
-        connectSrc: ["'self'", "http://localhost:5000", "ws:"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc,
         workerSrc: ["'self'", "blob:"],
       },
     },
