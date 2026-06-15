@@ -10,6 +10,18 @@ vi.mock('../../../store/product', () => ({
   useProductStore: () => ({
     deleteProduct: vi.fn(),
     updateProduct: vi.fn(),
+    addToCompare: vi.fn(),
+    compareList: [],
+    isSubmitting: false,
+    isDeleting: false,
+  }),
+}));
+
+vi.mock('../../../context/WishlistContext.jsx', () => ({
+  useWishlist: () => ({
+    addToWishlist: vi.fn(),
+    removeFromWishlist: vi.fn(),
+    checkInWishlist: vi.fn().mockResolvedValue(false),
   }),
 }));
 
