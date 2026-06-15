@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/cancel" element={<CancelPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
