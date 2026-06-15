@@ -117,21 +117,42 @@ export const stripeWebhook = async (req, res) => {
           cartItems = [];
         }
 
+        const itemIds = cartItems.map((i) => i._id);
+        const products = await Product.find({
+          _id: { $in: itemIds },
+          isDeleted: { $ne: true },
+        });
+        const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
         const orderItems = [];
         for (const item of cartItems) {
-          const product = await Product.findById(item._id);
-          if (product) {
-            orderItems.push({
-              product: product._id,
-              name: product.name,
-              price: product.price,
-              quantity: item.quantity,
-              image: product.image || "",
-            });
-            await Product.findByIdAndUpdate(product._id, {
-              $inc: { stock: -item.quantity },
-            });
+          const product = productMap.get(item._id.toString());
+          if (!product) {
+            console.error(`Checkout webhook: product not found or deleted: ${item._id}`);
+            return res.json({ received: true });
           }
+
+          const updated = await Product.findOneAndUpdate(
+            {
+              _id: item._id,
+              isDeleted: { $ne: true },
+              stock: { $gte: item.quantity },
+            },
+            { $inc: { stock: -item.quantity } }
+          );
+
+          if (!updated) {
+            console.error(`Checkout webhook: insufficient stock for ${product.name}`);
+            return res.json({ received: true });
+          }
+
+          orderItems.push({
+            product: product._id,
+            name: product.name,
+            price: product.price,
+            quantity: item.quantity,
+            image: product.image || "",
+          });
         }
 
         await Order.create({
