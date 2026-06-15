@@ -269,9 +269,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
               <Button ref={cancelRef} onClick={onDeleteClose}>
                 Cancel
               </Button>
-              <Button 
-                colorScheme="red" 
-                onClick={handleDeleteProduct} 
+              <Button
+                colorScheme="red"
+                onClick={handleDeleteProduct}
                 ml={3}
                 isLoading={isDeleting}
                 loadingText="Deleting..."
@@ -282,7 +282,6 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">

@@ -23,6 +23,7 @@
     "passport-google-oauth20": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "serverless-http": "^3.0.0",
+    "stripe": "^22.2.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
   },
