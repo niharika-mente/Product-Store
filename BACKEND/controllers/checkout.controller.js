@@ -20,6 +20,12 @@ if (process.env.NODE_ENV === 'test') {
 }
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+async function restoreStock(deductions) {
+  for (const { productId, quantity } of deductions) {
+    await Product.findByIdAndUpdate(productId, { $inc: { stock: quantity } });
+  }
+}
+
 export const createCheckoutSession = async (req, res) => {
     try {
         const { items } = req.body;
@@ -131,17 +137,7 @@ export const stripeWebhook = async (req, res) => {
             console.error(`Checkout webhook: product not found or deleted: ${item._id}`);
             return res.json({ received: true });
           }
-
-          const updated = await Product.findOneAndUpdate(
-            {
-              _id: item._id,
-              isDeleted: { $ne: true },
-              stock: { $gte: item.quantity },
-            },
-            { $inc: { stock: -item.quantity } }
-          );
-
-          if (!updated) {
+          if (item.quantity > product.stock) {
             console.error(`Checkout webhook: insufficient stock for ${product.name}`);
             return res.json({ received: true });
           }
@@ -153,6 +149,26 @@ export const stripeWebhook = async (req, res) => {
             quantity: item.quantity,
             image: product.image || "",
           });
+        }
+
+        const deductions = [];
+        for (const item of cartItems) {
+          const updated = await Product.findOneAndUpdate(
+            {
+              _id: item._id,
+              isDeleted: { $ne: true },
+              stock: { $gte: item.quantity },
+            },
+            { $inc: { stock: -item.quantity } }
+          );
+
+          if (!updated) {
+            console.error(`Checkout webhook: stock changed during fulfillment for ${item._id}`);
+            await restoreStock(deductions);
+            return res.json({ received: true });
+          }
+
+          deductions.push({ productId: item._id, quantity: item.quantity });
         }
 
         await Order.create({
