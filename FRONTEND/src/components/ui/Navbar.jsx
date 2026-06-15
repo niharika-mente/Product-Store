@@ -47,7 +47,9 @@ const Navbar = () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ items: cartItems }),
       });
       if (!res.ok) {
