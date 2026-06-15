@@ -12,7 +12,7 @@ const recalcProductRating = async (productId) => {
 };
 
 export const addReview = async (req, res) => {
-    const { id } = req.params;
+    const { productId: id } = req.params;
     const { userName, rating, comment } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -110,7 +110,7 @@ export const deleteReview = async (req, res) => {
 };
 
 export const getReviews = async (req, res) => {
-    const { id } = req.params;
+    const { productId: id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(404).json({ success: false, message: 'Invalid product ID' });
