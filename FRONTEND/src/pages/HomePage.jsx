@@ -12,8 +12,11 @@ import Pagination from '../components/ui/Pagination';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
+import { useCurrencyStore } from '../store/currency';
+import { formatPrice } from '../utils/currency';
 
 const ProductCardSkeleton = () => {
+  const { currency, rates } = useCurrencyStore();
   const bg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -310,8 +313,8 @@ const HomePage = () => {
                     <Text fontSize="sm" fontWeight="bold" noOfLines={1}>
                       {p.name}
                     </Text>
-                    <Text fontSize="sm" color="teal.400">
-                      ${p.price}
+                      <Text fontSize="sm" color="teal.400">
+                        {formatPrice(p.price, currency, rates)}
                     </Text>
                   </VStack>
                 </HStack>
@@ -418,7 +421,7 @@ const HomePage = () => {
                 </Thead>
                 <Tbody>
                   {[
-                    { label: "Price", key: "price", format: (v) => `$${v}` },
+                    { label: "Price", key: "price", format: (v) => formatPrice(v, currency, rates) },
                     { label: "Brand", key: "brand", format: (v) => v || "—" },
                     {
                       label: "Category",
@@ -434,7 +437,7 @@ const HomePage = () => {
                     {
                       label: "Original Price",
                       key: "originalPrice",
-                      format: (v) => (v ? `$${v}` : "—"),
+                      format: (v) => (v ? formatPrice(v, currency, rates) : "—"),
                     },
                     {
                       label: "Avg Rating",

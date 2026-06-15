@@ -10,6 +10,8 @@ import { Link } from "react-router-dom";
 import { FaEdit, FaTrash, FaHeart, FaRegHeart } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../store/cart";
+import { useCurrencyStore } from "../../store/currency";
+import { formatPrice } from "../../utils/currency";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { FaBalanceScale } from "react-icons/fa";
 
@@ -31,6 +33,7 @@ const ProductCard = ({ product }) => {
 const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
+  const { currency, rates } = useCurrencyStore();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -194,7 +197,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
         </Heading>
 
         <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          ${product.price}
+          {formatPrice(product.price, currency, rates)}
         </Text>
 
         <HStack spacing={2}>

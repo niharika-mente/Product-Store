@@ -7,6 +7,8 @@ import {
 } from '@chakra-ui/react';
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useCart } from '../store/cart.js';
+import { useCurrencyStore } from '../store/currency';
+import { formatPrice } from '../utils/currency';
 import { useRecentlyViewed } from "../store/product";
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
@@ -24,6 +26,9 @@ const ProductPage = () => {
   const [activeImg, setActiveImg] = useState(0);
 
   const { addToCart, addBundleToCart } = useCart();
+
+  const { currency, rates } = useCurrencyStore();
+  
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
 
