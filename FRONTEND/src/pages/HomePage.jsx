@@ -5,7 +5,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
   Table, Thead, Tbody, Tr, Th, Td, HStack, Badge, useDisclosure, Skeleton, SkeletonText
 } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
 import Pagination from '../components/ui/Pagination';
@@ -38,19 +38,19 @@ const ProductCardSkeleton = () => {
 };
 
 const HomePage = () => {
-  const { fetchProducts, fetchCategories, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
+  const { fetchProducts, products, searchQuery, setSearchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
-
+  
   const [sort, setSort] = useState("");
-  const [category, setCategory] = useState("");
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const limit = 10;
+  
+  const [searchParams] = useSearchParams();
 
   const labelColor = useColorModeValue("gray.600", "gray.300");
   const drawerBg = useColorModeValue("white", "gray.800");
@@ -61,11 +61,13 @@ const HomePage = () => {
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
+  // Read search query from URL on page load
   useEffect(() => {
-    fetchCategories().then((res) => {
-      if (res.success) setCategories(res.data);
-    });
-  }, [fetchCategories]);
+    const urlSearch = searchParams.get('search');
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
+  }, [searchParams, setSearchQuery]);
 
   useEffect(() => {
     let ignore = false;
@@ -81,7 +83,7 @@ const HomePage = () => {
           return;
         }
 
-        const response = await fetchProducts(page, limit, sort, category);
+        const response = await fetchProducts(page, limit, sort);
         if (response && response.success && !ignore) {
           const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
           if (page !== normalizedPage) {
@@ -104,7 +106,7 @@ const HomePage = () => {
     return () => {
       ignore = true;
     };
-  }, [debouncedSearch, sort, category, page, fetchProducts, searchProducts]);
+  }, [debouncedSearch, sort, page, fetchProducts, searchProducts]);
 
   const isSearching = debouncedSearch.trim() !== "";
   const hasNoProducts = !loading && products.length === 0 && !isSearching;
@@ -124,30 +126,17 @@ const HomePage = () => {
           >
             Current Products🚀
           </Text>
-          <HStack spacing={3} wrap="wrap" justify="center">
-            <Select
-              value={category}
-              onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-              maxW="220px"
-              aria-label="Filter by category"
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </Select>
-            <Select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              maxW="220px"
-              aria-label="Sort products"
-            >
-              <option value="">Default</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="newest">Newest First</option>
-            </Select>
-          </HStack>
+          <Select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            maxW="250px"
+            aria-label="Sort products"
+          >
+            <option value="">Default</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="newest">Newest First</option>
+          </Select>
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}

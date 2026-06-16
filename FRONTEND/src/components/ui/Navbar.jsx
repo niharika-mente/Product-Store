@@ -22,8 +22,8 @@ const Navbar = () => {
   const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
-  const toast = useToast();
   const location = useLocation();
+  const toast = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -154,6 +154,15 @@ const Navbar = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (location.pathname !== '/') {
+                      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+                    } else {
+                      fetchProducts();
+                    }
+                  }
+                }}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
                 bg={useColorModeValue("gray.50", "gray.700")}
@@ -265,6 +274,7 @@ const Navbar = () => {
                 </VStack>
               )}
             </DrawerBody>
+            
 
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
@@ -277,6 +287,8 @@ const Navbar = () => {
                 Proceed to Checkout
               </Button>
             </DrawerFooter>
+
+
           </DrawerContent>
         </Drawer>
       </Container>
