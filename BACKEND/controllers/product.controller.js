@@ -1,5 +1,6 @@
 import Product from "../models/product.model.js";
 import mongoose from "mongoose";
+import { escapeRegex } from '../utils/escapeRegex.js';
 import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
 
@@ -184,12 +185,6 @@ export const updateProduct = async (req, res, next) => {
             const result = await uploadToCloudinary(req.file.buffer);
             updateData.image = result.secure_url;
 
-            const oldPublicId = extractCloudinaryPublicId(existing.image);
-            if (oldPublicId) {
-                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-                    console.warn("Old image cleanup failed:", err.message);
-                });
-            }
         } catch (error) {
             return next(new AppError("Image upload failed", 500));
         }
@@ -200,6 +195,15 @@ export const updateProduct = async (req, res, next) => {
         if (!updatedProduct) {
             return next(new AppError("Product not found", 404));
         }
+        if (req.file){
+            const oldPublicId = extractCloudinaryPublicId(existing.image);
+                if (oldPublicId) {
+                    cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                        console.warn("Old image cleanup failed:", err.message);
+                    });
+                }
+        }
+
         res.status(200).json({ success: true, data: updatedProduct });
     } catch (error) {
         next(error);
@@ -374,11 +378,18 @@ export const getProductBundle = async (req, res) => {
 export const searchProducts = async (req, res, next) => {
     const { q } = req.query;
 
+    if (!q || !q.trim()) {
+        return res.status(400).json({ success: false, message: "Search query is required" });
+    }
+
     try {
-        const regex = new RegExp(q, 'i');
-        const products = await Product.find({ name: regex });
-        res.status(200).json({ success: true, data: products });
-    } catch (error) {
+    const safeQuery = escapeRegex(q);
+    const regex = new RegExp(safeQuery, 'i');
+    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
+    res.status(200).json({ success: true, data: products });
+} catch (error) {
+    next(error);
+} catch (error) {
         next(error);
     }
 };

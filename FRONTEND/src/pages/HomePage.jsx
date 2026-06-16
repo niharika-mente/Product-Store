@@ -12,6 +12,7 @@ import Pagination from '../components/ui/Pagination';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
+import RecentlyViewedCarousel from "../components/ui/RecentlyViewedCarousel";
 
 const ProductCardSkeleton = () => {
   const bg = useColorModeValue("white", "gray.800");
@@ -465,6 +466,7 @@ const HomePage = () => {
         </ModalContent>
       </Modal>
 
+      <RecentlyViewedCarousel />
       <Footer />
       <ScrollToTop />
     </>
