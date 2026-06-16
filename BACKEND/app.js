@@ -1,3 +1,4 @@
+import "./loadEnv.js";
 import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -25,7 +26,7 @@ import { validateEnv } from "./config/env.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, ".env") });
+// dotenv.config is handled conditionally in loadEnv.js
 if (process.env.NODE_ENV !== 'test') {
     validateEnv();
 }
@@ -38,8 +39,37 @@ if (process.env.NODE_ENV !== 'test') {
     connectDB();
 }
 
+const isDev = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+
+const scriptSrc = isDev
+  ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+  : ["'self'"];
+
+const connectSrc = ["'self'", "ws:"];
+if (isDev) {
+  connectSrc.push("http://localhost:5000");
+}
+if (process.env.VITE_API_URL) {
+  connectSrc.push(process.env.VITE_API_URL);
+}
+
 const app = express();
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc,
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        connectSrc,
+        workerSrc: ["'self'", "blob:"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("trust proxy", 1);
 
@@ -72,12 +102,13 @@ app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), str
 app.use(express.json());
 
 // ============= API ROUTES =============
+
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
+
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
 if (process.env.NODE_ENV === "production") {

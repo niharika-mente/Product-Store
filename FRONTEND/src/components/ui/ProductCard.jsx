@@ -28,7 +28,7 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
-const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
+const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();

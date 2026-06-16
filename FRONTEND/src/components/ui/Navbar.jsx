@@ -1,30 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast, Tooltip
+  VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
-import { LuSun, LuShoppingCart, LuHeart, LuPackage } from "react-icons/lu";
+import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
-
 
 const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
-  const { wishlistCount } = useWishlist();
+  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("authToken"));
+  }, [location]);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -38,8 +42,6 @@ const Navbar = () => {
     onOpen();
   };
 
-  const isLoggedIn = Boolean(localStorage.getItem('authToken'));
-
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setIsCheckoutLoading(true);
@@ -47,9 +49,7 @@ const Navbar = () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
       });
       if (!res.ok) {
@@ -94,14 +94,27 @@ const Navbar = () => {
     }
   };
 
-  /*
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (err) {
+        console.error("Failed to call logout API:", err);
+      }
+    }
     localStorage.removeItem("authToken");
     localStorage.removeItem("authUser");
+    emptyCart();
+    clearWishlist();
     navigate("/login");
-    window.location.reload();
   };
-  */
 
   return (
     <Box
@@ -183,16 +196,6 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              {isLoggedIn && (
-                <Tooltip label="My Orders" hasArrow>
-                  <Link to={"/orders"}>
-                    <Button aria-label="My Orders">
-                      <LuPackage size="20" />
-                    </Button>
-                  </Link>
-                </Tooltip>
-              )}
-
               <Button onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
                 <LuShoppingCart size="20" />
                 {totalItemsCount > 0 && (
@@ -212,6 +215,12 @@ const Navbar = () => {
               <Button onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
                 {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
               </Button>
+
+              {isLoggedIn && (
+                <Button onClick={handleLogout} colorScheme="red" variant="outline">
+                  Logout
+                </Button>
+              )}
             </HStack>
           </HStack>
         </Flex>
@@ -271,7 +280,7 @@ const Navbar = () => {
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
                 <Text fontWeight="bold" fontSize="lg" color="cyan.500">
-                  ${(updatedTotalPrice || 0).toFixed(2)}  {/* <-- FIXED */}
+                  ${(totalPrice ?? 0).toFixed(2)}
                 </Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>

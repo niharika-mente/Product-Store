@@ -11,8 +11,8 @@ const requiredEnvVars = [
   },
   {
     key: "NODE_ENV",
-    validate: (v) => ["development", "production"].includes(v),
-    message: 'should be "development" or "production"',
+    validate: (v) => ["development", "production", "test"].includes(v),
+    message: 'should be "development", "production", or "test"',
   },
   {
     key: "VITE_API_URL",
