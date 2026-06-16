@@ -182,3 +182,4 @@ export const stripeWebhook = async (req, res) => {
 
     res.json({ received: true });
 };
+// Note: In production, you should verify the webhook signature and handle retries appropriately.
