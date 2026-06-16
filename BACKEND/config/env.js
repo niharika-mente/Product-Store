@@ -32,8 +32,12 @@ export const validateEnv = () => {
   requiredEnvVars.forEach(({ key, validate, message }) => {
     const value = process.env[key];
     if (!value) {
-      console.error(`❌ Missing env variable: ${key}`);
-      hasError = true;
+      if (key === "MONGO_URI" && process.env.NODE_ENV !== "production") {
+        console.warn(`⚠️ Missing MONGO_URI, but allowed in ${process.env.NODE_ENV || 'development'} mode (falling back to in-memory DB)`);
+      } else {
+        console.error(`❌ Missing env variable: ${key}`);
+        hasError = true;
+      }
     } else if (!validate(value)) {
       console.error(`❌ Invalid env variable: ${key} — ${message}`);
       hasError = true;
