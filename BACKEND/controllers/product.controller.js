@@ -404,8 +404,6 @@ export const searchProducts = async (req, res, next) => {
     const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
     res.status(200).json({ success: true, data: products });
 } catch (error) {
-    next(error);
-} catch (error) {
         next(error);
     }
 };
