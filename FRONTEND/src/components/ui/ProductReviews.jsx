@@ -24,7 +24,7 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
     const [hovered, setHovered] = useState(0);
 
     const filledColor = useColorModeValue('yellow.400', 'yellow.300');
-    const emptyColor  = useColorModeValue('gray.300', 'gray.600');
+    const emptyColor = useColorModeValue('gray.300', 'gray.600');
 
     const fontSize = size === 'sm' ? '14px' : size === 'lg' ? '24px' : '20px';
 
@@ -54,16 +54,16 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
 
 const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     const labelColor = useColorModeValue('gray.600', 'gray.400');
-    const barBg        = useColorModeValue('gray.100', 'gray.700');
-    const barFill      = useColorModeValue('yellow.400', 'yellow.300');
-    const cardBg       = useColorModeValue('gray.50', 'gray.700');
-    const borderCol    = useColorModeValue('gray.200', 'gray.600');
-    const activeRowBg  = useColorModeValue('yellow.50', 'yellow.900');
-    const hoverRowBg   = useColorModeValue('gray.50', 'gray.600');
+    const barBg = useColorModeValue('gray.100', 'gray.700');
+    const barFill = useColorModeValue('yellow.400', 'yellow.300');
+    const cardBg = useColorModeValue('gray.50', 'gray.700');
+    const borderCol = useColorModeValue('gray.200', 'gray.600');
+    const activeRowBg = useColorModeValue('yellow.50', 'yellow.900');
+    const hoverRowBg = useColorModeValue('gray.50', 'gray.600');
 
     if (reviews.length === 0) return null;
 
-    const avg     = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
     const rounded = Math.round(avg * 10) / 10;
 
     const distribution = [5, 4, 3, 2, 1].map((star) => ({
@@ -140,7 +140,7 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
 };
 
 const ReviewCard = ({ review }) => {
-    const bg        = useColorModeValue('white', 'gray.800');
+    const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const textColor = useColorModeValue('gray.600', 'gray.400');
     const nameColor = useColorModeValue('gray.800', 'white');
@@ -151,9 +151,9 @@ const ReviewCard = ({ review }) => {
         day: 'numeric',
     });
 
-    
+
     const avatarColors = ['blue', 'cyan', 'teal', 'purple', 'pink'];
-    const colorIndex   = review.userName.charCodeAt(0) % avatarColors.length;
+    const colorIndex = review.userName.charCodeAt(0) % avatarColors.length;
     const avatarScheme = avatarColors[colorIndex];
 
     const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
@@ -210,29 +210,25 @@ const ReviewCard = ({ review }) => {
 
 // Review submission form
 const ReviewForm = ({ productId, onReviewAdded }) => {
-    const [form, setForm]           = useState({ userName: '', rating: 0, comment: '' });
+    const [form, setForm] = useState({
+        rating: 0,
+        comment: ''
+    });
     const [submitting, setSubmitting] = useState(false);
 
-    const bg        = useColorModeValue('white', 'gray.800');
+    const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const labelColor = useColorModeValue('gray.700', 'gray.300');
     const subLabelColor = useColorModeValue('gray.500', 'gray.400');
-    const ratingLabels  = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+    const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
     const toast = useToast();
 
 
     const handleSubmit = async () => {
-        if (!form.userName.trim()) {
-            return toast({
-                title: 'Name required',
-                description: 'Please enter your name before submitting.',
-                status: 'warning',
-                duration: 3000,
-                isClosable: true,
-                position: 'top-right',
-            });
-        }
+
+
+
         if (form.rating === 0) {
             return toast({
                 title: 'Rating required',
@@ -258,14 +254,17 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
         try {
             const res = await fetch(`${API}/api/products/${productId}/reviews`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('authToken')}`
+                },
                 body: JSON.stringify(form),
             });
-            
+
             if (!res.ok) {
                 throw new Error(`Server error: ${res.status} ${res.statusText}`);
             }
-            
+
             const data = await res.json();
 
             if (!data.success) {
@@ -286,7 +285,10 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
                     isClosable: true,
                     position: 'top-right',
                 });
-                setForm({ userName: '', rating: 0, comment: '' });
+                setForm({
+                    rating: 0,
+                    comment: ''
+                });
                 onReviewAdded();
             }
         } catch (err) {
@@ -342,20 +344,6 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
             </HStack>
 
             <VStack spacing={4} align="stretch">
-                {/* Name field */}
-                <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color={labelColor} mb={1}>
-                        Your Name
-                    </Text>
-                    <Input
-                        placeholder="e.g. John Doe"
-                        value={form.userName}
-                        onChange={(e) => setForm({ ...form, userName: e.target.value })}
-                        maxLength={50}
-                        focusBorderColor="blue.400"
-                    />
-                </Box>
-
                 {/* Star rating */}
                 <Box>
                     <Text fontSize="sm" fontWeight="semibold" color={labelColor} mb={2}>
@@ -426,7 +414,7 @@ const ProductReviews = ({ productId }) => {
     const fetchReviews = async () => {
         setLoading(true);
         try {
-            const res  = await fetch(`${API}/api/products/${productId}/reviews`);
+            const res = await fetch(`${API}/api/products/${productId}/reviews`);
             if (!res.ok) {
                 throw new Error(`Server error: ${res.status} ${res.statusText}`);
             }
@@ -442,7 +430,7 @@ const ProductReviews = ({ productId }) => {
 
     useEffect(() => {
         if (productId) fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [productId]);
 
     return (
@@ -468,7 +456,7 @@ const ProductReviews = ({ productId }) => {
                 )}
             </HStack>
 
-                {!loading && reviews.length > 0 && (
+            {!loading && reviews.length > 0 && (
                 <RatingSummary
                     reviews={reviews}
                     filterStar={filterStar}

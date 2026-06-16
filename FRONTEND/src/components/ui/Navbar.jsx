@@ -2,19 +2,17 @@ import React, { useState, useEffect } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast, Tooltip
+  VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
-import { LuSun, LuShoppingCart, LuHeart, LuPackage } from "react-icons/lu";
+import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -49,13 +47,9 @@ const Navbar = () => {
     setIsCheckoutLoading(true);
 
     try {
-      const token = localStorage.getItem('authToken');
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`${API}/api/checkout`, {
+      const res = await fetch("/api/checkout", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems }),
       });
       if (!res.ok) {
@@ -73,8 +67,9 @@ const Navbar = () => {
         });
         return;
       }
+      emptyCart();
       onClose();
-      window.location.href = data.url;
+      navigate("/success");
     } catch (err) {
       console.error("Checkout failed:", err);
 
@@ -192,16 +187,6 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              {isLoggedIn && (
-                <Tooltip label="My Orders" hasArrow>
-                  <Link to={"/orders"}>
-                    <Button aria-label="My Orders">
-                      <LuPackage size="20" />
-                    </Button>
-                  </Link>
-                </Tooltip>
-              )}
-
               <Button onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
                 <LuShoppingCart size="20" />
                 {totalItemsCount > 0 && (
@@ -284,7 +269,9 @@ const Navbar = () => {
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${Number(totalPrice ?? 0).toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">
+                  ${(totalPrice ?? 0).toFixed(2)}
+                </Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
