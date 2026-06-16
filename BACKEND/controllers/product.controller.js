@@ -374,9 +374,13 @@ export const getProductBundle = async (req, res) => {
 export const searchProducts = async (req, res, next) => {
     const { q } = req.query;
 
+    if (!q || !q.trim()) {
+        return res.status(400).json({ success: false, message: "Search query is required" });
+    }
+
     try {
         const regex = new RegExp(q, 'i');
-        const products = await Product.find({ name: regex });
+        const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
         res.status(200).json({ success: true, data: products });
     } catch (error) {
         next(error);
