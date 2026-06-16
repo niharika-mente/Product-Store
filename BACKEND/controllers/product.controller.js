@@ -37,7 +37,7 @@ export const getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
-        const { sort, category } = req.query;
+        const { sort, category, minPrice, maxPrice, brand, minRating, inStock } = req.query;
 
         if (page < 1 || limit < 1) {
             return res.status(400).json({
@@ -57,6 +57,22 @@ export const getProducts = async (req, res, next) => {
 
         const filter = { isDeleted: { $ne: true } };
         if (category) filter.category = category;
+
+        if (minPrice || maxPrice) {
+            filter.price = {};
+            if (minPrice) filter.price.$gte = Number(minPrice);
+            if (maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+        if (brand) {
+            // Case-insensitive brand search
+            filter.brand = { $regex: new RegExp(brand, 'i') };
+        }
+        if (minRating) {
+            filter.averageRating = { $gte: Number(minRating) };
+        }
+        if (inStock === 'true') {
+            filter.stock = { $gt: 0 };
+        }
 
         const skip = (page - 1) * limit;
         const totalProducts = await Product.countDocuments(filter);
@@ -387,8 +403,6 @@ export const searchProducts = async (req, res, next) => {
     const regex = new RegExp(safeQuery, 'i');
     const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
     res.status(200).json({ success: true, data: products });
-} catch (error) {
-    next(error);
 } catch (error) {
         next(error);
     }

@@ -13,6 +13,7 @@ import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
 import RecentlyViewedCarousel from "../components/ui/RecentlyViewedCarousel";
+import FilterPanel from "../components/ui/FilterPanel";
 
 const ProductCardSkeleton = () => {
   const bg = useColorModeValue("white", "gray.800");
@@ -50,6 +51,14 @@ const HomePage = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const limit = 10;
   
+  const [filters, setFilters] = useState({
+    minPrice: 0,
+    maxPrice: 5000,
+    brand: "",
+    minRating: 0,
+    inStock: false
+  });
+
   const [searchParams] = useSearchParams();
 
   const labelColor = useColorModeValue("gray.600", "gray.300");
@@ -83,7 +92,7 @@ const HomePage = () => {
           return;
         }
 
-        const response = await fetchProducts(page, limit, sort);
+        const response = await fetchProducts({ page, limit, sort, ...filters });
         if (response && response.success && !ignore) {
           const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
           if (page !== normalizedPage) {
@@ -106,7 +115,7 @@ const HomePage = () => {
     return () => {
       ignore = true;
     };
-  }, [debouncedSearch, sort, page, fetchProducts, searchProducts]);
+  }, [debouncedSearch, sort, page, filters, fetchProducts, searchProducts]);
 
   const isSearching = debouncedSearch.trim() !== "";
   const hasNoProducts = !loading && products.length === 0 && !isSearching;
@@ -169,20 +178,27 @@ const HomePage = () => {
             </Box>
           </VStack>
 
-          {/* Product grid — skeletons while loading, real cards when ready */}
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={10} w="full">
-            {loading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
-                ))
-              : products.map((product) => (
-                  <ProductCard key={product._id} product={product} />
-                ))}
-          </SimpleGrid>
+          <Box w="full" display={{ base: "block", lg: "grid" }} gridTemplateColumns="300px 1fr" gap={8} alignItems="start">
+            {/* Sidebar with Filters */}
+            <Box position={{ lg: "sticky" }} top={{ lg: "100px" }} mb={{ base: 8, lg: 0 }}>
+              <FilterPanel filters={filters} setFilters={setFilters} />
+            </Box>
 
-          {/* Empty state — no products in store */}
-          {hasNoProducts && (
-            <VStack gap={4} py={12}>
+            {/* Product grid — skeletons while loading, real cards when ready */}
+            <Box>
+              <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={10} w="full">
+                {loading
+                  ? Array.from({ length: 6 }).map((_, i) => (
+                      <ProductCardSkeleton key={i} />
+                    ))
+                  : products.map((product) => (
+                      <ProductCard key={product._id} product={product} />
+                    ))}
+              </SimpleGrid>
+
+              {/* Empty state — no products in store */}
+              {hasNoProducts && (
+                <VStack gap={4} py={12}>
               <Image
                 src="/empty-state.svg"
                 alt="No products"
@@ -241,10 +257,12 @@ const HomePage = () => {
                 No matching products
               </Text>
               <Text color={labelColor} textAlign="center">
-                Try a different search term.
+                Try a different search term or adjust your filters.
               </Text>
             </VStack>
           )}
+            </Box>
+          </Box>
         </VStack>
       </Container>
 
