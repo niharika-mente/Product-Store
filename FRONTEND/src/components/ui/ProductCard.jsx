@@ -28,7 +28,7 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
-const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
+const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
@@ -269,9 +269,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
               <Button ref={cancelRef} onClick={onDeleteClose}>
                 Cancel
               </Button>
-              <Button 
-                colorScheme="red" 
-                onClick={handleDeleteProduct} 
+              <Button
+                colorScheme="red"
+                onClick={handleDeleteProduct}
                 ml={3}
                 isLoading={isDeleting}
                 loadingText="Deleting..."
@@ -282,7 +282,6 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
