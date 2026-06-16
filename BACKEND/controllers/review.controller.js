@@ -20,8 +20,8 @@ const recalcProductRating = async (productId) => {
 };
 
 export const addReview = async (req, res) => {
-    const { productId } = req.params;
-    const { userName, rating, comment } = req.body;
+    const { productId } = req.params;    
+    const { rating, comment } = req.body;
 
     const userId = req.user.id;
     const userName = req.user.name;
