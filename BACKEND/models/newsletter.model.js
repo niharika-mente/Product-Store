@@ -23,10 +23,6 @@ const newsletterSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Index for optimized email lookups
-newsletterSchema.index({ email: 1 });
-
 const Newsletter = mongoose.model("Newsletter", newsletterSchema);
 
 export default Newsletter;
