@@ -7,18 +7,13 @@ import cors from "cors";
 import express from "express";
 import path from "path";
 import { connectDB } from "./config/db.js";
-import productRoutes from "./routes/product.route.js";
 import authRoutes from "./routes/auth.routes.js";
 import checkoutRoutes from "./routes/checkout.route.js";
-import wishlistRoutes from "./routes/wishlist.route.js";
-import reviewRoutes from "./routes/review.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import passport from "./config/passport.js";
-import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from './swagger.js';
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./swagger.js";
 import { stripeWebhook } from "./controllers/checkout.controller.js";
-
-// Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
 import { validateEnv } from "./config/env.js";
 
@@ -103,10 +98,8 @@ app.use(express.json());
 
 // ============= API ROUTES =============
 
-app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/checkout", checkoutRoutes);
-app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
 
 
