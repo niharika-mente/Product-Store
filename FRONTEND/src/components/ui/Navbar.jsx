@@ -28,9 +28,16 @@ const Navbar = () => {
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+  // ✅ ALL HOOKS AT TOP LEVEL (Fixed)
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+  
+  // ✅ Mobile menu colors - moved to top level
+  const mobileInputBg = useColorModeValue("gray.50", "gray.700");
+  const mobileInputBorder = useColorModeValue("gray.200", "gray.600");
+  const searchBg = useColorModeValue("gray.50", "gray.700");
+  const searchBorder = useColorModeValue("gray.200", "gray.600");
 
   const handleCartOpen = async () => {
     await fetchProducts();
@@ -131,8 +138,8 @@ const Navbar = () => {
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
                 size="sm"
-                bg={useColorModeValue("gray.50", "gray.700")}
-                borderColor={useColorModeValue("gray.200", "gray.600")}
+                bg={searchBg}
+                borderColor={searchBorder}
               />
             </Box>
 
@@ -209,15 +216,15 @@ const Navbar = () => {
             bg={navBg}
             w="full"
           >
-            {/* Search input for mobile */}
+            {/* Search input for mobile - ✅ FIXED: using top-level variables */}
             <Box w="full">
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
-                bg={useColorModeValue("gray.50", "gray.700")}
-                borderColor={useColorModeValue("gray.200", "gray.600")}
+                bg={mobileInputBg}
+                borderColor={mobileInputBorder}
               />
             </Box>
 
