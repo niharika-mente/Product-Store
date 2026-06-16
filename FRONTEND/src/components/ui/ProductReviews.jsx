@@ -139,11 +139,67 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     );
 };
 
-const ReviewCard = ({ review }) => {
+const ReviewCard = ({ review, onReviewUpdated }) => {
     const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const textColor = useColorModeValue('gray.600', 'gray.400');
     const nameColor = useColorModeValue('gray.800', 'white');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editRating, setEditRating] = useState(review.rating);
+    const [editComment, setEditComment] = useState(review.comment);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const toast = useToast();
+
+    const handleEdit = () => {
+        setEditRating(review.rating);
+        setEditComment(review.comment);
+        setIsEditing(true);
+    };
+    const handleUpdate = async () => {
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API}/api/products/${review.product}/reviews/${review._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+                body: JSON.stringify({ rating: editRating, comment: editComment }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                toast({ title: 'Error', description: data.message, status: 'error', duration: 3000, isClosable: true });
+            } else {
+                toast({ title: 'Review updated!', status: 'success', duration: 2000, isClosable: true });
+                setIsEditing(false);
+                onReviewUpdated();
+            }
+        } catch {
+            toast({ title: 'Network error', status: 'error', duration: 3000, isClosable: true });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API}/api/products/${review.product}/reviews/${review._id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+            });
+            const data = await res.json();
+            if (!data.success) {
+                toast({ title: 'Error', description: data.message, status: 'error', duration: 3000, isClosable: true });
+            } else {
+                toast({ title: 'Review deleted', status: 'info', duration: 2000, isClosable: true });
+                onReviewUpdated();
+            }
+        } catch {
+            toast({ title: 'Network error', status: 'error', duration: 3000, isClosable: true });
+        } finally {
+            setSubmitting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
 
     const formattedDate = new Date(review.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -201,9 +257,46 @@ const ReviewCard = ({ review }) => {
                 </HStack>
             </Flex>
 
-            <Text fontSize="sm" color={textColor} lineHeight="tall">
-                {review.comment}
-            </Text>
+            {!isEditing && !showDeleteConfirm && (
+                <>
+                    <Text fontSize="sm" color={textColor} lineHeight="tall" mb={3}>
+                        {review.comment}
+                    </Text>
+                    <HStack justify="flex-end" spacing={2}>
+                        <Button size="xs" variant="outline" colorScheme="blue" onClick={handleEdit}>Edit</Button>
+                        <Button size="xs" variant="outline" colorScheme="red" onClick={() => setShowDeleteConfirm(true)}>Delete</Button>
+                    </HStack>
+                </>
+            )}
+
+            {isEditing && (
+                <VStack spacing={3} mt={3} align="stretch">
+                    <StarRating value={editRating} onChange={setEditRating} size="sm" />
+                    <Textarea
+                        value={editComment}
+                        onChange={(e) => setEditComment(e.target.value)}
+                        rows={3}
+                        resize="vertical"
+                        maxLength={500}
+                        size="sm"
+                        focusBorderColor="blue.400"
+                    />
+                    <HStack justify="flex-end">
+                        <Button size="xs" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
+                        <Button size="xs" colorScheme="blue" onClick={handleUpdate} isLoading={submitting}>Save</Button>
+                    </HStack>
+                </VStack>
+            )}
+
+            {showDeleteConfirm && (
+                <VStack spacing={3} mt={3} align="stretch">
+                    <Text fontSize="sm" color="red.400" fontWeight="semibold">Are you sure you want to delete this review?</Text>
+                    <HStack justify="flex-end">
+                        <Button size="xs" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                        <Button size="xs" colorScheme="red" onClick={handleDelete} isLoading={submitting}>Confirm Delete</Button>
+                    </HStack>
+                </VStack>
+            )}
         </Box>
     );
 };
@@ -527,7 +620,7 @@ const ProductReviews = ({ productId }) => {
                                     return new Date(b.createdAt) - new Date(a.createdAt);
                                 })
                                 .map((r) => (
-                                    <ReviewCard key={r._id} review={r} />
+                                    <ReviewCard key={r._id} review={r} onReviewUpdated={fetchReviews} />
                                 ))}
                         </VStack>
                     )}

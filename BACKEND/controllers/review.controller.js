@@ -20,13 +20,13 @@ const recalcProductRating = async (productId) => {
 };
 
 export const addReview = async (req, res) => {
-    const { id } = req.params;
+    const { productId } = req.params;
     const { rating, comment } = req.body;
 
     const userId = req.user.id;
     const userName = req.user.name;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
         return res.status(404).json({
             success: false,
             message: 'Invalid product ID'
@@ -48,7 +48,7 @@ export const addReview = async (req, res) => {
     }
 
     const product = await Product.findOne({
-        _id: id,
+        _id: productId,
         isDeleted: { $ne: true }
     });
 
@@ -60,7 +60,7 @@ export const addReview = async (req, res) => {
     }
 
     const existing = await Review.findOne({
-        product: id,
+        product: productId,
         userId
     });
 
@@ -73,14 +73,14 @@ export const addReview = async (req, res) => {
 
     try {
         const review = await Review.create({
-            product: id,
+            product: productId,
             userId,
             userName,
             rating,
             comment
         });
 
-        await recalcProductRating(id);
+        await recalcProductRating(productId);
 
         return res.status(201).json({
             success: true,
@@ -96,10 +96,71 @@ export const addReview = async (req, res) => {
     }
 };
 
-export const getReviews = async (req, res) => {
-    const { id } = req.params;
+export const updateReview = async (req, res) => {
+    const { reviewId } = req.params;
+    const { rating, comment } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+        return res.status(404).json({ success: false, message: 'Invalid review ID' });
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        return res.status(404).json({ success: false, message: 'Review not found' });
+    }
+
+    if (review.userId.toString() !== req.user.id.toString()) {
+        return res.status(403).json({ success: false, message: 'You can only edit your own reviews' });
+    }
+
+    if (rating && (rating < 1 || rating > 5)) {
+        return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+
+    try {
+        const updated = await Review.findByIdAndUpdate(
+            reviewId,
+            { ...(rating && { rating }), ...(comment && { comment: comment.trim() }) },
+            { new: true, runValidators: true }
+        );
+        await recalcProductRating(review.product);
+        return res.status(200).json({ success: true, data: updated });
+    } catch (error) {
+        console.error('Error updating review:', error.message);
+        return res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+export const deleteReview = async (req, res) => {
+    const { reviewId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+        return res.status(404).json({ success: false, message: 'Invalid review ID' });
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        return res.status(404).json({ success: false, message: 'Review not found' });
+    }
+
+    if (review.userId.toString() !== req.user.id.toString()) {
+        return res.status(403).json({ success: false, message: 'You can only delete your own reviews' });
+    }
+
+    try {
+        await Review.findByIdAndDelete(reviewId);
+        await recalcProductRating(review.product);
+        return res.status(200).json({ success: true, message: 'Review deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting review:', error.message);
+        return res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+export const getReviews = async (req, res) => {
+    const { productId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
         return res.status(404).json({
             success: false,
             message: 'Invalid product ID'
@@ -108,7 +169,7 @@ export const getReviews = async (req, res) => {
 
     try {
         const reviews = await Review.find({
-            product: id
+            product: productId
         }).sort({ createdAt: -1 });
 
         return res.status(200).json({

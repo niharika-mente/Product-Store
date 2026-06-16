@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -18,11 +18,17 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, updatedTotalPrice, emptyCart } = useCart();
-  const { wishlistCount } = useWishlist();
+  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("authToken"));
+  }, [location]);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -96,6 +102,28 @@ const Navbar = () => {
     }
   };
 
+  const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (err) {
+        console.error("Failed to call logout API:", err);
+      }
+    }
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    emptyCart();
+    clearWishlist();
+    navigate("/login");
+  };
+
   return (
     <Box
       bg={navBg}
@@ -135,6 +163,15 @@ const Navbar = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (location.pathname !== '/') {
+                      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+                    } else {
+                      fetchProducts();
+                    }
+                  }
+                }}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
                 size="sm"
@@ -190,6 +227,12 @@ const Navbar = () => {
               <Button size="sm" onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
                 {colorMode === "light" ? <IoMoon /> : <LuSun size='18' />}
               </Button>
+
+              {isLoggedIn && (
+                <Button onClick={handleLogout} colorScheme="red" variant="outline">
+                  Logout
+                </Button>
+              )}
             </HStack>
 
             {/* Hamburger Button - Mobile only */}
@@ -338,18 +381,21 @@ const Navbar = () => {
                 </VStack>
               )}
             </DrawerBody>
+            
 
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
                 <Text fontWeight="bold" fontSize="lg" color="cyan.500">
-                  ${(updatedTotalPrice ?? 0).toFixed(2)}
+                  ${(totalPrice ?? 0).toFixed(2)}
                 </Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
               </Button>
             </DrawerFooter>
+
+
           </DrawerContent>
         </Drawer>
       </Container>
