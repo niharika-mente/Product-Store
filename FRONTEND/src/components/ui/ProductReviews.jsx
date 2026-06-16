@@ -145,7 +145,6 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     const textColor = useColorModeValue('gray.600', 'gray.400');
     const nameColor = useColorModeValue('gray.800', 'white');
     const [isEditing, setIsEditing] = useState(false);
-    const [editName, setEditName] = useState('');
     const [editRating, setEditRating] = useState(review.rating);
     const [editComment, setEditComment] = useState(review.comment);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -153,22 +152,17 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     const toast = useToast();
 
     const handleEdit = () => {
-        setEditName('');
         setEditRating(review.rating);
         setEditComment(review.comment);
         setIsEditing(true);
     };
-
     const handleUpdate = async () => {
-        if (!editName.trim()) {
-            return toast({ title: 'Enter your name to confirm ownership', status: 'warning', duration: 3000, isClosable: true });
-        }
         setSubmitting(true);
         try {
             const res = await fetch(`${API}/api/products/${review.product}/reviews/${review._id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userName: editName.trim(), rating: editRating, comment: editComment }),
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+                body: JSON.stringify({ rating: editRating, comment: editComment }),
             });
             const data = await res.json();
             if (!data.success) {
@@ -186,15 +180,11 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     };
 
     const handleDelete = async () => {
-        if (!editName.trim()) {
-            return toast({ title: 'Enter your name to confirm ownership', status: 'warning', duration: 3000, isClosable: true });
-        }
         setSubmitting(true);
         try {
             const res = await fetch(`${API}/api/products/${review.product}/reviews/${review._id}`, {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userName: editName.trim() }),
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
             });
             const data = await res.json();
             if (!data.success) {
@@ -274,20 +264,13 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
                     </Text>
                     <HStack justify="flex-end" spacing={2}>
                         <Button size="xs" variant="outline" colorScheme="blue" onClick={handleEdit}>Edit</Button>
-                        <Button size="xs" variant="outline" colorScheme="red" onClick={() => { setEditName(''); setShowDeleteConfirm(true); }}>Delete</Button>
+                        <Button size="xs" variant="outline" colorScheme="red" onClick={() => setShowDeleteConfirm(true)}>Delete</Button>
                     </HStack>
                 </>
             )}
 
             {isEditing && (
                 <VStack spacing={3} mt={3} align="stretch">
-                    <Input
-                        placeholder="Enter your name to confirm"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        size="sm"
-                        focusBorderColor="blue.400"
-                    />
                     <StarRating value={editRating} onChange={setEditRating} size="sm" />
                     <Textarea
                         value={editComment}
@@ -307,14 +290,7 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
 
             {showDeleteConfirm && (
                 <VStack spacing={3} mt={3} align="stretch">
-                    <Text fontSize="sm" color="red.400" fontWeight="semibold">Enter your name to confirm deletion:</Text>
-                    <Input
-                        placeholder="Your name"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        size="sm"
-                        focusBorderColor="red.400"
-                    />
+                    <Text fontSize="sm" color="red.400" fontWeight="semibold">Are you sure you want to delete this review?</Text>
                     <HStack justify="flex-end">
                         <Button size="xs" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
                         <Button size="xs" colorScheme="red" onClick={handleDelete} isLoading={submitting}>Confirm Delete</Button>

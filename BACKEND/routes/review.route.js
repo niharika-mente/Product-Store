@@ -6,8 +6,8 @@ const router = express.Router({ mergeParams: true });
 
 router.get('/', getReviews);
 router.post('/', addReview);
-router.put('/:reviewId', updateReview);
-router.delete('/:reviewId', deleteReview);
+router.put('/:reviewId', authMiddleware, updateReview);
+router.delete('/:reviewId', authMiddleware, deleteReview);
 
 // Only authenticated users can add reviews
 router.post('/', authMiddleware, addReview);

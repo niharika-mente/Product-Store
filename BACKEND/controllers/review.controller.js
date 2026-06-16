@@ -98,7 +98,7 @@ export const addReview = async (req, res) => {
 
 export const updateReview = async (req, res) => {
     const { reviewId } = req.params;
-    const { userName, rating, comment } = req.body;
+    const { rating, comment } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(reviewId)) {
         return res.status(404).json({ success: false, message: 'Invalid review ID' });
@@ -109,7 +109,7 @@ export const updateReview = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Review not found' });
     }
 
-    if (review.userName !== userName?.trim()) {
+    if (review.userId.toString() !== req.user.id.toString()) {
         return res.status(403).json({ success: false, message: 'You can only edit your own reviews' });
     }
 
@@ -133,7 +133,6 @@ export const updateReview = async (req, res) => {
 
 export const deleteReview = async (req, res) => {
     const { reviewId } = req.params;
-    const { userName } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(reviewId)) {
         return res.status(404).json({ success: false, message: 'Invalid review ID' });
@@ -144,7 +143,7 @@ export const deleteReview = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Review not found' });
     }
 
-    if (review.userName !== userName?.trim()) {
+    if (review.userId.toString() !== req.user.id.toString()) {
         return res.status(403).json({ success: false, message: 'You can only delete your own reviews' });
     }
 
