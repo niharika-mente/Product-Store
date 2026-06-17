@@ -221,7 +221,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
             onClick={() => addToCompare(product)}
             colorScheme={isInCompare ? "purple" : "gray"}
             aria-label="Add to compare"
-            isDisabled={!isInCompare && compareList.length >= 2}
+            isDisabled={!isInCompare && compareList.length >= 4}
             title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
             transition="all 0.2s"
             _hover={{ transform: "scale(1.1)" }}

@@ -13,6 +13,7 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
+import { FaBalanceScale } from "react-icons/fa";
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
   const { wishlistCount, clearWishlist } = useWishlist();
-  const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
+  const { searchQuery, setSearchQuery, products, fetchProducts,compareList  } = useProductStore();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -207,6 +208,25 @@ const Navbar = () => {
                 </Button>
               </Link>
 
+              <Link to={"/compare"}>
+  <Button size="sm" position="relative" aria-label="Compare products">
+    <FaBalanceScale size="18" />
+    {compareList.length > 0 && (
+      <Badge
+        colorScheme="purple"
+        borderRadius="full"
+        position="absolute"
+        top="-5px"
+        right="-5px"
+        px={1.5}
+        fontSize="10px"
+      >
+        {compareList.length}
+      </Badge>
+    )}
+  </Button>
+</Link>
+
               <Button size="sm" onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
                 <LuShoppingCart size="18" />
                 {totalItemsCount > 0 && (
@@ -294,6 +314,24 @@ const Navbar = () => {
                 )}
               </Button>
             </Link>
+
+            <Link to="/compare" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+  <Button w="full" leftIcon={<FaBalanceScale />} position="relative">
+    Compare
+    {compareList.length > 0 && (
+      <Badge
+        colorScheme="purple"
+        borderRadius="full"
+        position="absolute"
+        right="12px"
+        top="50%"
+        transform="translateY(-50%)"
+      >
+        {compareList.length}
+      </Badge>
+    )}
+  </Button>
+</Link>
 
             <Button
               w="full"
