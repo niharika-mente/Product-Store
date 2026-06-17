@@ -53,6 +53,11 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "completed", "failed", "refunded"],
     default: "pending",  // changed from "completed" to "pending"
   },
+  orderStatus: {
+    type: String,
+    enum: ["placed", "shipped", "delivered"],
+    default: "placed",
+  },
 }, { timestamps: true });
 
 // Indexes for faster lookups

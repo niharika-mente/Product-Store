@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema(
       enum: ['local', 'google', 'github'],
       default: 'local',
     },
+    emailPreferences: {
+      orderUpdates: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   {
     timestamps: true,

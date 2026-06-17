@@ -1,7 +1,9 @@
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
+import User from '../models/user.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
+import { sendEmail, getOrderStatusTemplate } from '../utils/email.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -174,13 +176,39 @@ export const stripeWebhook = async (req, res) => {
           deductions.push({ productId: item._id, quantity: item.quantity });
         }
 
-        await Order.create({
+        const newOrder = await Order.create({
           user: session.metadata?.userId || null,
           items: orderItems,
           totalAmount: session.amount_total / 100,
           stripeSessionId: session.id,
           paymentStatus: "completed",
         });
+
+        // Send Order Placed Email
+        try {
+          let userEmail = session.customer_details?.email;
+          let sendNotification = true;
+
+          if (session.metadata?.userId) {
+            const user = await User.findById(session.metadata.userId);
+            if (user) {
+              userEmail = userEmail || user.email;
+              sendNotification = user.emailPreferences?.orderUpdates !== false;
+            }
+          }
+
+          if (userEmail && sendNotification) {
+            const html = getOrderStatusTemplate(newOrder, 'placed');
+            // Do not await to avoid delaying webhook response
+            sendEmail({
+              to: userEmail,
+              subject: 'Order Confirmation - Placed',
+              html
+            });
+          }
+        } catch (emailError) {
+          console.error("Error sending order placed email:", emailError.message);
+        }
     }
 
     res.json({ received: true });
