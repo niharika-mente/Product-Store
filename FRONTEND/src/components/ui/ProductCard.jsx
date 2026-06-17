@@ -2,7 +2,7 @@ import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
   AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
   IconButton, Image, Input, ModalOverlay, ModalHeader, ModalBody, ModalFooter, Modal, ModalCloseButton, ModalContent,
-  Text, useColorModeValue,
+  Stack, Text, useColorModeValue,
   useDisclosure, useToast, VStack
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -160,18 +160,22 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
         shadow: "2xl",
       }}
       bg={bg}
+      minW="0"
+      w="full"
     >
       <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
         <Image
-          src={product.image}
-          alt={product.name}
-          h={48}
-          w="full"
-          objectFit="cover"
-          transition="transform 0.4s"
-          _groupHover={{ transform: "scale(1.05)" }}
-          cursor="pointer"
-        />
+  src={product.image}
+  alt={product.name}
+  h={{ base: "160px", sm: "192px" }}
+  w="full"
+  objectFit="contain"
+  p={2}                             
+  bg={useColorModeValue("gray.50", "gray.700")}   
+  transition="transform 0.4s"
+  _groupHover={{ transform: "scale(1.05)" }}
+  cursor="pointer"
+/>
       </Link>
 
       <Box p={4}>
@@ -187,50 +191,58 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           ${product.price}
         </Text>
 
-        <HStack spacing={2}>
-          <IconButton
-            icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
-            onClick={handleWishlistToggle}
-            colorScheme={isInWishlist ? "red" : "gray"}
-            variant="ghost"
-            aria-label='Add to Wishlist'
-            transition="all 0.2s"
-            _hover={{
-              transform: "scale(1.1)",
-            }}
-          />
+        {/* Button row: stacks vertically on very small screens, horizontal on sm+ */}
+        <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
+          <HStack spacing={2}>
+            <IconButton
+              icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
+              onClick={handleWishlistToggle}
+              colorScheme={isInWishlist ? "red" : "gray"}
+              variant="ghost"
+              aria-label='Add to Wishlist'
+              size="sm"
+              transition="all 0.2s"
+              _hover={{
+                transform: "scale(1.1)",
+              }}
+            />
 
-          <IconButton
-            icon={<FaEdit />}
-            onClick={handleModalOpen}
-            colorScheme="blue"
-            aria-label={`Edit ${product.name}`}
-            transition="all 0.2s"
-            _hover={{ transform: "scale(1.1)" }}
-          />
-          <IconButton
-            icon={<FaTrash />}
-            onClick={onDeleteOpen}
-            colorScheme="red"
-            aria-label={`Delete ${product.name}`}
-            transition="all 0.2s"
-            _hover={{ transform: "scale(1.1)" }}
-          />
-          <IconButton
-            icon={<FaBalanceScale />}
-            onClick={() => addToCompare(product)}
-            colorScheme={isInCompare ? "purple" : "gray"}
-            aria-label="Add to compare"
-            isDisabled={!isInCompare && compareList.length >= 2}
-            title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
-            transition="all 0.2s"
-            _hover={{ transform: "scale(1.1)" }}
-          />
+            <IconButton
+              icon={<FaEdit />}
+              onClick={handleModalOpen}
+              colorScheme="blue"
+              aria-label={`Edit ${product.name}`}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+            <IconButton
+              icon={<FaTrash />}
+              onClick={onDeleteOpen}
+              colorScheme="red"
+              aria-label={`Delete ${product.name}`}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+            <IconButton
+              icon={<FaBalanceScale />}
+              onClick={() => addToCompare(product)}
+              colorScheme={isInCompare ? "purple" : "gray"}
+              aria-label="Add to compare"
+              isDisabled={!isInCompare && compareList.length >= 2}
+              title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+          </HStack>
           <Button
             colorScheme="teal"
             onClick={handleAddToCart}
             size="sm"
             flex={1}
+            w={{ base: "full", sm: "auto" }}
             isDisabled={isOutOfStock}
             aria-label={`Add ${product.name} to cart`}
             transition="all 0.2s"
@@ -238,7 +250,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           >
             {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </Button>
-        </HStack>
+        </Stack>
       </Box>
 
       <AlertDialog
