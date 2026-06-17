@@ -99,6 +99,7 @@ export const createProduct = async (req, res, next) => {
     }
 
     let finalImageUrl = imageUrl || '';
+    let cloudinaryPublicId; // track uploaded image's public ID for potential cleanup
 
     if (req.file) {
         if (!cloudinaryConfigured()) {
@@ -107,6 +108,7 @@ export const createProduct = async (req, res, next) => {
         try {
             const result = await uploadToCloudinary(req.file.buffer);
             finalImageUrl = result.secure_url;
+            cloudinaryPublicId = result.public_id; // save public ID for cleanup if needed
         } catch (error) {
             return next(new AppError("Image upload failed", 500));
         }
@@ -133,7 +135,15 @@ export const createProduct = async (req, res, next) => {
         await newProduct.save();
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
-        next(error);
+        // CLEANUP: delete uploaded Cloudinary image if save failed
+        if (cloudinaryPublicId) {
+            try {
+                await cloudinary.uploader.destroy(cloudinaryPublicId);
+            } catch (destroyError) {
+                console.error("Failed to delete Cloudinary image:", destroyError.message);
+            }
+        }
+        return next(error);
     }
 };
 
@@ -383,13 +393,11 @@ export const searchProducts = async (req, res, next) => {
     }
 
     try {
-    const safeQuery = escapeRegex(q);
-    const regex = new RegExp(safeQuery, 'i');
-    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
-    res.status(200).json({ success: true, data: products });
-} catch (error) {
-    next(error);
-} catch (error) {
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
+        const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
         next(error);
     }
 };
