@@ -139,7 +139,7 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     );
 };
 
-    const ReviewCard = ({ review, onReviewUpdated }) => {
+const ReviewCard = ({ review, onReviewUpdated }) => {
     const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const textColor = useColorModeValue('gray.600', 'gray.400');
