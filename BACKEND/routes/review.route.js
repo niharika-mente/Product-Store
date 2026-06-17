@@ -5,11 +5,8 @@ import authMiddleware from '../middleware/authMiddleware.js';
 const router = express.Router({ mergeParams: true });
 
 router.get('/', getReviews);
-router.post('/', addReview);
+router.post('/', authMiddleware, addReview);
 router.put('/:reviewId', authMiddleware, updateReview);
 router.delete('/:reviewId', authMiddleware, deleteReview);
-
-// Only authenticated users can add reviews
-router.post('/', authMiddleware, addReview);
 
 export default router;

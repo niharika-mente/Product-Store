@@ -21,12 +21,12 @@ const recalcProductRating = async (productId) => {
 
 export const addReview = async (req, res) => {
     const { productId } = req.params;
-    const { userName, rating, comment } = req.body;
+    const { rating, comment } = req.body;
 
     const userId = req.user.id;
     const userName = req.user.name;
 
-    if (!mongoose.Types.ObjectId.isValid(productId)) {  // ← FIXED
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
         return res.status(404).json({
             success: false,
             message: 'Invalid product ID'
@@ -48,7 +48,7 @@ export const addReview = async (req, res) => {
     }
 
     const product = await Product.findOne({
-        _id: productId,  // ← FIXED
+        _id: productId,
         isDeleted: { $ne: true }
     });
 
@@ -60,7 +60,7 @@ export const addReview = async (req, res) => {
     }
 
     const existing = await Review.findOne({
-        product: productId,  // ← FIXED
+        product: productId,
         userId
     });
 
@@ -73,14 +73,14 @@ export const addReview = async (req, res) => {
 
     try {
         const review = await Review.create({
-            product: productId,  // ← FIXED
+            product: productId,
             userId,
             userName,
             rating,
             comment
         });
 
-        await recalcProductRating(productId);  // ← FIXED
+        await recalcProductRating(productId);
 
         return res.status(201).json({
             success: true,
@@ -158,9 +158,9 @@ export const deleteReview = async (req, res) => {
 };
 
 export const getReviews = async (req, res) => {
-  const { productId } = req.params;
+    const { productId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(productId)) {  // ← FIXED
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
         return res.status(404).json({
             success: false,
             message: 'Invalid product ID'
@@ -169,7 +169,7 @@ export const getReviews = async (req, res) => {
 
     try {
         const reviews = await Review.find({
-            product: productId  // ← FIXED
+            product: productId
         }).sort({ createdAt: -1 });
 
         return res.status(200).json({
