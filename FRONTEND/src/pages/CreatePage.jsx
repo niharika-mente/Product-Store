@@ -17,7 +17,7 @@ const CreatePage = () => {
     name: "",
     price: "",
     image: "",
-    imageFile: null,
+    imageFiles: [],
     images: [],
     description: "",
     category: "",
@@ -26,7 +26,7 @@ const CreatePage = () => {
     originalPrice: "",
     discount: ""
   });
-  const [preview, setPreview] = useState(null);
+  const [previews, setPreviews] = useState([]);
   const [extraImageInput, setExtraImageInput] = useState("");
   const [showExtraDetails, setShowExtraDetails] = useState(false);
   const fileInputRef = useRef(null);
@@ -35,17 +35,18 @@ const CreatePage = () => {
   const { createProduct, isSubmitting } = useProductStore();
 
   useEffect(() => {
-    const url = preview;
     return () => {
-      if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+      previews.forEach(url => {
+        if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
     };
-  }, [preview]);
+  }, [previews]);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setNewProduct({ ...newProduct, imageFile: file, image: "" });
-    setPreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    setNewProduct({ ...newProduct, imageFiles: files, image: "" });
+    setPreviews(files.map(file => URL.createObjectURL(file)));
   };
 
   const handleAddProduct = async () => {
@@ -55,10 +56,10 @@ const CreatePage = () => {
     } else {
       showSuccessToast(toast, "Success", message);
       setNewProduct({
-        name: "", price: "", image: "", imageFile: null, images: [],
+        name: "", price: "", image: "", imageFiles: [], images: [],
         description: "", category: "", brand: "", stock: "", originalPrice: "", discount: ""
       });
-      setPreview(null);
+      setPreviews([]);
       setExtraImageInput("");
       setShowExtraDetails(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -111,10 +112,11 @@ const CreatePage = () => {
 
                 <Box w="full">
                   <Text fontSize="sm" mb={1} color="gray.500">
-                    Upload an image or paste a URL below
+                    Upload images (up to 5) or paste a URL below
                   </Text>
                   <Input
                     type="file"
+                    multiple
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     aria-label="Upload product image"
                     ref={fileInputRef}
@@ -129,23 +131,27 @@ const CreatePage = () => {
                   aria-label="Image URL"
                   value={newProduct.image}
                   onChange={(e) => {
-                    setNewProduct({ ...newProduct, image: e.target.value, imageFile: null });
-                    setPreview(e.target.value || null);
+                    setNewProduct({ ...newProduct, image: e.target.value, imageFiles: [] });
+                    setPreviews(e.target.value ? [e.target.value] : []);
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 />
 
-                {preview && (
-                  <Image
-                    src={preview}
-                    alt="Product preview"
-                    maxH="200px"
-                    objectFit="contain"
-                    rounded="md"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    w="full"
-                  />
+                {previews.length > 0 && (
+                  <HStack spacing={2} overflowX="auto" py={2}>
+                    {previews.map((previewUrl, idx) => (
+                      <Image
+                        key={idx}
+                        src={previewUrl}
+                        alt={`Preview ${idx + 1}`}
+                        maxH="100px"
+                        objectFit="contain"
+                        rounded="md"
+                        border="1px solid"
+                        borderColor="gray.200"
+                      />
+                    ))}
+                  </HStack>
                 )}
 
                 <Box w="full">

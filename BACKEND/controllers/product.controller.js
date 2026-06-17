@@ -115,20 +115,29 @@ export const createProduct = async (req, res, next) => {
     }
 
     let finalImageUrl = imageUrl || '';
+    let finalImageUrls = Array.isArray(req.body.images) ? req.body.images : (req.body.images ? [req.body.images] : []);
 
-    if (req.file) {
+    if (req.files && req.files.length > 0) {
         if (!cloudinaryConfigured()) {
             return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
         }
         try {
-            const result = await uploadToCloudinary(req.file.buffer);
-            finalImageUrl = result.secure_url;
+            const uploadPromises = req.files.map(file => uploadToCloudinary(file.buffer));
+            const results = await Promise.all(uploadPromises);
+            const uploadedUrls = results.map(result => result.secure_url);
+            
+            if (!finalImageUrl && uploadedUrls.length > 0) {
+                finalImageUrl = uploadedUrls[0];
+            }
+            finalImageUrls = [...finalImageUrls, ...uploadedUrls];
         } catch (error) {
             return next(new AppError("Image upload failed", 500));
         }
     }
 
-    if (!finalImageUrl) {
+    if (!finalImageUrl && finalImageUrls.length > 0) {
+        finalImageUrl = finalImageUrls[0];
+    } else if (!finalImageUrl) {
         return next(new AppError("Please provide a product image", 400));
     }
 
@@ -136,7 +145,7 @@ export const createProduct = async (req, res, next) => {
         name,
         price: Number(price),
         image: finalImageUrl,
-        images: Array.isArray(req.body.images) ? req.body.images : [],
+        images: finalImageUrls,
         description,
         category,
         brand,
@@ -161,7 +170,7 @@ export const updateProduct = async (req, res, next) => {
         return next(new AppError("Invalid Product Id format", 404));
     }
 
-    if ((!req.body || Object.keys(req.body).length === 0) && !req.file) {
+    if ((!req.body || Object.keys(req.body).length === 0) && (!req.files || req.files.length === 0)) {
         return next(new AppError("No update fields provided", 400));
     }
 
@@ -193,14 +202,17 @@ export const updateProduct = async (req, res, next) => {
     if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
     if (discount !== undefined) updateData.discount = Number(discount);
 
-    if (req.file) {
+    if (req.files && req.files.length > 0) {
         if (!cloudinaryConfigured()) {
             return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
         }
         try {
-            const result = await uploadToCloudinary(req.file.buffer);
-            updateData.image = result.secure_url;
+            const uploadPromises = req.files.map(file => uploadToCloudinary(file.buffer));
+            const results = await Promise.all(uploadPromises);
+            const uploadedUrls = results.map(result => result.secure_url);
 
+            updateData.image = uploadedUrls[0];
+            updateData.images = uploadedUrls;
         } catch (error) {
             return next(new AppError("Image upload failed", 500));
         }
@@ -211,13 +223,15 @@ export const updateProduct = async (req, res, next) => {
         if (!updatedProduct) {
             return next(new AppError("Product not found", 404));
         }
-        if (req.file){
-            const oldPublicId = extractCloudinaryPublicId(existing.image);
-                if (oldPublicId) {
-                    cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-                        console.warn("Old image cleanup failed:", err.message);
-                    });
-                }
+        if (req.files && req.files.length > 0) {
+            const oldImages = [existing.image, ...(existing.images || [])].filter(Boolean);
+            const oldPublicIds = [...new Set(oldImages.map(extractCloudinaryPublicId).filter(Boolean))];
+            
+            oldPublicIds.forEach(oldPublicId => {
+                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                    console.warn(`Old image cleanup failed for ${oldPublicId}:`, err.message);
+                });
+            });
         }
 
         res.status(200).json({ success: true, data: updatedProduct });

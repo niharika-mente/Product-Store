@@ -32,7 +32,7 @@ export const useProductStore = create((set) =>({
         if (!newProduct.name || !newProduct.price) {
             return { success: false, message: "Please fill in all fields." };
         }
-        if (!newProduct.imageFile && !newProduct.image) {
+        if ((!newProduct.imageFiles || newProduct.imageFiles.length === 0) && !newProduct.image) {
             return { success: false, message: "Please provide a product image." };
         }
 
@@ -42,10 +42,14 @@ export const useProductStore = create((set) =>({
             formData.append("name", newProduct.name);
             formData.append("price", newProduct.price);
 
-            if (newProduct.imageFile) {
-                formData.append("image", newProduct.imageFile);
+            if (newProduct.imageFiles && newProduct.imageFiles.length > 0) {
+                newProduct.imageFiles.forEach(file => formData.append("images", file));
             } else {
                 formData.append("image", newProduct.image);
+            }
+
+            if (newProduct.images && newProduct.images.length > 0) {
+                newProduct.images.forEach(imgUrl => formData.append("images", imgUrl));
             }
 
             if (newProduct.description) formData.append("description", newProduct.description);
@@ -163,10 +167,14 @@ export const useProductStore = create((set) =>({
             formData.append("name", updatedProduct.name);
             formData.append("price", updatedProduct.price);
 
-            if (updatedProduct.imageFile) {
-                formData.append("image", updatedProduct.imageFile);
+            if (updatedProduct.imageFiles && updatedProduct.imageFiles.length > 0) {
+                updatedProduct.imageFiles.forEach(file => formData.append("images", file));
             } else if (updatedProduct.image) {
                 formData.append("image", updatedProduct.image);
+            }
+
+            if (updatedProduct.images && updatedProduct.images.length > 0) {
+                updatedProduct.images.forEach(imgUrl => formData.append("images", imgUrl));
             }
 
             if (updatedProduct.description !== undefined) formData.append("description", updatedProduct.description);

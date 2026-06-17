@@ -11,8 +11,8 @@ router.get("/related/:id", getRelatedProducts);
 router.get("/search", searchProducts);
 router.get("/:id/bundle", getProductBundle);
 router.get("/:id", getProductById);
-router.post("/", upload.single("image"), handleUploadError, createProduct);
-router.put("/:id", upload.single("image"), handleUploadError, updateProduct);
+router.post("/", upload.array("images", 5), handleUploadError, createProduct);
+router.put("/:id", upload.array("images", 5), handleUploadError, updateProduct);
 router.delete("/:id", deleteProduct);
 
 
