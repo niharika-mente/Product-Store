@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   VStack,
@@ -13,14 +13,36 @@ import {
   Button,
   useColorModeValue,
   Divider,
-  HStack
+  HStack,
+  Badge,
+  Wrap,
+  WrapItem,
+  Skeleton
 } from '@chakra-ui/react';
+import { useProductStore } from '../../store/product';
 
 const FilterPanel = ({ filters, setFilters }) => {
   const [localFilters, setLocalFilters] = useState(filters);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const { fetchTags } = useProductStore();
 
   const bg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const tagActiveBg = useColorModeValue('purple.500', 'purple.400');
+  const tagInactiveBg = useColorModeValue('gray.100', 'gray.700');
+  const tagActiveColor = 'white';
+  const tagInactiveColor = useColorModeValue('gray.700', 'gray.200');
+
+  useEffect(() => {
+    const loadTags = async () => {
+      setTagsLoading(true);
+      const result = await fetchTags();
+      if (result.success) setAvailableTags(result.data);
+      setTagsLoading(false);
+    };
+    loadTags();
+  }, [fetchTags]);
 
   const handleApply = () => {
     setFilters(localFilters);
@@ -32,10 +54,19 @@ const FilterPanel = ({ filters, setFilters }) => {
       maxPrice: 5000,
       brand: '',
       minRating: 0,
-      inStock: false
+      inStock: false,
+      tags: []
     };
     setLocalFilters(defaultFilters);
     setFilters(defaultFilters);
+  };
+
+  const toggleTag = (tag) => {
+    const current = localFilters.tags || [];
+    const updated = current.includes(tag)
+      ? current.filter(t => t !== tag)
+      : [...current, tag];
+    setLocalFilters({ ...localFilters, tags: updated });
   };
 
   return (
@@ -116,6 +147,56 @@ const FilterPanel = ({ filters, setFilters }) => {
           >
             <Text fontSize="sm">In Stock Only</Text>
           </Checkbox>
+        </Box>
+
+        {/* Tags Filter */}
+        <Box>
+          <HStack justify="space-between" mb={2}>
+            <Text fontWeight="medium" fontSize="sm">Tags</Text>
+            {(localFilters.tags || []).length > 0 && (
+              <Text
+                fontSize="xs"
+                color="purple.500"
+                cursor="pointer"
+                onClick={() => setLocalFilters({ ...localFilters, tags: [] })}
+              >
+                Clear tags
+              </Text>
+            )}
+          </HStack>
+          {tagsLoading ? (
+            <VStack align="stretch" spacing={2}>
+              <Skeleton height="24px" borderRadius="full" />
+              <Skeleton height="24px" borderRadius="full" />
+            </VStack>
+          ) : availableTags.length === 0 ? (
+            <Text fontSize="xs" color="gray.400">No tags available</Text>
+          ) : (
+            <Wrap spacing={2}>
+              {availableTags.map(tag => {
+                const isSelected = (localFilters.tags || []).includes(tag);
+                return (
+                  <WrapItem key={tag}>
+                    <Badge
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                      cursor="pointer"
+                      bg={isSelected ? tagActiveBg : tagInactiveBg}
+                      color={isSelected ? tagActiveColor : tagInactiveColor}
+                      fontWeight={isSelected ? 'bold' : 'normal'}
+                      onClick={() => toggleTag(tag)}
+                      transition="all 0.15s"
+                      _hover={{ opacity: 0.8 }}
+                      fontSize="xs"
+                    >
+                      {tag}
+                    </Badge>
+                  </WrapItem>
+                );
+              })}
+            </Wrap>
+          )}
         </Box>
 
         <Divider />

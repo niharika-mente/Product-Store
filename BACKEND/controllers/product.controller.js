@@ -32,12 +32,18 @@ const extractCloudinaryPublicId = (url) => {
     return afterUpload.join('/').replace(/\.[^.]+$/, '');
 };
 
+const parseTags = (raw) => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map(t => t.trim().toLowerCase()).filter(Boolean);
+    return raw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+};
+
 // @desc    Get all products
 export const getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
-        const { sort, category, minPrice, maxPrice, brand, minRating, inStock } = req.query;
+        const { sort, category, minPrice, maxPrice, brand, minRating, inStock, tags } = req.query;
 
         if (page < 1 || limit < 1) {
             return res.status(400).json({
@@ -64,7 +70,6 @@ export const getProducts = async (req, res, next) => {
             if (maxPrice) filter.price.$lte = Number(maxPrice);
         }
         if (brand) {
-            // Case-insensitive brand search
             filter.brand = { $regex: new RegExp(brand, 'i') };
         }
         if (minRating) {
@@ -72,6 +77,10 @@ export const getProducts = async (req, res, next) => {
         }
         if (inStock === 'true') {
             filter.stock = { $gt: 0 };
+        }
+        if (tags) {
+            const tagList = parseTags(tags);
+            if (tagList.length > 0) filter.tags = { $in: tagList };
         }
 
         const skip = (page - 1) * limit;
@@ -102,9 +111,20 @@ export const getProductCategories = async (req, res, next) => {
     }
 };
 
+// @desc    Get distinct product tags
+export const getProductTags = async (req, res, next) => {
+    try {
+        const tags = await Product.distinct('tags', { isDeleted: { $ne: true }, tags: { $ne: '' } });
+        res.status(200).json({ success: true, data: tags.sort() });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Create a new product
 export const createProduct = async (req, res, next) => {
     const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
+    const tags = parseTags(req.body.tags);
 
     if (!name || price === undefined || price === null || price === '' || isNaN(Number(price))) {
         return next(new AppError("Please provide all fields", 400));
@@ -140,6 +160,7 @@ export const createProduct = async (req, res, next) => {
         description,
         category,
         brand,
+        tags,
         ...(stock !== undefined && { stock: Number(stock) }),
         ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
         ...(discount !== undefined && { discount: Number(discount) }),
@@ -192,6 +213,7 @@ export const updateProduct = async (req, res, next) => {
     if (stock !== undefined) updateData.stock = Number(stock);
     if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
     if (discount !== undefined) updateData.discount = Number(discount);
+    if (req.body.tags !== undefined) updateData.tags = parseTags(req.body.tags);
 
     if (req.file) {
         if (!cloudinaryConfigured()) {
@@ -200,7 +222,6 @@ export const updateProduct = async (req, res, next) => {
         try {
             const result = await uploadToCloudinary(req.file.buffer);
             updateData.image = result.secure_url;
-
         } catch (error) {
             return next(new AppError("Image upload failed", 500));
         }
@@ -211,13 +232,13 @@ export const updateProduct = async (req, res, next) => {
         if (!updatedProduct) {
             return next(new AppError("Product not found", 404));
         }
-        if (req.file){
+        if (req.file) {
             const oldPublicId = extractCloudinaryPublicId(existing.image);
-                if (oldPublicId) {
-                    cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-                        console.warn("Old image cleanup failed:", err.message);
-                    });
-                }
+            if (oldPublicId) {
+                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                    console.warn("Old image cleanup failed:", err.message);
+                });
+            }
         }
 
         res.status(200).json({ success: true, data: updatedProduct });
@@ -294,7 +315,7 @@ export const getRelatedProducts = async (req, res) => {
         const orConditions = [];
         if (product.category) orConditions.push({ category: product.category });
         if (product.brand) orConditions.push({ brand: product.brand });
-        if (targetTagsSet.size > 0) orConditions.push({ tags: { $in: [ ...targetTagsSet ] } });
+        if (targetTagsSet.size > 0) orConditions.push({ tags: { $in: [...targetTagsSet] } });
 
         const query = {
             _id: { $ne: product._id },
@@ -319,7 +340,7 @@ export const getRelatedProducts = async (req, res) => {
 
             if (c.tags && c.tags.length > 0) {
                 for (const tag of c.tags) {
-                    if (targetTagsSet.has(tag.toLowerCase())) {
+                    if (targetTagsSet.has(tag.toLowerCase())) {  // fixed: was targetTags
                         score += 2;
                     }
                 }
@@ -363,18 +384,16 @@ export const getProductBundle = async (req, res) => {
             .filter(ci => ci.product && !ci.product.isDeleted)
             .slice(0, 3);
 
-        // product.controller.js  —  getProductBundle  (lines 366–371)
+        const bundleTotal = [product, ...items.map(i => i.product)]
+            .reduce((sum, p) => sum + (Number(p?.price) || 0), 0);
 
-const bundleTotal = [product, ...items.map(i => i.product)]
-    .reduce((sum, p) => sum + (Number(p?.price) || 0), 0);   // ← null-safe
-
-const bundleDiscount = 0.1;
-const bundlePrice = bundleTotal > 0
-    ? +(bundleTotal * (1 - bundleDiscount)).toFixed(2)
-    : 0;
-const savings = bundleTotal > 0
-    ? +(bundleTotal * bundleDiscount).toFixed(2)
-    : 0;
+        const bundleDiscount = 0.1;
+        const bundlePrice = bundleTotal > 0
+            ? +(bundleTotal * (1 - bundleDiscount)).toFixed(2)
+            : 0;
+        const savings = bundleTotal > 0
+            ? +(bundleTotal * bundleDiscount).toFixed(2)
+            : 0;
 
         res.status(200).json({
             success: true,
@@ -405,11 +424,17 @@ export const searchProducts = async (req, res, next) => {
     }
 
     try {
-    const safeQuery = escapeRegex(q);
-    const regex = new RegExp(safeQuery, 'i');
-    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
-    res.status(200).json({ success: true, data: products });
-} catch (error) {
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
+        const products = await Product.find({
+            isDeleted: { $ne: true },
+            $or: [
+                { name: regex },
+                { tags: { $in: [safeQuery.toLowerCase()] } }
+            ]
+        });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
         next(error);
     }
 };

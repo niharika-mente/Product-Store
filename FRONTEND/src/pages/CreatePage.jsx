@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useProductStore } from '../store/product';
 import {
-  Box, Button, Collapse, Container, Divider, Heading, HStack, Icon,
-  Image, Input, Select, Text, Textarea, useColorModeValue, useToast, VStack
+  Box, Badge, Button, Collapse, Container, Divider, Heading, HStack, Icon,
+  Image, Input, Select, Text, Textarea, useColorModeValue, useToast, VStack, Wrap, WrapItem
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
@@ -24,10 +24,12 @@ const CreatePage = () => {
     brand: "",
     stock: "",
     originalPrice: "",
-    discount: ""
+    discount: "",
+    tags: []
   });
   const [preview, setPreview] = useState(null);
   const [extraImageInput, setExtraImageInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
   const [showExtraDetails, setShowExtraDetails] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -48,6 +50,18 @@ const CreatePage = () => {
     setPreview(URL.createObjectURL(file));
   };
 
+  const handleAddTag = () => {
+    const tag = tagInput.trim().toLowerCase();
+    if (tag && !newProduct.tags.includes(tag)) {
+      setNewProduct({ ...newProduct, tags: [...newProduct.tags, tag] });
+    }
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tag) => {
+    setNewProduct({ ...newProduct, tags: newProduct.tags.filter(t => t !== tag) });
+  };
+
   const handleAddProduct = async () => {
     const { success, message } = await createProduct(newProduct);
     if (!success) {
@@ -56,10 +70,12 @@ const CreatePage = () => {
       showSuccessToast(toast, "Success", message);
       setNewProduct({
         name: "", price: "", image: "", imageFile: null, images: [],
-        description: "", category: "", brand: "", stock: "", originalPrice: "", discount: ""
+        description: "", category: "", brand: "", stock: "", originalPrice: "", discount: "",
+        tags: []
       });
       setPreview(null);
       setExtraImageInput("");
+      setTagInput("");
       setShowExtraDetails(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -68,6 +84,8 @@ const CreatePage = () => {
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const toggleBg = useColorModeValue("blue.50", "blue.900");
   const infoColor = useColorModeValue("gray.700", "gray.300");
+  const tagBg = useColorModeValue("purple.100", "purple.800");
+  const tagColor = useColorModeValue("purple.800", "purple.100");
 
   return (
     <Container maxW={"container.sm"} py={12}>
@@ -277,12 +295,61 @@ const CreatePage = () => {
                   value={newProduct.discount}
                   onChange={(e) => setNewProduct({ ...newProduct, discount: e.target.value })}
                 />
+
+                {/* Tags Input */}
+                <Box w="full">
+                  <Text fontSize="sm" mb={1} color="gray.500">
+                    Tags (e.g. wireless, portable, premium)
+                  </Text>
+                  <HStack>
+                    <Input
+                      placeholder="Add a tag and press Enter"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                    />
+                    <Button
+                      colorScheme="purple"
+                      variant="outline"
+                      px={6}
+                      isDisabled={!tagInput.trim()}
+                      onClick={handleAddTag}
+                    >
+                      Add
+                    </Button>
+                  </HStack>
+                  {newProduct.tags.length > 0 && (
+                    <Wrap mt={2} spacing={2}>
+                      {newProduct.tags.map((tag) => (
+                        <WrapItem key={tag}>
+                          <Badge
+                            px={2}
+                            py={1}
+                            borderRadius="full"
+                            bg={tagBg}
+                            color={tagColor}
+                            cursor="pointer"
+                            onClick={() => handleRemoveTag(tag)}
+                            _hover={{ opacity: 0.7 }}
+                          >
+                            {tag} ✕
+                          </Badge>
+                        </WrapItem>
+                      ))}
+                    </Wrap>
+                  )}
+                </Box>
               </VStack>
             </Collapse>
 
-            <Button 
-              colorScheme='blue' 
-              onClick={handleAddProduct} 
+            <Button
+              colorScheme='blue'
+              onClick={handleAddProduct}
               w='full'
               size="lg"
               mt={4}

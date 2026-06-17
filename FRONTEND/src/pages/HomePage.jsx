@@ -43,20 +43,21 @@ const HomePage = () => {
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
-  
+
   const [sort, setSort] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const limit = 10;
-  
+
   const [filters, setFilters] = useState({
     minPrice: 0,
     maxPrice: 5000,
     brand: "",
     minRating: 0,
-    inStock: false
+    inStock: false,
+    tags: []
   });
 
   const [searchParams] = useSearchParams();
@@ -70,7 +71,6 @@ const HomePage = () => {
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
-  // Read search query from URL on page load
   useEffect(() => {
     const urlSearch = searchParams.get('search');
     if (urlSearch) {
@@ -181,11 +181,23 @@ const HomePage = () => {
           <Box w="full" display={{ base: "block", lg: "grid" }} gridTemplateColumns="300px 1fr" gap={8} alignItems="start">
             {/* Sidebar with Filters */}
             <Box position={{ lg: "sticky" }} top={{ lg: "100px" }} mb={{ base: 8, lg: 0 }}>
-              <FilterPanel filters={filters} setFilters={setFilters} />
+              <FilterPanel filters={filters} setFilters={(newFilters) => { setFilters(newFilters); setPage(1); }} />
             </Box>
 
-            {/* Product grid — skeletons while loading, real cards when ready */}
+            {/* Product grid */}
             <Box>
+              {/* Active tag filters display */}
+              {(filters.tags || []).length > 0 && (
+                <HStack mb={4} flexWrap="wrap" spacing={2}>
+                  <Text fontSize="sm" color={labelColor}>Filtering by tags:</Text>
+                  {filters.tags.map(tag => (
+                    <Badge key={tag} colorScheme="purple" px={2} py={1} borderRadius="full">
+                      {tag}
+                    </Badge>
+                  ))}
+                </HStack>
+              )}
+
               <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={10} w="full">
                 {loading
                   ? Array.from({ length: 6 }).map((_, i) => (
@@ -196,7 +208,6 @@ const HomePage = () => {
                     ))}
               </SimpleGrid>
 
-              {/* Empty state — no products in store */}
               {hasNoProducts && (
                 <VStack gap={4} py={12}>
               <Image
@@ -236,7 +247,6 @@ const HomePage = () => {
             </VStack>
           )}
 
-          {/* Pagination */}
           {!loading && products.length > 0 && !isSearching && (
             <Pagination
               currentPage={page}
@@ -249,7 +259,6 @@ const HomePage = () => {
             />
           )}
 
-          {/* Empty state — search returned nothing */}
           {hasNoSearchMatch && (
             <VStack gap={4} py={12}>
               <Text fontSize="6xl">🔎</Text>
@@ -281,12 +290,7 @@ const HomePage = () => {
         </Button>
       )}
 
-      <Drawer
-        isOpen={isDrawerOpen}
-        onClose={onDrawerClose}
-        placement="right"
-        size="sm"
-      >
+      <Drawer isOpen={isDrawerOpen} onClose={onDrawerClose} placement="right" size="sm">
         <DrawerOverlay />
         <DrawerContent bg={drawerBg}>
           <DrawerCloseButton />
@@ -327,12 +331,7 @@ const HomePage = () => {
             </VStack>
           </DrawerBody>
           <DrawerFooter borderTopWidth="1px">
-            <Button
-              size="sm"
-              variant="ghost"
-              colorScheme="red"
-              onClick={clearRecentlyViewed}
-            >
+            <Button size="sm" variant="ghost" colorScheme="red" onClick={clearRecentlyViewed}>
               Clear History
             </Button>
           </DrawerFooter>
@@ -356,27 +355,11 @@ const HomePage = () => {
           <HStack justify="space-between" maxW="container.xl" mx="auto">
             <HStack spacing={3}>
               {compareList.map((p) => (
-                <HStack
-                  key={p._id}
-                  bg={compareTagBg}
-                  px={3}
-                  py={1}
-                  borderRadius="md"
-                >
-                  <Text
-                    fontSize="sm"
-                    fontWeight="bold"
-                    noOfLines={1}
-                    maxW="120px"
-                  >
+                <HStack key={p._id} bg={compareTagBg} px={3} py={1} borderRadius="md">
+                  <Text fontSize="sm" fontWeight="bold" noOfLines={1} maxW="120px">
                     {p.name}
                   </Text>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    colorScheme="red"
-                    onClick={() => removeFromCompare(p._id)}
-                  >
+                  <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeFromCompare(p._id)}>
                     ✕
                   </Button>
                 </HStack>
@@ -404,66 +387,36 @@ const HomePage = () => {
         </Box>
       )}
 
-      <Modal
-        isOpen={isCompareOpen}
-        onClose={onCompareClose}
-        size="4xl"
-        isCentered
-      >
+      <Modal isOpen={isCompareOpen} onClose={onCompareClose} size="4xl" isCentered>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Product Comparison</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6} overflowX="auto">
-            {compareList.length === 2 && (
+            {compareList.length >= 2 && (
               <Table variant="simple" size="sm">
                 <Thead>
                   <Tr>
                     <Th>Feature</Th>
-                    <Th>{compareList[0].name}</Th>
-                    <Th>{compareList[1].name}</Th>
+                    {compareList.map(p => <Th key={p._id}>{p.name}</Th>)}
                   </Tr>
                 </Thead>
                 <Tbody>
                   {[
                     { label: "Price", key: "price", format: (v) => `$${v}` },
                     { label: "Brand", key: "brand", format: (v) => v || "—" },
-                    {
-                      label: "Category",
-                      key: "category",
-                      format: (v) => v || "—",
-                    },
+                    { label: "Category", key: "category", format: (v) => v || "—" },
                     { label: "Stock", key: "stock", format: (v) => v ?? "—" },
-                    {
-                      label: "Discount",
-                      key: "discount",
-                      format: (v) => (v ? `${v}%` : "—"),
-                    },
-                    {
-                      label: "Original Price",
-                      key: "originalPrice",
-                      format: (v) => (v ? `$${v}` : "—"),
-                    },
-                    {
-                      label: "Avg Rating",
-                      key: "averageRating",
-                      format: (v) => (v ? `${v} / 5` : "—"),
-                    },
-                    {
-                      label: "Reviews",
-                      key: "reviewCount",
-                      format: (v) => v ?? 0,
-                    },
-                    {
-                      label: "Description",
-                      key: "description",
-                      format: (v) => v || "—",
-                    },
+                    { label: "Discount", key: "discount", format: (v) => (v ? `${v}%` : "—") },
+                    { label: "Original Price", key: "originalPrice", format: (v) => (v ? `$${v}` : "—") },
+                    { label: "Avg Rating", key: "averageRating", format: (v) => (v ? `${v} / 5` : "—") },
+                    { label: "Reviews", key: "reviewCount", format: (v) => v ?? 0 },
+                    { label: "Tags", key: "tags", format: (v) => (v && v.length > 0 ? v.join(', ') : "—") },
+                    { label: "Description", key: "description", format: (v) => v || "—" },
                   ].map(({ label, key, format }) => (
                     <Tr key={key}>
                       <Td fontWeight="bold">{label}</Td>
-                      <Td>{format(compareList[0][key])}</Td>
-                      <Td>{format(compareList[1][key])}</Td>
+                      {compareList.map(p => <Td key={p._id}>{format(p[key])}</Td>)}
                     </Tr>
                   ))}
                 </Tbody>

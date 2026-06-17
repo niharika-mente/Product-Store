@@ -17,7 +17,7 @@ export const useRecentlyViewed = create(
   )
 );
 
-export const useProductStore = create((set) =>({
+export const useProductStore = create((set) => ({
     products: [],
     isLoading: false,
     isSubmitting: false,
@@ -54,6 +54,7 @@ export const useProductStore = create((set) =>({
             if (newProduct.stock !== undefined && newProduct.stock !== '') formData.append("stock", newProduct.stock);
             if (newProduct.originalPrice !== undefined && newProduct.originalPrice !== '') formData.append("originalPrice", newProduct.originalPrice);
             if (newProduct.discount !== undefined && newProduct.discount !== '') formData.append("discount", newProduct.discount);
+            if (newProduct.tags && newProduct.tags.length > 0) formData.append("tags", newProduct.tags.join(','));
 
             const res = await fetch(`${API}/api/products`, {
                 method: "POST",
@@ -86,7 +87,8 @@ export const useProductStore = create((set) =>({
             maxPrice,
             brand,
             minRating,
-            inStock
+            inStock,
+            tags = []
         } = options;
 
         set({ isLoading: true, error: null });
@@ -99,6 +101,7 @@ export const useProductStore = create((set) =>({
             if (brand) url += `&brand=${encodeURIComponent(brand)}`;
             if (minRating !== undefined && minRating !== null) url += `&minRating=${minRating}`;
             if (inStock) url += `&inStock=true`;
+            if (tags && tags.length > 0) url += `&tags=${encodeURIComponent(tags.join(','))}`;
 
             const res = await fetch(url);
             if (!res.ok) {
@@ -131,6 +134,18 @@ export const useProductStore = create((set) =>({
             return { success: true, data: data.data };
         } catch (error) {
             console.error("Network error fetching categories:", error);
+            return { success: false, data: [] };
+        }
+    },
+
+    fetchTags: async () => {
+        try {
+            const res = await fetch(`${API}/api/products/tags`);
+            if (!res.ok) return { success: false, data: [] };
+            const data = await res.json();
+            return { success: true, data: data.data };
+        } catch (error) {
+            console.error("Network error fetching tags:", error);
             return { success: false, data: [] };
         }
     },
@@ -175,6 +190,7 @@ export const useProductStore = create((set) =>({
             if (updatedProduct.stock !== undefined && updatedProduct.stock !== '') formData.append("stock", updatedProduct.stock);
             if (updatedProduct.originalPrice !== undefined && updatedProduct.originalPrice !== '') formData.append("originalPrice", updatedProduct.originalPrice);
             if (updatedProduct.discount !== undefined && updatedProduct.discount !== '') formData.append("discount", updatedProduct.discount);
+            if (updatedProduct.tags !== undefined) formData.append("tags", Array.isArray(updatedProduct.tags) ? updatedProduct.tags.join(',') : updatedProduct.tags);
 
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "PUT",
@@ -198,30 +214,30 @@ export const useProductStore = create((set) =>({
             return { success: false, message: "Network error - could not reach API" };
         }
     },
-compareList: [],
+
+    compareList: [],
     addToCompare: (product) => set((state) => {
-      if (state.compareList.find((p) => p._id === product._id)) return state;
-      if (state.compareList.length >= 4) return state;
-      return { compareList: [...state.compareList, product] };
+        if (state.compareList.find((p) => p._id === product._id)) return state;
+        if (state.compareList.length >= 4) return state;
+        return { compareList: [...state.compareList, product] };
     }),
     removeFromCompare: (pid) => set((state) => ({
-      compareList: state.compareList.filter((p) => p._id !== pid),
+        compareList: state.compareList.filter((p) => p._id !== pid),
     })),
     clearCompare: () => set({ compareList: [] }),
 
     searchProducts: async (query) => {
         try {
             const res = await fetch(`${API}/api/products/search?q=${encodeURIComponent(query)}`);
-            if(!res.ok){
-                return {success:false,message:"Failed to search products."};
+            if (!res.ok) {
+                return { success: false, message: "Failed to search products." };
             }
             const data = await res.json();
-            set({products:data.data});
-            return {success:true};
-        }
-        catch(error){
+            set({ products: data.data });
+            return { success: true };
+        } catch (error) {
             console.error("Network error searching products:", error);
-            return {success:false,message:"Network error - could not reach API"};
+            return { success: false, message: "Network error - could not reach API" };
         }
     }
 }));
