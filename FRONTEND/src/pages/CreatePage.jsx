@@ -6,6 +6,10 @@ import {
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
+import {
+  showSuccessToast,
+  showErrorToast,
+} from "../utils/toastHelpers";
 
 const CreatePage = () => {
   const { t } = useTranslation();
@@ -47,9 +51,9 @@ const CreatePage = () => {
   const handleAddProduct = async () => {
     const { success, message } = await createProduct(newProduct);
     if (!success) {
-      toast({ title: "Error", description: message, status: "error", isClosable: true, duration: 3000 });
+      showErrorToast(toast, "Error", message);
     } else {
-      toast({ title: "Success", description: message, status: "success", isClosable: true, duration: 3000 });
+      showSuccessToast(toast, "Success", message);
       setNewProduct({
         name: "", price: "", image: "", imageFile: null, images: [],
         description: "", category: "", brand: "", stock: "", originalPrice: "", discount: ""
