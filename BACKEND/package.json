@@ -7,13 +7,17 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --forceExit"
   },
   "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "@as-integrations/express4": "^1.1.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
+    "body-parser": "^2.3.0",
     "cloudinary": "^2.10.0",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "express-rate-limit": "^8.5.2",
+    "graphql": "^17.0.1",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb-memory-server": "^11.0.1",

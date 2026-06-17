@@ -17,6 +17,8 @@ import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import { stripeWebhook } from "./controllers/checkout.controller.js";
+import { expressMiddleware } from "@as-integrations/express4";
+import { apolloServer } from "./graphql/server.js";
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
@@ -54,6 +56,13 @@ if (process.env.VITE_API_URL) {
 }
 
 const app = express();
+await apolloServer.start();
+
+app.use(
+  "/graphql",
+  express.json(),
+  expressMiddleware(apolloServer)
+);
 app.use(
   helmet({
     contentSecurityPolicy: {
