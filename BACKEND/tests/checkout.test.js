@@ -103,7 +103,7 @@ describe('Checkout API Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe(`Insufficient stock for ${product.name}`);
+            expect(response.body.message).toBe(`Insufficient stock for ${product.name}. Available: ${product.stock}, requested: 5`);
         });
 
         it('should return 400 for an invalid product ID', async () => {

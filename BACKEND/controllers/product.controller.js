@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { escapeRegex } from '../utils/escapeRegex.js';
 import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
+import { indexProduct, deleteProductFromIndex, searchProductsES } from '../services/elasticsearch.service.js';
 
 const cloudinaryConfigured = () =>
     process.env.CLOUDINARY_CLOUD_NAME &&
@@ -147,6 +148,7 @@ export const createProduct = async (req, res, next) => {
 
     try {
         await newProduct.save();
+        await indexProduct(newProduct);
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
         next(error);
@@ -220,6 +222,8 @@ export const updateProduct = async (req, res, next) => {
                 }
         }
 
+        await indexProduct(updatedProduct);
+
         res.status(200).json({ success: true, data: updatedProduct });
     } catch (error) {
         next(error);
@@ -239,6 +243,7 @@ export const deleteProduct = async (req, res, next) => {
         if (!product) {
             return next(new AppError("Product not found", 404));
         }
+        await deleteProductFromIndex(id);
         res.status(200).json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
         next(error);
@@ -399,11 +404,18 @@ export const searchProducts = async (req, res, next) => {
     }
 
     try {
-    const safeQuery = escapeRegex(q);
-    const regex = new RegExp(safeQuery, 'i');
-    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
-    res.status(200).json({ success: true, data: products });
-} catch (error) {
+        // Try Elasticsearch first
+        const esProducts = await searchProductsES(q);
+        if (esProducts) {
+            return res.status(200).json({ success: true, data: esProducts });
+        }
+
+        // Fallback to MongoDB regex search
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
+        const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
         next(error);
     }
 };
