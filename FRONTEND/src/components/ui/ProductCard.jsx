@@ -12,6 +12,12 @@ import { useProductStore } from "../../store/product";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { FaBalanceScale } from "react-icons/fa";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+  showInfoToast,
+} from "../../utils/toastHelpers";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
@@ -77,23 +83,19 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
     if (isOutOfStock) return;
     const { status } = addToCart(product);
     if (status === 'capped') {
-      toast({
-        title: "Stock limit reached",
-        description: `Only ${product.stock} unit(s) of ${product.name} are available.`,
-        status: "warning",
-        duration: 2500,
-        isClosable: true,
-      });
+      showWarningToast(
+        toast,
+        "Stock limit reached",
+        `Only ${product.stock} unit(s) of ${product.name} are available.`
+      );
       return;
     }
     if (status === 'out_of_stock') return;
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your shopping cart.`,
-      status: "success",
-      duration: 2000,
-      isClosable: true,
-    });
+    showSuccessToast(
+      toast,
+      "Added to Cart",
+      `${product.name} has been added to your shopping cart.`
+    );
   };
 
   const handleWishlistToggle = async () => {
@@ -101,37 +103,25 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
       const result = await removeFromWishlist(product._id);
       if (result.success) {
         setIsInWishlist(false);
-        toast({
-          title: "Removed from Wishlist",
-          description: `${product.name} has been removed from your wishlist.`,
-          status: "info",
-          duration: 2000,
-        });
+        showInfoToast(
+          toast,
+          "Removed from Wishlist",
+          `${product.name} has been removed from your wishlist.`
+        );
       } else {
-        toast({
-          title: "Error",
-          description: result.message || "Failed to remove from wishlist",
-          status: "error",
-          duration: 2000,
-        });
+        showErrorToast(toast, "Error", result.message || "Failed to remove from wishlist");
       }
     } else {
       const result = await addToWishlist(product._id);
       if (result.success) {
         setIsInWishlist(true);
-        toast({
-          title: "Added to Wishlist",
-          description: `${product.name} has been added to your wishlist. ❤️`,
-          status: "success",
-          duration: 2000,
-        });
+        showSuccessToast(
+          toast,
+          "Added to Wishlist",
+          `${product.name} has been added to your wishlist. ❤️`
+        );
       } else {
-        toast({
-          title: "Error",
-          description: result.message || "Failed to add to wishlist",
-          status: "error",
-          duration: 2000,
-        });
+        showErrorToast(toast, "Error", result.message || "Failed to add to wishlist");
       }
     }
   };
@@ -140,9 +130,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
     onDeleteClose();
     const { success, message } = await deleteProduct(product._id);
     if (!success) {
-      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
+      showErrorToast(toast, "Error", message);
     } else {
-      toast({ title: "Success", description: "Product deleted successfully", status: "success", duration: 3000, isClosable: true });
+      showSuccessToast(toast, "Success", "Product deleted successfully");
     }
   };
 
@@ -150,9 +140,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
     const { success, message } = await updateProduct(pid, updatedProduct);
     onClose();
     if (!success) {
-      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
+      showErrorToast(toast, "Error", message);
     } else {
-      toast({ title: "Success", description: "Product updated successfully", status: "success", duration: 3000, isClosable: true });
+      showSuccessToast(toast, "Success", "Product updated successfully");
     }
   };
 

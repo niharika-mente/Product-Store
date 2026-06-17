@@ -30,12 +30,20 @@ const Navbar = () => {
     setIsLoggedIn(!!localStorage.getItem("authToken"));
   }, [location]);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+  // ✅ ALL HOOKS AT TOP LEVEL (Fixed)
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+  
+  // ✅ Mobile menu colors - moved to top level
+  const mobileInputBg = useColorModeValue("gray.50", "gray.700");
+  const mobileInputBorder = useColorModeValue("gray.200", "gray.600");
+  const searchBg = useColorModeValue("gray.50", "gray.700");
+  const searchBorder = useColorModeValue("gray.200", "gray.600");
 
   const handleCartOpen = async () => {
     await fetchProducts();
@@ -132,14 +140,13 @@ const Navbar = () => {
           py={{ base: 3, sm: 0 }}
           alignItems="center"
           justifyContent="space-between"
-          flexDir={{ base: "column", sm: "row" }}
-          gap={{ base: 2, sm: 0 }}
+          flexDir={{ base: "row" }}
         >
+          {/* LEFT SIDE - LOGO */}
           <Text
-            fontSize={{ base: "22px", sm: "28px" }}
+            fontSize={{ base: "20px", sm: "24px" }}
             fontWeight={"bold"}
             textTransform={"uppercase"}
-            textAlign={"center"}
             bgGradient={"linear(to-r, cyan.400, blue.500)"}
             bgClip={"text"}
             transition="all 0.3s"
@@ -149,8 +156,10 @@ const Navbar = () => {
             <Link to={"/"}>Product Store 🛒</Link>
           </Text>
 
-          <HStack spacing={4} alignItems={"center"} justifyContent="flex-end" w={{ base: "full", sm: "auto" }}>
-            <Box w={{ base: "full", sm: "240px", md: "300px" }}>
+          {/* RIGHT SIDE - ICONS + HAMBURGER */}
+          <HStack spacing={3} alignItems={"center"}>
+            {/* Search Box - Desktop only */}
+            <Box display={{ base: "none", md: "block" }} w="200px">
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -165,22 +174,23 @@ const Navbar = () => {
                 }}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
-                bg={useColorModeValue("gray.50", "gray.700")}
-                borderColor={useColorModeValue("gray.200", "gray.600")}
-                _placeholder={{ color: useColorModeValue("gray.400", "gray.400") }}
+                size="sm"
+                bg={searchBg}
+                borderColor={searchBorder}
               />
             </Box>
 
-            <HStack spacing={2} alignItems={"center"}>
+            {/* Desktop Icons */}
+            <HStack spacing={1} display={{ base: "none", sm: "flex" }}>
               <Link to={"/create"}>
-                <Button aria-label={t('nav.addProduct')}>
-                  <PlusSquareIcon fontSize={20} />
+                <Button size="sm" aria-label={t('nav.addProduct')}>
+                  <PlusSquareIcon fontSize={18} />
                 </Button>
               </Link>
 
               <Link to={"/wishlist"}>
-                <Button position="relative" aria-label="Open wishlist">
-                  <LuHeart size="20" />
+                <Button size="sm" position="relative" aria-label="Open wishlist">
+                  <LuHeart size="18" />
                   {wishlistCount > 0 && (
                     <Badge
                       colorScheme="pink"
@@ -188,7 +198,8 @@ const Navbar = () => {
                       position="absolute"
                       top="-5px"
                       right="-5px"
-                      px={2}
+                      px={1.5}
+                      fontSize="10px"
                     >
                       {wishlistCount}
                     </Badge>
@@ -196,8 +207,8 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              <Button onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
-                <LuShoppingCart size="20" />
+              <Button size="sm" onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
+                <LuShoppingCart size="18" />
                 {totalItemsCount > 0 && (
                   <Badge
                     colorScheme="teal"
@@ -205,15 +216,16 @@ const Navbar = () => {
                     position="absolute"
                     top="-5px"
                     right="-5px"
-                    px={2}
+                    px={1.5}
+                    fontSize="10px"
                   >
                     {totalItemsCount}
                   </Badge>
                 )}
               </Button>
 
-              <Button onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
-                {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
+              <Button size="sm" onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
+                {colorMode === "light" ? <IoMoon /> : <LuSun size='18' />}
               </Button>
 
               {isLoggedIn && (
@@ -222,8 +234,103 @@ const Navbar = () => {
                 </Button>
               )}
             </HStack>
+
+            {/* Hamburger Button - Mobile only */}
+            <Button
+              display={{ base: "flex", sm: "none" }}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Open menu"
+              variant="ghost"
+              fontSize="22px"
+            >
+              ☰
+            </Button>
           </HStack>
         </Flex>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <VStack
+            display={{ base: "flex", sm: "none" }}
+            spacing={3}
+            p={4}
+            borderTop="1px solid"
+            borderColor={border}
+            bg={navBg}
+            w="full"
+          >
+            {/* Search input for mobile - ✅ FIXED: using top-level variables */}
+            <Box w="full">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('common.search')}
+                aria-label={t('common.search')}
+                bg={mobileInputBg}
+                borderColor={mobileInputBorder}
+              />
+            </Box>
+
+            <Link to="/create" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+              <Button w="full" leftIcon={<PlusSquareIcon />}>
+                {t('nav.addProduct')}
+              </Button>
+            </Link>
+
+            <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+              <Button w="full" leftIcon={<LuHeart />} position="relative">
+                Wishlist
+                {wishlistCount > 0 && (
+                  <Badge
+                    colorScheme="pink"
+                    borderRadius="full"
+                    position="absolute"
+                    right="12px"
+                    top="50%"
+                    transform="translateY(-50%)"
+                  >
+                    {wishlistCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
+            <Button
+              w="full"
+              leftIcon={<LuShoppingCart />}
+              position="relative"
+              onClick={() => {
+                handleCartOpen();
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              Cart
+              {totalItemsCount > 0 && (
+                <Badge
+                  colorScheme="teal"
+                  borderRadius="full"
+                  position="absolute"
+                  right="12px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {totalItemsCount}
+                </Badge>
+              )}
+            </Button>
+
+            <Button 
+              w="full" 
+              leftIcon={colorMode === "light" ? <IoMoon /> : <LuSun />}
+              onClick={() => {
+                toggleColorMode();
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              {colorMode === "light" ? "Dark Mode" : "Light Mode"}
+            </Button>
+          </VStack>
+        )}
 
         <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="md">
           <DrawerOverlay />
