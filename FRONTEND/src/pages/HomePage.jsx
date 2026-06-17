@@ -12,13 +12,11 @@ import Pagination from '../components/ui/Pagination';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
-
 import { useCurrencyStore } from '../store/currency';
 import { formatPrice } from '../utils/currency';
 import RecentlyViewedCarousel from "../components/ui/RecentlyViewedCarousel";
 
 const ProductCardSkeleton = () => {
-  const { currency, rates } = useCurrencyStore();
   const bg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -43,6 +41,7 @@ const ProductCardSkeleton = () => {
 
 const HomePage = () => {
   const { fetchProducts, fetchCategories, products, searchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
+  const { currency, rates } = useCurrencyStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
