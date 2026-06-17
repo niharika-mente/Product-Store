@@ -102,12 +102,13 @@ app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), str
 app.use(express.json());
 
 // ============= API ROUTES =============
+
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
+
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
 if (process.env.NODE_ENV === "production") {

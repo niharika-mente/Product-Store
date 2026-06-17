@@ -8,6 +8,9 @@ import { formatPrice } from '../utils/currency';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { ArrowBackIcon } from '@chakra-ui/icons';
+import {
+  showInfoToast,
+} from "../utils/toastHelpers";
 
 const WishlistPage = () => {
   const { currency, rates } = useCurrencyStore();
@@ -23,12 +26,7 @@ const WishlistPage = () => {
 
   const handleRemove = async (productId, productName) => {
     await removeFromWishlist(productId);
-    toast({
-      title: "Removed",
-      description: `${productName} removed from wishlist`,
-      status: "info",
-      duration: 2000,
-    });
+    showInfoToast(toast, "Removed", `${productName} removed from wishlist`);
   };
 
   const handleGoBack = () => {

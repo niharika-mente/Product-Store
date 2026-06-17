@@ -8,13 +8,21 @@ const newsletterSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
+    },
+    isSubscribed: {
+      type: Boolean,
+      default: true,
+    },
+    subscribedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
     timestamps: true,
   }
 );
-
 const Newsletter = mongoose.model("Newsletter", newsletterSchema);
 
 export default Newsletter;
