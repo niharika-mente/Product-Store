@@ -56,7 +56,8 @@ const HomePage = () => {
     maxPrice: 5000,
     brand: "",
     minRating: 0,
-    inStock: false
+    inStock: false,
+    categories: []
   });
 
   const [searchParams] = useSearchParams();
@@ -91,7 +92,7 @@ const HomePage = () => {
           await searchProducts(query);
           return;
         }
-
+        const category = (filters.categories || []).join(',');
         const response = await fetchProducts({ page, limit, sort, ...filters });
         if (response && response.success && !ignore) {
           const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
