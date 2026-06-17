@@ -319,7 +319,7 @@ export const getRelatedProducts = async (req, res) => {
 
             if (c.tags && c.tags.length > 0) {
                 for (const tag of c.tags) {
-                    if (targetTags.has(tag.toLowerCase())) {
+                    if (targetTagsSet.has(tag.toLowerCase())) {
                         score += 2;
                     }
                 }
@@ -363,12 +363,18 @@ export const getProductBundle = async (req, res) => {
             .filter(ci => ci.product && !ci.product.isDeleted)
             .slice(0, 3);
 
-        const bundleTotal = [product, ...items.map(i => i.product)]
-            .reduce((sum, p) => sum + p.price, 0);
+        // product.controller.js  —  getProductBundle  (lines 366–371)
 
-        const bundleDiscount = 0.1;
-        const bundlePrice = +(bundleTotal * (1 - bundleDiscount)).toFixed(2);
-        const savings = +(bundleTotal * bundleDiscount).toFixed(2);
+const bundleTotal = [product, ...items.map(i => i.product)]
+    .reduce((sum, p) => sum + (Number(p?.price) || 0), 0);   // ← null-safe
+
+const bundleDiscount = 0.1;
+const bundlePrice = bundleTotal > 0
+    ? +(bundleTotal * (1 - bundleDiscount)).toFixed(2)
+    : 0;
+const savings = bundleTotal > 0
+    ? +(bundleTotal * bundleDiscount).toFixed(2)
+    : 0;
 
         res.status(200).json({
             success: true,
