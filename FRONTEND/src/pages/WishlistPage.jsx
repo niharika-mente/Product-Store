@@ -98,6 +98,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { ArrowBackIcon } from '@chakra-ui/icons';
+import Breadcrumbs from "../components/ui/Breadcrumbs";
 
 const WishlistPage = () => {
   const { wishlist, loading, removeFromWishlist, fetchWishlist } = useWishlist();
@@ -134,6 +135,12 @@ const WishlistPage = () => {
 
   return (
     <Container maxW="1140px" py={8}>
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Wishlist" }
+        ]}
+      />
       {/* ✅ Header with Back Button */}
       <HStack mb={6} spacing={4} alignItems="center">
         <Button
