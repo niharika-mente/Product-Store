@@ -19,6 +19,11 @@ import {
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "../utils/toastHelpers";
 
 function Signup() {
   const [name, setName] = useState('')
@@ -35,22 +40,12 @@ function Signup() {
     event.preventDefault()
 
     if (!name || !email || !password || !confirmPassword) {
-      toast({
-        title: 'Please complete all fields.',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true,
-      })
+      showWarningToast(toast, 'Please complete all fields.')
       return
     }
 
     if (password !== confirmPassword) {
-      toast({
-        title: 'Passwords do not match.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      })
+      showErrorToast(toast, 'Passwords do not match.')
       return
     }
 
@@ -67,13 +62,7 @@ function Signup() {
       })
       setTimeout(() => navigate('/login'), 1000)
     } catch (error) {
-      toast({
-        title: 'Registration failed.',
-        description: error.message,
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-      })
+      showErrorToast(toast, 'Registration failed.', error.message)
     } finally {
       setLoading(false)
     }

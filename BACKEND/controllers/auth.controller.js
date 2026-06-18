@@ -68,6 +68,19 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    if (!user.password) {
+      let message = "Please log in with your social provider.";
+      if (user.provider === "google") {
+        message = "Please log in with Google";
+      } else if (user.provider === "github") {
+        message = "Please log in with GitHub";
+      }
+      return res.status(400).json({
+        success: false,
+        message,
+      });
+    }
+
     const isMatch = await bcrypt.compare(
       password,
       user.password

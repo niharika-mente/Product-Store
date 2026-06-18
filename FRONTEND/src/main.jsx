@@ -6,6 +6,9 @@ import './i18n';
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from './context/AuthContext';
 
+import { useCurrencyStore } from './store/currency';
+useCurrencyStore.getState().fetchRates();
+
 const root = createRoot(document.getElementById('root'));
 
 root.render(

@@ -1,17 +1,19 @@
-import {
-  AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
-  IconButton, Image, Input, ModalOverlay, ModalHeader, ModalBody, ModalFooter, Modal, ModalCloseButton, ModalContent,
-  Text, useColorModeValue,
-  useDisclosure, useToast, VStack
-} from '@chakra-ui/react';
-import React, { useEffect, useRef, useState } from 'react';
-import { Link } from "react-router-dom";
-import { FaEdit, FaTrash, FaHeart, FaRegHeart } from "react-icons/fa";
+import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
+import React from 'react'
+import { useState } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../store/cart";
+import { useCurrencyStore } from "../../store/currency";
+import { formatPrice } from "../../utils/currency";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { FaBalanceScale } from "react-icons/fa";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+  showInfoToast,
+} from "../../utils/toastHelpers";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
@@ -28,9 +30,10 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
-const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
+const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
+  const { currency, rates } = useCurrencyStore();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -77,23 +80,19 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
     if (isOutOfStock) return;
     const { status } = addToCart(product);
     if (status === 'capped') {
-      toast({
-        title: "Stock limit reached",
-        description: `Only ${product.stock} unit(s) of ${product.name} are available.`,
-        status: "warning",
-        duration: 2500,
-        isClosable: true,
-      });
+      showWarningToast(
+        toast,
+        "Stock limit reached",
+        `Only ${product.stock} unit(s) of ${product.name} are available.`
+      );
       return;
     }
     if (status === 'out_of_stock') return;
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your shopping cart.`,
-      status: "success",
-      duration: 2000,
-      isClosable: true,
-    });
+    showSuccessToast(
+      toast,
+      "Added to Cart",
+      `${product.name} has been added to your shopping cart.`
+    );
   };
 
   const handleWishlistToggle = async () => {
@@ -101,37 +100,25 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
       const result = await removeFromWishlist(product._id);
       if (result.success) {
         setIsInWishlist(false);
-        toast({
-          title: "Removed from Wishlist",
-          description: `${product.name} has been removed from your wishlist.`,
-          status: "info",
-          duration: 2000,
-        });
+        showInfoToast(
+          toast,
+          "Removed from Wishlist",
+          `${product.name} has been removed from your wishlist.`
+        );
       } else {
-        toast({
-          title: "Error",
-          description: result.message || "Failed to remove from wishlist",
-          status: "error",
-          duration: 2000,
-        });
+        showErrorToast(toast, "Error", result.message || "Failed to remove from wishlist");
       }
     } else {
       const result = await addToWishlist(product._id);
       if (result.success) {
         setIsInWishlist(true);
-        toast({
-          title: "Added to Wishlist",
-          description: `${product.name} has been added to your wishlist. ❤️`,
-          status: "success",
-          duration: 2000,
-        });
+        showSuccessToast(
+          toast,
+          "Added to Wishlist",
+          `${product.name} has been added to your wishlist. ❤️`
+        );
       } else {
-        toast({
-          title: "Error",
-          description: result.message || "Failed to add to wishlist",
-          status: "error",
-          duration: 2000,
-        });
+        showErrorToast(toast, "Error", result.message || "Failed to add to wishlist");
       }
     }
   };
@@ -140,9 +127,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
     onDeleteClose();
     const { success, message } = await deleteProduct(product._id);
     if (!success) {
-      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
+      showErrorToast(toast, "Error", message);
     } else {
-      toast({ title: "Success", description: "Product deleted successfully", status: "success", duration: 3000, isClosable: true });
+      showSuccessToast(toast, "Success", "Product deleted successfully");
     }
   };
 
@@ -150,39 +137,98 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
     const { success, message } = await updateProduct(pid, updatedProduct);
     onClose();
     if (!success) {
-      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
+      showErrorToast(toast, "Error", message);
     } else {
-      toast({ title: "Success", description: "Product updated successfully", status: "success", duration: 3000, isClosable: true });
+      showSuccessToast(toast, "Success", "Product updated successfully");
     }
   };
 
   return (
-    <Box
-      role="group"
-      shadow="lg"
-      rounded="lg"
-      overflow="hidden"
-      borderWidth="1px"
-      borderColor={borderColor}
-      transition="all 0.3s"
-      _hover={{
-        transform: "translateY(-8px)",
-        shadow: "2xl",
-      }}
-      bg={bg}
-    >
-      <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-        <Image
-          src={product.image}
-          alt={product.name}
-          h={48}
-          w="full"
-          objectFit="cover"
-          transition="transform 0.4s"
-          _groupHover={{ transform: "scale(1.05)" }}
-          cursor="pointer"
+   <Box
+  role="group"
+  shadow="lg"
+  rounded="lg"
+  overflow="hidden"
+  borderWidth="1px"
+  borderColor={borderColor}
+  transition="all 0.3s"
+  _hover={{
+    transform: "translateY(-8px)",
+    shadow: "2xl",
+  }}
+  bg={bg}
+>
+    <Image src={product.image} alt={product.name} h={48} w='full' objectFit='cover'  transition="transform 0.4s"
+  _groupHover={{transform: "scale(1.05)",
+            }} />
+
+    <Box p={4}>
+      <Heading as='h3' size='md' mb={2} noOfLines={1}>
+        {product.name}
+      </Heading>
+
+      <Text fontWeight='bold' fontSize='xl' color={textColor} mb={4}>
+        ${product.price}
+      </Text>
+
+      {/* ─── TAGS DISPLAY ────────────────────────────────────────── */}
+      {product.tags && product.tags.length > 0 && (
+        <HStack spacing={1} mb={3} flexWrap="wrap">
+          {product.tags.map((tag, index) => (
+            <Text
+              key={index}
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="full"
+              bg="blue.100"
+              color="blue.800"
+              _dark={{
+                bg: "blue.900",
+                color: "blue.200"
+              }}
+            >
+              #{tag}
+            </Text>
+          ))}
+        </HStack>
+      )}
+
+      <HStack spacing={2}>
+        <IconButton 
+          icon={<FaEdit />} 
+          onClick={onOpen}
+          colorScheme='blue' 
+          aria-label='Edit Product'
+          transition="all 0.2s"
+          _hover={{
+          transform: "scale(1.1)",
+  }}
         />
-      </Link>
+        
+        <IconButton 
+          icon={<FaTrash />} 
+          onClick={() => handleDeleteProduct(product._id)} 
+          colorScheme='red' 
+          aria-label='Delete Product' 
+          transition="all 0.2s"
+          _hover={{
+            transform: "scale(1.1)",
+          }}
+        />
+        
+        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
+          transition="all 0.2s"
+          _hover={{
+            transform: "translateY(-2px)",
+          }}
+        >
+          Add to Cart
+        </Button>
+      </HStack>
+    </Box>
+      <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay/>
 
       <Box p={4}>
         <Heading as="h3" size="md" mb={2} noOfLines={1}>
@@ -194,53 +240,61 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
         </Heading>
 
         <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          ${product.price}
+          {formatPrice(product.price, currency, rates)}
         </Text>
 
-        <HStack spacing={2}>
-          <IconButton
-            icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
-            onClick={handleWishlistToggle}
-            colorScheme={isInWishlist ? "red" : "gray"}
-            variant="ghost"
-            aria-label='Add to Wishlist'
-            transition="all 0.2s"
-            _hover={{
-              transform: "scale(1.1)",
-            }}
-          />
+        {/* Button row: stacks vertically on very small screens, horizontal on sm+ */}
+        <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
+          <HStack spacing={2}>
+            <IconButton
+              icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
+              onClick={handleWishlistToggle}
+              colorScheme={isInWishlist ? "red" : "gray"}
+              variant="ghost"
+              aria-label='Add to Wishlist'
+              size="sm"
+              transition="all 0.2s"
+              _hover={{
+                transform: "scale(1.1)",
+              }}
+            />
 
-          <IconButton
-            icon={<FaEdit />}
-            onClick={handleModalOpen}
-            colorScheme="blue"
-            aria-label={`Edit ${product.name}`}
-            transition="all 0.2s"
-            _hover={{ transform: "scale(1.1)" }}
-          />
-          <IconButton
-            icon={<FaTrash />}
-            onClick={onDeleteOpen}
-            colorScheme="red"
-            aria-label={`Delete ${product.name}`}
-            transition="all 0.2s"
-            _hover={{ transform: "scale(1.1)" }}
-          />
-          <IconButton
-            icon={<FaBalanceScale />}
-            onClick={() => addToCompare(product)}
-            colorScheme={isInCompare ? "purple" : "gray"}
-            aria-label="Add to compare"
-            isDisabled={!isInCompare && compareList.length >= 2}
-            title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
-            transition="all 0.2s"
-            _hover={{ transform: "scale(1.1)" }}
-          />
+            <IconButton
+              icon={<FaEdit />}
+              onClick={handleModalOpen}
+              colorScheme="blue"
+              aria-label={`Edit ${product.name}`}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+            <IconButton
+              icon={<FaTrash />}
+              onClick={onDeleteOpen}
+              colorScheme="red"
+              aria-label={`Delete ${product.name}`}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+            <IconButton
+              icon={<FaBalanceScale />}
+              onClick={() => addToCompare(product)}
+              colorScheme={isInCompare ? "purple" : "gray"}
+              aria-label="Add to compare"
+              isDisabled={!isInCompare && compareList.length >= 2}
+              title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+          </HStack>
           <Button
             colorScheme="teal"
             onClick={handleAddToCart}
             size="sm"
             flex={1}
+            w={{ base: "full", sm: "auto" }}
             isDisabled={isOutOfStock}
             aria-label={`Add ${product.name} to cart`}
             transition="all 0.2s"
@@ -248,7 +302,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
           >
             {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </Button>
-        </HStack>
+        </Stack>
       </Box>
 
       <AlertDialog
@@ -269,9 +323,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
               <Button ref={cancelRef} onClick={onDeleteClose}>
                 Cancel
               </Button>
-              <Button 
-                colorScheme="red" 
-                onClick={handleDeleteProduct} 
+              <Button
+                colorScheme="red"
+                onClick={handleDeleteProduct}
                 ml={3}
                 isLoading={isDeleting}
                 loadingText="Deleting..."
@@ -282,7 +336,6 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
@@ -398,6 +451,19 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
                 aria-label="Discount Percentage"
                 value={updatedProduct.discount ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: e.target.value === '' ? '' : Number(e.target.value) })}
+              />
+              {/* ─── TAGS INPUT IN EDIT MODAL ───────────────────────── */}
+              <Input
+                placeholder='Tags (comma separated, e.g. wireless, premium)'
+                name='tags'
+                value={updatedProduct.tags ? updatedProduct.tags.join(', ') : ''}
+                onChange={(e) => {
+                  const tagsArray = e.target.value
+                    .split(',')
+                    .map(tag => tag.trim())
+                    .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
+                  setUpdatedProduct({ ...updatedProduct, tags: tagsArray });
+                }}
               />
             </VStack>
           </ModalBody>

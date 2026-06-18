@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
   VStack, Box, Badge, useColorModeValue, useToast
 } from '@chakra-ui/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
@@ -14,22 +14,47 @@ import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
 import { useAuth } from '../../context/AuthContext';
+import { useCurrencyStore } from "../../store/currency";
+import { formatPrice } from "../../utils/currency";
+
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 const Navbar = () => {
   const { updateThemeInDB } = useAuth();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, totalPrice } = useCart();
-  const { wishlistCount } = useWishlist();
+  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { currency, rates, setCurrency } = useCurrencyStore();
+  const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("authToken"));
+  }, [location]);
+
+  useEffect(() => {
+    const handleOpenCart = () => {
+      handleCartOpen();
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, []);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.300");
+  const mobileInputBg = useColorModeValue("gray.50", "gray.700");
+  const mobileInputBorder = useColorModeValue("gray.200", "gray.600");
+  const searchBg = useColorModeValue("gray.50", "gray.700");
+  const searchBorder = useColorModeValue("gray.200", "gray.600");
 
   const handleThemeToggle = async () => {
     const newTheme = colorMode === "light" ? "dark" : "light";
@@ -93,6 +118,29 @@ const Navbar = () => {
       setIsCheckoutLoading(false);
     }
   };
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (err) {
+        console.error("Failed to call logout API:", err);
+      }
+    }
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    emptyCart();
+    clearWishlist();
+    navigate("/login");
+  };
+
   return (
     <Box
       bg={navBg}
@@ -109,14 +157,13 @@ const Navbar = () => {
           py={{ base: 3, sm: 0 }}
           alignItems="center"
           justifyContent="space-between"
-          flexDir={{ base: "column", sm: "row" }}
-          gap={{ base: 2, sm: 0 }}
+          flexDir={{ base: "row" }}
         >
+          {/* LEFT SIDE - LOGO */}
           <Text
-            fontSize={{ base: "22px", sm: "28px" }}
+            fontSize={{ base: "20px", sm: "24px" }}
             fontWeight={"bold"}
             textTransform={"uppercase"}
-            textAlign={"center"}
             bgGradient={"linear(to-r, cyan.400, blue.500)"}
             bgClip={"text"}
             transition="all 0.3s"
@@ -126,29 +173,42 @@ const Navbar = () => {
             <Link to={"/"}>Product Store 🛒</Link>
           </Text>
 
-          <HStack spacing={4} alignItems={"center"} justifyContent="flex-end" w={{ base: "full", sm: "auto" }}>
-            <Box w={{ base: "full", sm: "240px", md: "300px" }}>
+          {/* RIGHT SIDE - ICONS + HAMBURGER */}
+          <HStack spacing={3} alignItems={"center"}>
+            {/* Search Box - Desktop only */}
+            <Box display={{ base: "none", md: "block" }} w="200px">
               <Input
+                id="navbar-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (location.pathname !== '/') {
+                      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+                    } else {
+                      fetchProducts();
+                    }
+                  }
+                }}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
-                bg={useColorModeValue("gray.50", "gray.700")}
-                borderColor={useColorModeValue("gray.200", "gray.600")}
-                _placeholder={{ color: useColorModeValue("gray.400", "gray.400") }}
+                size="sm"
+                bg={searchBg}
+                borderColor={searchBorder}
               />
             </Box>
 
-            <HStack spacing={2} alignItems={"center"}>
+            {/* Desktop Icons */}
+            <HStack spacing={1} display={{ base: "none", sm: "flex" }}>
               <Link to={"/create"}>
-                <Button aria-label={t('nav.addProduct')}>
-                  <PlusSquareIcon fontSize={20} />
+                <Button size="sm" aria-label={t('nav.addProduct')}>
+                  <PlusSquareIcon fontSize={18} />
                 </Button>
               </Link>
 
               <Link to={"/wishlist"}>
-                <Button position="relative" aria-label="Open wishlist">
-                  <LuHeart size="20" />
+                <Button size="sm" position="relative" aria-label="Open wishlist">
+                  <LuHeart size="18" />
                   {wishlistCount > 0 && (
                     <Badge
                       colorScheme="pink"
@@ -156,7 +216,8 @@ const Navbar = () => {
                       position="absolute"
                       top="-5px"
                       right="-5px"
-                      px={2}
+                      px={1.5}
+                      fontSize="10px"
                     >
                       {wishlistCount}
                     </Badge>
@@ -164,8 +225,8 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              <Button onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
-                <LuShoppingCart size="20" />
+              <Button size="sm" onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
+                <LuShoppingCart size="18" />
                 {totalItemsCount > 0 && (
                   <Badge
                     colorScheme="teal"
@@ -173,19 +234,140 @@ const Navbar = () => {
                     position="absolute"
                     top="-5px"
                     right="-5px"
-                    px={2}
+                    px={1.5}
+                    fontSize="10px"
                   >
                     {totalItemsCount}
                   </Badge>
                 )}
               </Button>
 
-              <Button onClick={handleThemeToggle} aria-label="Toggle color mode">
-                {colorMode === "light" ? <IoMoon /> : <LuSun size='20' />}
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                aria-label="Select currency"
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  backgroundColor: colorMode === 'dark' ? '#2D3748' : '#ffffff',
+                  color: colorMode === 'dark' ? '#ffffff' : '#1A202C',
+                }}
+              >
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="INR">₹ INR</option>
+              </select>
+
+              <Button size="sm" onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
+                {colorMode === "light" ? <IoMoon /> : <LuSun size='18' />}
               </Button>
+
+              {isLoggedIn && (
+                <Button onClick={handleLogout} colorScheme="red" variant="outline">
+                  Logout
+                </Button>
+              )}
             </HStack>
+
+            {/* Hamburger Button - Mobile only */}
+            <Button
+              display={{ base: "flex", sm: "none" }}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Open menu"
+              variant="ghost"
+              fontSize="22px"
+            >
+              ☰
+            </Button>
           </HStack>
         </Flex>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <VStack
+            display={{ base: "flex", sm: "none" }}
+            spacing={3}
+            p={4}
+            borderTop="1px solid"
+            borderColor={border}
+            bg={navBg}
+            w="full"
+          >
+            <Box w="full">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('common.search')}
+                aria-label={t('common.search')}
+                bg={mobileInputBg}
+                borderColor={mobileInputBorder}
+              />
+            </Box>
+
+            <Link to="/create" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+              <Button w="full" leftIcon={<PlusSquareIcon />}>
+                {t('nav.addProduct')}
+              </Button>
+            </Link>
+
+            <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+              <Button w="full" leftIcon={<LuHeart />} position="relative">
+                Wishlist
+                {wishlistCount > 0 && (
+                  <Badge
+                    colorScheme="pink"
+                    borderRadius="full"
+                    position="absolute"
+                    right="12px"
+                    top="50%"
+                    transform="translateY(-50%)"
+                  >
+                    {wishlistCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
+            <Button
+              w="full"
+              leftIcon={<LuShoppingCart />}
+              position="relative"
+              onClick={() => {
+                handleCartOpen();
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              Cart
+              {totalItemsCount > 0 && (
+                <Badge
+                  colorScheme="teal"
+                  borderRadius="full"
+                  position="absolute"
+                  right="12px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {totalItemsCount}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              w="full"
+              leftIcon={colorMode === "light" ? <IoMoon /> : <LuSun />}
+              onClick={() => {
+                toggleColorMode();
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              {colorMode === "light" ? "Dark Mode" : "Light Mode"}
+            </Button>
+          </VStack>
+        )}
 
         <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="md">
           <DrawerOverlay />
@@ -199,12 +381,8 @@ const Navbar = () => {
               ) : (
                 <VStack align="stretch" spacing={4} mt={4}>
                   {cartItems.map((item) => {
-                    const latestProduct = products.find(
-                      (p) => p._id === item._id
-                    );
-
-                    const currentPrice =
-                      latestProduct?.price ?? item.price;
+                    const latestProduct = products.find((p) => p._id === item._id);
+                    const currentPrice = latestProduct?.price ?? item.price;
 
                     return (
                       <HStack
@@ -218,10 +396,9 @@ const Navbar = () => {
                         <Box>
                           <Text fontWeight="bold">{item.name}</Text>
                           <Text fontSize="sm" color={labelColor}>
-                            {t('cart.quantity')}: {item.quantity} × ${currentPrice}
+                            {t('cart.quantity')}: {item.quantity} × {formatPrice(currentPrice, currency, rates)}
                           </Text>
                         </Box>
-
                         <Button
                           size="sm"
                           colorScheme="red"
@@ -239,13 +416,16 @@ const Navbar = () => {
 
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
-                <Text fontWeight="bold" fontSize="lg">Total Amount:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">${(totalPrice || 0).toFixed(2)}</Text>
+                <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
+                <Text fontWeight="bold" fontSize="lg" color="cyan.500">
+                  {formatPrice(totalPrice ?? 0, currency, rates)}
+                </Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
               </Button>
             </DrawerFooter>
+
           </DrawerContent>
         </Drawer>
       </Container>
