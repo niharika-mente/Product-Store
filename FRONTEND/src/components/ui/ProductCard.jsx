@@ -1,7 +1,7 @@
 import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
 import React from 'react'
 import { useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa"; // 1. Swapped out @chakra-ui/icons for react-icons
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../context/CartContext.jsx";
 
@@ -92,8 +92,7 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
             }} />
 
     <Box p={4}>
-      <Heading as='h3' size='md' mb={2}
-      noOfLines={1}>
+      <Heading as='h3' size='md' mb={2} noOfLines={1}>
         {product.name}
       </Heading>
 
@@ -101,8 +100,30 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
         ${product.price}
       </Text>
 
+      {/* ─── TAGS DISPLAY ────────────────────────────────────────── */}
+      {product.tags && product.tags.length > 0 && (
+        <HStack spacing={1} mb={3} flexWrap="wrap">
+          {product.tags.map((tag, index) => (
+            <Text
+              key={index}
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="full"
+              bg="blue.100"
+              color="blue.800"
+              _dark={{
+                bg: "blue.900",
+                color: "blue.200"
+              }}
+            >
+              #{tag}
+            </Text>
+          ))}
+        </HStack>
+      )}
+
       <HStack spacing={2}>
-        {/* 2. Updated Edit Button with clean icon child rendering */}
         <IconButton 
           icon={<FaEdit />} 
           onClick={onOpen}
@@ -114,7 +135,6 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
   }}
         />
         
-        {/* 3. Updated Delete Button with clean icon child rendering */}
         <IconButton 
           icon={<FaTrash />} 
           onClick={() => handleDeleteProduct(product._id)} 
@@ -162,6 +182,19 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
                 name='image'
                 value={updatedProduct.image}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
+              />
+              {/* ─── TAGS INPUT IN EDIT MODAL ───────────────────────── */}
+              <Input
+                placeholder='Tags (comma separated, e.g. wireless, premium)'
+                name='tags'
+                value={updatedProduct.tags ? updatedProduct.tags.join(', ') : ''}
+                onChange={(e) => {
+                  const tagsArray = e.target.value
+                    .split(',')
+                    .map(tag => tag.trim())
+                    .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
+                  setUpdatedProduct({ ...updatedProduct, tags: tagsArray });
+                }}
               />
             </VStack>
           </ModalBody>
