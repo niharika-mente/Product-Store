@@ -6,6 +6,7 @@ import {
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
+import Breadcrumbs from "../components/ui/Breadcrumbs";
 import {
   showSuccessToast,
   showErrorToast,
@@ -72,6 +73,12 @@ const CreatePage = () => {
   return (
     <Container maxW={"container.sm"} py={12}>
       <VStack spacing={8}>
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Create Product" }
+          ]}
+        />
         <Heading as={"h1"} size={"2xl"} textAlign={"center"} mb={4}>
           Create New Product
         </Heading>
