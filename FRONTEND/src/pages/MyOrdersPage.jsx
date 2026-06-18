@@ -16,6 +16,7 @@ import {
   AlertIcon,
 } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
+import Breadcrumbs from "../components/ui/Breadcrumbs";
 
 const STATUS_COLORS = {
   completed: 'green',
@@ -74,6 +75,12 @@ const MyOrdersPage = () => {
   return (
     <Container maxW="container.lg" py={10}>
       <VStack spacing={6} align="stretch">
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "My Orders" }
+          ]}
+        />
         <HStack justify="space-between" align="center">
           <Heading size="lg" bgGradient="linear(to-r, cyan.400, blue.500)" bgClip="text">
             My Orders

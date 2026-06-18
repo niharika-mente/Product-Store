@@ -13,12 +13,17 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
+import { useCurrencyStore } from "../../store/currency";
+import { formatPrice } from "../../utils/currency";
+
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { currency, rates, setCurrency } = useCurrencyStore();
   const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
   const navigate = useNavigate();
@@ -29,17 +34,22 @@ const Navbar = () => {
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem("authToken"));
   }, [location]);
+
+  useEffect(() => {
+    const handleOpenCart = () => {
+      handleCartOpen();
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, []);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-  // ✅ ALL HOOKS AT TOP LEVEL (Fixed)
   const navBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.300");
-  
-  // ✅ Mobile menu colors - moved to top level
   const mobileInputBg = useColorModeValue("gray.50", "gray.700");
   const mobileInputBorder = useColorModeValue("gray.200", "gray.600");
   const searchBg = useColorModeValue("gray.50", "gray.700");
@@ -161,6 +171,7 @@ const Navbar = () => {
             {/* Search Box - Desktop only */}
             <Box display={{ base: "none", md: "block" }} w="200px">
               <Input
+                id="navbar-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => {
@@ -224,6 +235,26 @@ const Navbar = () => {
                 )}
               </Button>
 
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                aria-label="Select currency"
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  backgroundColor: colorMode === 'dark' ? '#2D3748' : '#ffffff',
+                  color: colorMode === 'dark' ? '#ffffff' : '#1A202C',
+                }}
+              >
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="INR">₹ INR</option>
+              </select>
+
               <Button size="sm" onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
                 {colorMode === "light" ? <IoMoon /> : <LuSun size='18' />}
               </Button>
@@ -259,7 +290,6 @@ const Navbar = () => {
             bg={navBg}
             w="full"
           >
-            {/* Search input for mobile - ✅ FIXED: using top-level variables */}
             <Box w="full">
               <Input
                 value={searchQuery}
@@ -319,8 +349,8 @@ const Navbar = () => {
               )}
             </Button>
 
-            <Button 
-              w="full" 
+            <Button
+              w="full"
               leftIcon={colorMode === "light" ? <IoMoon /> : <LuSun />}
               onClick={() => {
                 toggleColorMode();
@@ -344,12 +374,8 @@ const Navbar = () => {
               ) : (
                 <VStack align="stretch" spacing={4} mt={4}>
                   {cartItems.map((item) => {
-                    const latestProduct = products.find(
-                      (p) => p._id === item._id
-                    );
-
-                    const currentPrice =
-                      latestProduct?.price ?? item.price;
+                    const latestProduct = products.find((p) => p._id === item._id);
+                    const currentPrice = latestProduct?.price ?? item.price;
 
                     return (
                       <HStack
@@ -363,10 +389,9 @@ const Navbar = () => {
                         <Box>
                           <Text fontWeight="bold">{item.name}</Text>
                           <Text fontSize="sm" color={labelColor}>
-                            {t('cart.quantity')}: {item.quantity} × ${currentPrice}
+                            {t('cart.quantity')}: {item.quantity} × {formatPrice(currentPrice, currency, rates)}
                           </Text>
                         </Box>
-
                         <Button
                           size="sm"
                           colorScheme="red"
@@ -381,20 +406,18 @@ const Navbar = () => {
                 </VStack>
               )}
             </DrawerBody>
-            
 
             <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
               <HStack justify="space-between" mb={4}>
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
                 <Text fontWeight="bold" fontSize="lg" color="cyan.500">
-                  ${(totalPrice ?? 0).toFixed(2)}
+                  {formatPrice(totalPrice ?? 0, currency, rates)}
                 </Text>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
               </Button>
             </DrawerFooter>
-
 
           </DrawerContent>
         </Drawer>

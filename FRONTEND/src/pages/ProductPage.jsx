@@ -8,6 +8,7 @@ import {
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useCart } from '../store/cart.js';
 import { useRecentlyViewed } from "../store/product";
+import Breadcrumbs from "../components/ui/Breadcrumbs";
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
 
@@ -24,6 +25,7 @@ const ProductPage = () => {
   const [activeImg, setActiveImg] = useState(0);
 
   const { addToCart, addBundleToCart } = useCart();
+
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
 
@@ -211,7 +213,8 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
   return (
     <>
       <Container maxW="container.xl" py={8}>
-        {/* Breadcrumb */}
+        <Breadcrumbs currentPage={product?.name || "Product Details"} />
+
         <Button
           as={RouterLink}
           to="/"
