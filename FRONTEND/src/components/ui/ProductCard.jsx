@@ -3,48 +3,130 @@ import React from 'react'
 import { useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
-import { useCart } from "../../context/CartContext.jsx";
+import { useCart } from "../../store/cart";
+import { useWishlist } from "../../context/WishlistContext.jsx";
+import { FaBalanceScale } from "react-icons/fa";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+  showInfoToast,
+} from "../../utils/toastHelpers";
 
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
+  const [imagePreview, setImagePreview] = useState(product.image);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const textColor = useColorModeValue("gray.600","gray.200");
-  const bg = useColorModeValue("white","gray.800");
+  useEffect(() => {
+    if (product) setUpdatedProduct(product);
+  }, [product]);
 
-  const { deleteProduct ,updateProduct}=useProductStore()
-  const { addToCart } = useCart(); 
-  const toast = useToast()
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const textColor = useColorModeValue("gray.600", "gray.200");
+  const bg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
-  const handleAddToCart = () => {
-    addToCart(product);
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your shopping cart.`,
-      status: "success",
-      duration: 2000,
-      isClosable: true,
-    });
+const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
+  const isInCompare = compareList.some((p) => p._id === product._id);
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const cancelRef = useRef();
+
+  const isOutOfStock = product.stock != null && product.stock === 0;
+
+  useEffect(() => {
+    const checkWishlist = async () => {
+      const inWishlist = await checkInWishlist(product._id);
+      setIsInWishlist(inWishlist);
+    };
+    checkWishlist();
+  }, [product._id, checkInWishlist]);
+
+  useEffect(() => {
+    setUpdatedProduct(product);
+    setImagePreview(product.image);
+  }, [product]);
+
+  useEffect(() => {
+    const url = imagePreview;
+    return () => {
+      if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+    };
+  }, [imagePreview]);
+
+  const handleModalOpen = () => {
+    setUpdatedProduct(product);
+    setImagePreview(product.image);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onOpen();
   };
 
-  const handleDeleteProduct = async (pid) => {
-    const {success,message} = await deleteProduct(pid)
-    if(!success){
-      toast({
-        title:"Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } else{
-      toast({
-        title: "Success",
-        description: "Product deleted successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUpdatedProduct({ ...updatedProduct, imageFile: file });
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleAddToCart = () => {
+    if (isOutOfStock) return;
+    const { status } = addToCart(product);
+    if (status === 'capped') {
+      showWarningToast(
+        toast,
+        "Stock limit reached",
+        `Only ${product.stock} unit(s) of ${product.name} are available.`
+      );
+      return;
+    }
+    if (status === 'out_of_stock') return;
+    showSuccessToast(
+      toast,
+      "Added to Cart",
+      `${product.name} has been added to your shopping cart.`
+    );
+  };
+
+  const handleWishlistToggle = async () => {
+    if (isInWishlist) {
+      const result = await removeFromWishlist(product._id);
+      if (result.success) {
+        setIsInWishlist(false);
+        showInfoToast(
+          toast,
+          "Removed from Wishlist",
+          `${product.name} has been removed from your wishlist.`
+        );
+      } else {
+        showErrorToast(toast, "Error", result.message || "Failed to remove from wishlist");
+      }
+    } else {
+      const result = await addToWishlist(product._id);
+      if (result.success) {
+        setIsInWishlist(true);
+        showSuccessToast(
+          toast,
+          "Added to Wishlist",
+          `${product.name} has been added to your wishlist. ❤️`
+        );
+      } else {
+        showErrorToast(toast, "Error", result.message || "Failed to add to wishlist");
+      }
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    onDeleteClose();
+    const { success, message } = await deleteProduct(product._id);
+    if (!success) {
+      showErrorToast(toast, "Error", message);
+    } else {
+      showSuccessToast(toast, "Success", "Product deleted successfully");
     }
   };
 
@@ -52,25 +134,11 @@ const ProductCard = ({ product }) => {
     const { success, message } = await updateProduct(pid, updatedProduct);
     onClose();
     if (!success) {
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      showErrorToast(toast, "Error", message);
     } else {
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      showSuccessToast(toast, "Success", "Product updated successfully");
     }
   };
-
-const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
    <Box
@@ -159,29 +227,227 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
       <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay/>
 
-        <ModalContent>
+      <Box p={4}>
+        <Heading as="h3" size="md" mb={2} noOfLines={1}>
+          <Link to={`/product/${product._id}`} style={{ textDecoration: 'none' }}>
+            <Text _hover={{ color: "cyan.500" }} transition="color 0.2s">
+              {product.name}
+            </Text>
+          </Link>
+        </Heading>
+
+        <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
+          ${product.price}
+        </Text>
+
+        {/* Button row: stacks vertically on very small screens, horizontal on sm+ */}
+        <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
+          <HStack spacing={2}>
+            <IconButton
+              icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
+              onClick={handleWishlistToggle}
+              colorScheme={isInWishlist ? "red" : "gray"}
+              variant="ghost"
+              aria-label='Add to Wishlist'
+              size="sm"
+              transition="all 0.2s"
+              _hover={{
+                transform: "scale(1.1)",
+              }}
+            />
+
+            <IconButton
+              icon={<FaEdit />}
+              onClick={handleModalOpen}
+              colorScheme="blue"
+              aria-label={`Edit ${product.name}`}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+            <IconButton
+              icon={<FaTrash />}
+              onClick={onDeleteOpen}
+              colorScheme="red"
+              aria-label={`Delete ${product.name}`}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+            <IconButton
+              icon={<FaBalanceScale />}
+              onClick={() => addToCompare(product)}
+              colorScheme={isInCompare ? "purple" : "gray"}
+              aria-label="Add to compare"
+              isDisabled={!isInCompare && compareList.length >= 2}
+              title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
+              size="sm"
+              transition="all 0.2s"
+              _hover={{ transform: "scale(1.1)" }}
+            />
+          </HStack>
+          <Button
+            colorScheme="teal"
+            onClick={handleAddToCart}
+            size="sm"
+            flex={1}
+            w={{ base: "full", sm: "auto" }}
+            isDisabled={isOutOfStock}
+            aria-label={`Add ${product.name} to cart`}
+            transition="all 0.2s"
+            _hover={{ transform: isOutOfStock ? "none" : "translateY(-2px)" }}
+          >
+            {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+          </Button>
+        </Stack>
+      </Box>
+
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onDeleteClose}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Product
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onDeleteClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={handleDeleteProduct}
+                ml={3}
+                isLoading={isDeleting}
+                loadingText="Deleting..."
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+        <ModalOverlay />
+        <ModalContent maxH="90vh">
           <ModalHeader>Update Product</ModalHeader>
-          <ModalCloseButton/>
+          <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <Input
-                placeholder='Product Name'
-                name='name'
+                placeholder="Product Name"
+                name="name"
+                aria-label="Product Name"
                 value={updatedProduct.name}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, name: e.target.value })}
               />
               <Input
-                placeholder='Price'
-                name='price'
-                type='number'
+                placeholder="Price"
+                name="price"
+                type="number"
+                aria-label="Price"
                 value={updatedProduct.price}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: e.target.value })}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: Number(e.target.value) })}
               />
+
+              <Box w="full">
+                <Text fontSize="sm" mb={1} color="gray.500">
+                  Upload a new image or paste a URL
+                </Text>
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  aria-label="Upload product image"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  p={1}
+                />
+              </Box>
+
               <Input
-                placeholder='Image URL'
-                name='image'
-                value={updatedProduct.image}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, image: e.target.value })}
+                placeholder="Or paste an Image URL"
+                name="image"
+                aria-label="Image URL"
+                value={updatedProduct.imageFile ? "" : updatedProduct.image}
+                onChange={(e) => {
+                  setUpdatedProduct({ ...updatedProduct, image: e.target.value, imageFile: null });
+                  setImagePreview(e.target.value || product.image);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+              />
+
+              {imagePreview && (
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  maxH="150px"
+                  objectFit="contain"
+                  rounded="md"
+                  border="1px solid"
+                  borderColor="gray.200"
+                  w="full"
+                />
+              )}
+
+              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={optionalLabelColor} mt={2}>
+                Optional Details
+              </Text>
+
+              <Input
+                placeholder="Description (optional)"
+                name="description"
+                aria-label="Description"
+                value={updatedProduct.description || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
+              />
+
+              <Input
+                placeholder="Category (optional)"
+                name="category"
+                aria-label="Category"
+                value={updatedProduct.category || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, category: e.target.value })}
+              />
+
+              <Input
+                placeholder="Brand (optional)"
+                name="brand"
+                aria-label="Brand"
+                value={updatedProduct.brand || ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, brand: e.target.value })}
+              />
+
+              <Input
+                placeholder="Stock Quantity (optional)"
+                name="stock"
+                type="number"
+                aria-label="Stock Quantity"
+                value={updatedProduct.stock ?? ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })}
+              />
+
+              <Input
+                placeholder="Original Price (optional)"
+                name="originalPrice"
+                type="number"
+                aria-label="Original Price"
+                value={updatedProduct.originalPrice ?? ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
+              />
+
+              <Input
+                placeholder="Discount % (optional)"
+                name="discount"
+                type="number"
+                aria-label="Discount Percentage"
+                value={updatedProduct.discount ?? ''}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: e.target.value === '' ? '' : Number(e.target.value) })}
               />
               {/* ─── TAGS INPUT IN EDIT MODAL ───────────────────────── */}
               <Input
@@ -198,22 +464,29 @@ const borderColor = useColorModeValue("gray.200", "gray.700");
               />
             </VStack>
           </ModalBody>
-
           <ModalFooter>
             <Button
-              colorScheme='blue'
+              colorScheme="blue"
               mr={3}
               onClick={() => handleUpdateProduct(product._id, updatedProduct)}
+              isLoading={isSubmitting}
+              loadingText="Updating..."
             >
               Update
             </Button>
-            <Button variant='ghost' onClick={onClose}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                onClose();
+                setUpdatedProduct(product);
+              }}
+            >
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-   </Box>
+    </Box>
   );
 };
 
