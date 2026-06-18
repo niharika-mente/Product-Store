@@ -29,6 +29,14 @@ const Navbar = () => {
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem("authToken"));
   }, [location]);
+
+  useEffect(() => {
+    const handleOpenCart = () => {
+      handleCartOpen();
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, []);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -161,6 +169,7 @@ const Navbar = () => {
             {/* Search Box - Desktop only */}
             <Box display={{ base: "none", md: "block" }} w="200px">
               <Input
+                id="navbar-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => {

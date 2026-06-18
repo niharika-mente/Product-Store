@@ -148,6 +148,8 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
 
   return (
     <Box
+      className="product-card"
+      tabIndex={0}
       role="group"
       shadow="lg"
       rounded="lg"
@@ -158,6 +160,11 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
       _hover={{
         transform: "translateY(-8px)",
         shadow: "2xl",
+      }}
+      _focus={{
+        boxShadow: "outline",
+        transform: "translateY(-8px)",
+        outline: "none",
       }}
       bg={bg}
     >
