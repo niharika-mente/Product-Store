@@ -168,13 +168,66 @@ export const getReviews = async (req, res) => {
     }
 
     try {
-        const reviews = await Review.find({
-            product: productId
-        }).sort({ createdAt: -1 });
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 5;
+        const sort = req.query.sort || 'newest';
+        const star = parseInt(req.query.star, 10);
+
+        if (page < 1 || limit < 1 || limit > 50) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pagination parameters. page and limit must be positive integers (limit max 50).',
+            });
+        }
+
+        const filter = { product: productId };
+        if (star >= 1 && star <= 5) {
+            filter.rating = star;
+        }
+
+        let sortOption;
+        if (sort === 'highest') sortOption = { rating: -1, createdAt: -1 };
+        else if (sort === 'lowest') sortOption = { rating: 1, createdAt: -1 };
+        else sortOption = { createdAt: -1 };
+
+        const skip = (page - 1) * limit;
+
+        const [reviews, totalReviews, distribution] = await Promise.all([
+            Review.find(filter).sort(sortOption).skip(skip).limit(limit),
+            Review.countDocuments(filter),
+            Review.aggregate([
+                { $match: { product: new mongoose.Types.ObjectId(productId) } },
+                {
+                    $group: {
+                        _id: '$rating',
+                        count: { $sum: 1 },
+                    },
+                },
+            ]),
+        ]);
+
+        const distMap = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        distribution.forEach((d) => { distMap[d._id] = d.count; });
+
+        const totalAll = Object.values(distMap).reduce((a, b) => a + b, 0);
+        const averageRating = totalAll > 0
+            ? Math.round(
+                (Object.entries(distMap).reduce((sum, [star, count]) => sum + Number(star) * count, 0) / totalAll) * 10,
+              ) / 10
+            : 0;
+
+        const totalPages = totalReviews > 0 ? Math.ceil(totalReviews / limit) : 0;
 
         return res.status(200).json({
             success: true,
-            data: reviews
+            currentPage: page,
+            totalPages,
+            totalReviews,
+            totalAll,
+            limit,
+            averageRating,
+            distribution: distMap,
+            data: reviews,
         });
     } catch (error) {
         console.error('Error fetching reviews:', error.message);
