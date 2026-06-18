@@ -25,6 +25,7 @@ const ProductPage = () => {
   const [activeImg, setActiveImg] = useState(0);
 
   const { addToCart, addBundleToCart } = useCart();
+
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
 

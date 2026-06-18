@@ -411,15 +411,26 @@ export const searchProducts = async (req, res, next) => {
     const { q } = req.query;
 
     if (!q || !q.trim()) {
-        return res.status(400).json({ success: false, message: "Search query is required" });
+        return res.status(400).json({
+            success: false,
+            message: "Search query is required"
+        });
     }
 
     try {
-    const safeQuery = escapeRegex(q);
-    const regex = new RegExp(safeQuery, 'i');
-    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
-    res.status(200).json({ success: true, data: products });
-} catch (error) {
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
+
+        const products = await Product.find({
+            name: regex,
+            isDeleted: { $ne: true }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: products
+        });
+    } catch (error) {
         next(error);
     }
 };

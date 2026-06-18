@@ -2,7 +2,9 @@ import React, { useEffect } from 'react';
 import {
   Box, Heading, Text, SimpleGrid, Image, VStack, Button, useToast,
   useColorModeValue, Container, Spinner, HStack
-} from '@chakra-ui/react';
+} from '@chakra-ui/react';  
+import { useCurrencyStore } from '../store/currency';
+import { formatPrice } from '../utils/currency';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { ArrowBackIcon } from '@chakra-ui/icons';
@@ -12,6 +14,7 @@ import {
 } from "../utils/toastHelpers";
 
 const WishlistPage = () => {
+  const { currency, rates } = useCurrencyStore();
   const { wishlist, loading, removeFromWishlist, fetchWishlist } = useWishlist();
   const toast = useToast();
   const bgColor = useColorModeValue("white", "gray.800");
@@ -96,7 +99,7 @@ const WishlistPage = () => {
                       {product.name}
                     </Text>
                   </Link>
-                  <Text fontWeight="bold" color="teal.500">${product.price}</Text>
+                  <Text fontWeight="bold" color="teal.500">{formatPrice(product.price, currency, rates)}</Text>
                   <Button
                     size="sm"
                     colorScheme="red"
