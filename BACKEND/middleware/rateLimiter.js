@@ -1,8 +1,8 @@
 import rateLimit from "express-rate-limit";
 
 export const loginLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 min
-  max: parseInt(process.env.RATE_LIMIT_LOGIN_MAX) || 10, // 10 attempts
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_LOGIN_MAX) || 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -13,7 +13,7 @@ export const loginLimiter = rateLimit({
 
 export const registerLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_REGISTER_MAX) || 5, // 5 attempts
+  max: parseInt(process.env.RATE_LIMIT_REGISTER_MAX) || 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -30,5 +30,16 @@ export const logoutLimiter = rateLimit({
   message: {
     success: false,
     message: "Too many logout attempts. Please try again after 15 minutes.",
+  },
+});
+
+export const checkoutLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many checkout attempts. Please try again later.",
   },
 });
