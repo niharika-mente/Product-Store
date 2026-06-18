@@ -4,291 +4,125 @@ import { escapeRegex } from '../utils/escapeRegex.js';
 import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
 
-const cloudinaryConfigured = () =>
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET;
-
-const uploadToCloudinary = (buffer) => {
-    return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-            { folder: 'product-store' },
-            (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-            }
-        );
-        stream.end(buffer);
-    });
-};
-
-const extractCloudinaryPublicId = (url) => {
-    if (!url || !url.includes('res.cloudinary.com')) return null;
-    const parts = url.split('/');
-    const uploadIdx = parts.indexOf('upload');
-    if (uploadIdx === -1) return null;
-    const afterUpload = parts.slice(uploadIdx + 1);
-    if (afterUpload[0] && /^v\d+$/.test(afterUpload[0])) afterUpload.shift();
-    return afterUpload.join('/').replace(/\.[^.]+$/, '');
-};
-
-// @desc    Get all products
-export const getProducts = async (req, res, next) => {
+export const getProducts = async (req, res) => {
     try {
-        const page = parseInt(req.query.page, 10) || 1;
-        const limit = parseInt(req.query.limit, 10) || 10;
-        const { sort, category, minPrice, maxPrice, brand, minRating, inStock } = req.query;
-
-        if (page < 1 || limit < 1) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid pagination parameters. page and limit must be positive integers.",
-            });
+        const { tags } = req.query;
+        
+        let query = {};
+        
+        // ─── TAG FILTER ─────────────────────────────────────────────
+        if (tags) {
+            const tagArray = tags.split(',').map(tag => tag.trim());
+            query.tags = { $in: tagArray };
         }
+        
+        const products = await Product.find(query);
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
+        console.log("error in fetching products:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
 
-        let sortOption = {};
-        if (sort === "price_asc") {
-            sortOption = { price: 1 };
-        } else if (sort === "price_desc") {
-            sortOption = { price: -1 };
-        } else if (sort === "newest") {
-            sortOption = { createdAt: -1 };
-        }
+export const createProduct = async (req, res) => {
+    const product = req.body;
 
-        const filter = { isDeleted: { $ne: true } };
-        if (category) filter.category = category;
+    if (!product.name || !product.price || !product.image) {
+        return res.status(400).json({ success: false, message: "Please provide all fields" });
+    }
 
-        if (minPrice || maxPrice) {
-            filter.price = {};
-            if (minPrice) filter.price.$gte = Number(minPrice);
-            if (maxPrice) filter.price.$lte = Number(maxPrice);
-        }
-        if (brand) {
-            // Case-insensitive brand search
-            filter.brand = { $regex: new RegExp(brand, 'i') };
-        }
-        if (minRating) {
-            filter.averageRating = { $gte: Number(minRating) };
-        }
-        if (inStock === 'true') {
-            filter.stock = { $gt: 0 };
-        }
-
-        const skip = (page - 1) * limit;
-        const totalProducts = await Product.countDocuments(filter);
-        const products = await Product.find(filter).sort(sortOption).skip(skip).limit(limit);
-        const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
-
-        res.status(200).json({
-            success: true,
-            currentPage: page,
-            totalPages,
-            totalProducts,
-            limit,
-            data: products,
+    // ─── VALIDATE TAGS ─────────────────────────────────────────────
+    if (product.tags && product.tags.length > 5) {
+        return res.status(400).json({
+            success: false,
+            message: "Maximum 5 tags allowed per product"
         });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// @desc    Get distinct product categories
-export const getProductCategories = async (req, res, next) => {
-    try {
-        const categories = await Product.distinct('category', { isDeleted: { $ne: true }, category: { $ne: '' } });
-        res.status(200).json({ success: true, data: categories.sort() });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// @desc    Create a new product
-export const createProduct = async (req, res, next) => {
-    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
-
-    if (!name || price === undefined || price === null || price === '' || isNaN(Number(price))) {
-        return next(new AppError("Please provide all fields", 400));
     }
 
-    if (Number(price) < 0) {
-        return next(new AppError("Price cannot be negative", 400));
-    }
-
-    let finalImageUrl = imageUrl || '';
-    let cloudinaryPublicId; // track uploaded image's public ID for potential cleanup
-
-    if (req.file) {
-        if (!cloudinaryConfigured()) {
-            return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
-        }
-        try {
-            const result = await uploadToCloudinary(req.file.buffer);
-            finalImageUrl = result.secure_url;
-            cloudinaryPublicId = result.public_id; // save public ID for cleanup if needed
-        } catch (error) {
-            return next(new AppError("Image upload failed", 500));
-        }
-    }
-
-    if (!finalImageUrl) {
-        return next(new AppError("Please provide a product image", 400));
-    }
-
-    const newProduct = new Product({
-        name,
-        price: Number(price),
-        image: finalImageUrl,
-        images: Array.isArray(req.body.images) ? req.body.images : [],
-        description,
-        category,
-        brand,
-        ...(stock !== undefined && { stock: Number(stock) }),
-        ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
-        ...(discount !== undefined && { discount: Number(discount) }),
-    });
+    const newProduct = new Product(product);
 
     try {
         await newProduct.save();
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
-        // CLEANUP: delete uploaded Cloudinary image if save failed
-        if (cloudinaryPublicId) {
-            try {
-                await cloudinary.uploader.destroy(cloudinaryPublicId);
-            } catch (destroyError) {
-                console.error("Failed to delete Cloudinary image:", destroyError.message);
-            }
-        }
-        return next(error);
+        console.error("Error in Create product:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-// @desc    Update a product
-export const updateProduct = async (req, res, next) => {
+export const updateProduct = async (req, res) => {
     const { id } = req.params;
+    const product = req.body;
+    console.log("PUT Request ID:", id);
+    console.log("PUT Request Body:", product);
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return res.status(404).json({ success: false, message: "Invalid Product Id" });
     }
 
-    if ((!req.body || Object.keys(req.body).length === 0) && !req.file) {
-        return next(new AppError("No update fields provided", 400));
-    }
-
-    let existing;
-    try {
-        existing = await Product.findById(id);
-    } catch (error) {
-        return next(error);
-    }
-    if (!existing) {
-        return next(new AppError("Product not found", 404));
-    }
-
-    const { name, price, image: imageUrl, description, category, brand, stock, originalPrice, discount } = req.body;
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (price !== undefined) {
-        if (price === '' || isNaN(Number(price))) {
-            return next(new AppError("Invalid price value", 400));
-        }
-        updateData.price = Number(price);
-    }
-    if (imageUrl !== undefined) updateData.image = imageUrl;
-    if (req.body.images !== undefined) updateData.images = Array.isArray(req.body.images) ? req.body.images : [];
-    if (description !== undefined) updateData.description = description;
-    if (category !== undefined) updateData.category = category;
-    if (brand !== undefined) updateData.brand = brand;
-    if (stock !== undefined) updateData.stock = Number(stock);
-    if (originalPrice !== undefined) updateData.originalPrice = Number(originalPrice);
-    if (discount !== undefined) updateData.discount = Number(discount);
-
-    if (req.file) {
-        if (!cloudinaryConfigured()) {
-            return next(new AppError("File uploads are not configured. Please use an image URL instead.", 503));
-        }
-        try {
-            const result = await uploadToCloudinary(req.file.buffer);
-            updateData.image = result.secure_url;
-
-        } catch (error) {
-            return next(new AppError("Image upload failed", 500));
-        }
+    // ─── VALIDATE TAGS ON UPDATE ────────────────────────────────────
+    if (product.tags && product.tags.length > 5) {
+        return res.status(400).json({
+            success: false,
+            message: "Maximum 5 tags allowed per product"
+        });
     }
 
     try {
-        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+        const updatedProduct = await Product.findByIdAndUpdate(id, product, { 
+            new: true,
+            runValidators: true 
+        });
+        
         if (!updatedProduct) {
-            return next(new AppError("Product not found", 404));
+            return res.status(404).json({ success: false, message: "Product not found" });
         }
-        if (req.file){
-            const oldPublicId = extractCloudinaryPublicId(existing.image);
-                if (oldPublicId) {
-                    cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-                        console.warn("Old image cleanup failed:", err.message);
-                    });
-                }
-        }
-
+        
         res.status(200).json({ success: true, data: updatedProduct });
     } catch (error) {
-        next(error);
+        console.error("Update error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-// @desc    Delete a product (soft delete)
-export const deleteProduct = async (req, res, next) => {
+export const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return res.status(404).json({ success: false, message: "Invalid Product Id" });
     }
 
     try {
-        const product = await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
-        if (!product) {
-            return next(new AppError("Product not found", 404));
-        }
-        res.status(200).json({ success: true, message: "Product deleted successfully" });
+        await Product.findByIdAndDelete(id);
+        res.status(200).json({ success: true, message: "Product deleted" });
     } catch (error) {
-        next(error);
+        console.log("error in deleting product:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
-// @desc    Get product by ID
-export const getProductById = async (req, res, next) => {
-    const { id } = req.params;
+// ─── SEARCH PRODUCTS (INCLUDING TAGS) ────────────────────────────
+export const searchProducts = async (req, res) => {
+    const { q } = req.query;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+    if (!q) {
+        return res.status(400).json({ success: false, message: "Search query required" });
     }
 
     try {
-        const product = await Product.findOne({ _id: id, isDeleted: { $ne: true } });
-        if (!product) {
-            return next(new AppError("Product not found", 404));
-        }
-        res.status(200).json({ success: true, data: product });
+        const regex = new RegExp(q, 'i');
+        
+        const products = await Product.find({
+            $or: [
+                { name: regex },
+                { tags: { $in: [regex] } }
+            ]
+        });
+        
+        res.status(200).json({ success: true, data: products });
     } catch (error) {
-        next(error);
-    }
-};
-
-const stopWords = new Set(["the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "of"]);
-
-function tokenize(text) {
-    return text
-        .toLowerCase()
-        .split(/\s+/)
-        .map(w => w.replace(/[^a-z0-9]/g, ""))
-        .filter(w => w.length > 1 && !stopWords.has(w));
-}
-
-export const getRelatedProducts = async (req, res) => {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ success: false, message: "Invalid Product Id format" });
+        console.error("Error in searching products:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 
     try {
