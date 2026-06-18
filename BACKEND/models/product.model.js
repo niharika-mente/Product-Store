@@ -16,6 +16,16 @@ const productSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    tags:{
+        type: [String],
+        default: [],
+        validate: {
+            validator: function (tags){
+              return tags.length <= 5 && tags.every(tag => tag.length >= 2 && tag.length <= 30);
+            },
+            message: "Maximum 5 tags, each 2-30 characters"
+        }
+    }
 },{
    timestamps: true //createdAt,updatedAt
 });
