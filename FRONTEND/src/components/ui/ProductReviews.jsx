@@ -25,7 +25,7 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
     const [hovered, setHovered] = useState(0);
 
     const filledColor = useColorModeValue('yellow.400', 'yellow.300');
-    const emptyColor  = useColorModeValue('gray.300', 'gray.600');
+    const emptyColor = useColorModeValue('gray.300', 'gray.600');
 
     const fontSize = size === 'sm' ? '14px' : size === 'lg' ? '24px' : '20px';
 
@@ -55,12 +55,12 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
 
 const RatingSummary = ({ reviews, filterStar, onFilterChange, distribution, averageRating, totalReviews }) => {
     const labelColor = useColorModeValue('gray.600', 'gray.400');
-    const barBg        = useColorModeValue('gray.100', 'gray.700');
-    const barFill      = useColorModeValue('yellow.400', 'yellow.300');
-    const cardBg       = useColorModeValue('gray.50', 'gray.700');
-    const borderCol    = useColorModeValue('gray.200', 'gray.600');
-    const activeRowBg  = useColorModeValue('yellow.50', 'yellow.900');
-    const hoverRowBg   = useColorModeValue('gray.50', 'gray.600');
+    const barBg = useColorModeValue('gray.100', 'gray.700');
+    const barFill = useColorModeValue('yellow.400', 'yellow.300');
+    const cardBg = useColorModeValue('gray.50', 'gray.700');
+    const borderCol = useColorModeValue('gray.200', 'gray.600');
+    const activeRowBg = useColorModeValue('yellow.50', 'yellow.900');
+    const hoverRowBg = useColorModeValue('gray.50', 'gray.600');
 
     const totalCount = totalReviews ?? reviews.length;
     if (totalCount === 0) return null;
@@ -140,11 +140,67 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange, distribution, aver
     );
 };
 
-const ReviewCard = ({ review }) => {
-    const bg        = useColorModeValue('white', 'gray.800');
+const ReviewCard = ({ review, onReviewUpdated }) => {
+    const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const textColor = useColorModeValue('gray.600', 'gray.400');
     const nameColor = useColorModeValue('gray.800', 'white');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editRating, setEditRating] = useState(review.rating);
+    const [editComment, setEditComment] = useState(review.comment);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const toast = useToast();
+
+    const handleEdit = () => {
+        setEditRating(review.rating);
+        setEditComment(review.comment);
+        setIsEditing(true);
+    };
+    const handleUpdate = async () => {
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API}/api/products/${review.product}/reviews/${review._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+                body: JSON.stringify({ rating: editRating, comment: editComment }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                toast({ title: 'Error', description: data.message, status: 'error', duration: 3000, isClosable: true });
+            } else {
+                toast({ title: 'Review updated!', status: 'success', duration: 2000, isClosable: true });
+                setIsEditing(false);
+                onReviewUpdated();
+            }
+        } catch {
+            toast({ title: 'Network error', status: 'error', duration: 3000, isClosable: true });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API}/api/products/${review.product}/reviews/${review._id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+            });
+            const data = await res.json();
+            if (!data.success) {
+                toast({ title: 'Error', description: data.message, status: 'error', duration: 3000, isClosable: true });
+            } else {
+                toast({ title: 'Review deleted', status: 'info', duration: 2000, isClosable: true });
+                onReviewUpdated();
+            }
+        } catch {
+            toast({ title: 'Network error', status: 'error', duration: 3000, isClosable: true });
+        } finally {
+            setSubmitting(false);
+            setShowDeleteConfirm(false);
+        }
+    };
 
     const formattedDate = new Date(review.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -152,9 +208,9 @@ const ReviewCard = ({ review }) => {
         day: 'numeric',
     });
 
-    
+
     const avatarColors = ['blue', 'cyan', 'teal', 'purple', 'pink'];
-    const colorIndex   = review.userName.charCodeAt(0) % avatarColors.length;
+    const colorIndex = review.userName.charCodeAt(0) % avatarColors.length;
     const avatarScheme = avatarColors[colorIndex];
 
     const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
@@ -202,38 +258,71 @@ const ReviewCard = ({ review }) => {
                 </HStack>
             </Flex>
 
-            <Text fontSize="sm" color={textColor} lineHeight="tall">
-                {review.comment}
-            </Text>
+            {!isEditing && !showDeleteConfirm && (
+                <>
+                    <Text fontSize="sm" color={textColor} lineHeight="tall" mb={3}>
+                        {review.comment}
+                    </Text>
+                    <HStack justify="flex-end" spacing={2}>
+                        <Button size="xs" variant="outline" colorScheme="blue" onClick={handleEdit}>Edit</Button>
+                        <Button size="xs" variant="outline" colorScheme="red" onClick={() => setShowDeleteConfirm(true)}>Delete</Button>
+                    </HStack>
+                </>
+            )}
+
+            {isEditing && (
+                <VStack spacing={3} mt={3} align="stretch">
+                    <StarRating value={editRating} onChange={setEditRating} size="sm" />
+                    <Textarea
+                        value={editComment}
+                        onChange={(e) => setEditComment(e.target.value)}
+                        rows={3}
+                        resize="vertical"
+                        maxLength={500}
+                        size="sm"
+                        focusBorderColor="blue.400"
+                    />
+                    <HStack justify="flex-end">
+                        <Button size="xs" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
+                        <Button size="xs" colorScheme="blue" onClick={handleUpdate} isLoading={submitting}>Save</Button>
+                    </HStack>
+                </VStack>
+            )}
+
+            {showDeleteConfirm && (
+                <VStack spacing={3} mt={3} align="stretch">
+                    <Text fontSize="sm" color="red.400" fontWeight="semibold">Are you sure you want to delete this review?</Text>
+                    <HStack justify="flex-end">
+                        <Button size="xs" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                        <Button size="xs" colorScheme="red" onClick={handleDelete} isLoading={submitting}>Confirm Delete</Button>
+                    </HStack>
+                </VStack>
+            )}
         </Box>
     );
 };
 
 // Review submission form
 const ReviewForm = ({ productId, onReviewAdded }) => {
-    const [form, setForm]           = useState({ userName: '', rating: 0, comment: '' });
+    const [form, setForm] = useState({
+        rating: 0,
+        comment: ''
+    });
     const [submitting, setSubmitting] = useState(false);
 
-    const bg        = useColorModeValue('white', 'gray.800');
+    const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const labelColor = useColorModeValue('gray.700', 'gray.300');
     const subLabelColor = useColorModeValue('gray.500', 'gray.400');
-    const ratingLabels  = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+    const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
     const toast = useToast();
 
 
     const handleSubmit = async () => {
-        if (!form.userName.trim()) {
-            return toast({
-                title: 'Name required',
-                description: 'Please enter your name before submitting.',
-                status: 'warning',
-                duration: 3000,
-                isClosable: true,
-                position: 'top-right',
-            });
-        }
+
+
+
         if (form.rating === 0) {
             return toast({
                 title: 'Rating required',
@@ -259,14 +348,17 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
         try {
             const res = await fetch(`${API}/api/products/${productId}/reviews`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('authToken')}`
+                },
                 body: JSON.stringify(form),
             });
-            
+
             if (!res.ok) {
                 throw new Error(`Server error: ${res.status} ${res.statusText}`);
             }
-            
+
             const data = await res.json();
 
             if (!data.success) {
@@ -287,7 +379,10 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
                     isClosable: true,
                     position: 'top-right',
                 });
-                setForm({ userName: '', rating: 0, comment: '' });
+                setForm({
+                    rating: 0,
+                    comment: ''
+                });
                 onReviewAdded();
             }
         } catch (err) {
@@ -343,20 +438,6 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
             </HStack>
 
             <VStack spacing={4} align="stretch">
-                {/* Name field */}
-                <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color={labelColor} mb={1}>
-                        Your Name
-                    </Text>
-                    <Input
-                        placeholder="e.g. John Doe"
-                        value={form.userName}
-                        onChange={(e) => setForm({ ...form, userName: e.target.value })}
-                        maxLength={50}
-                        focusBorderColor="blue.400"
-                    />
-                </Box>
-
                 {/* Star rating */}
                 <Box>
                     <Text fontSize="sm" fontWeight="semibold" color={labelColor} mb={2}>
@@ -566,7 +647,7 @@ const ProductReviews = ({ productId }) => {
                                 </HStack>
                             )}
                             {reviews.map((r) => (
-                                <ReviewCard key={r._id} review={r} />
+                                <ReviewCard key={r._id} review={r} onReviewUpdated={fetchReviews} />
                             ))}
                             {totalPages > 1 && (
                                 <Pagination
