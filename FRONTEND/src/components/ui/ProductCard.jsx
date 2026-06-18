@@ -48,9 +48,9 @@ const ProductCard = ({ product }) => {
   const [isInWishlist, setIsInWishlist] = useState(false);
 
   const handleClose = () => {
-  setUpdatedProduct(product);
-  setImagePreview(product.image);
-  onClose();
+    setUpdatedProduct(product);
+    setImagePreview(product.image);
+    onClose();
   };
 
   const fileInputRef = useRef(null);
@@ -73,7 +73,6 @@ const ProductCard = ({ product }) => {
 
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
-  const { currency, rates } = useCurrencyStore();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
 
@@ -96,11 +95,8 @@ const ProductCard = ({ product }) => {
 
   // Check wishlist status on mount
   useEffect(() => {
-    const checkWishlist = async () => {
-      const inWishlist = await checkInWishlist(product._id);
-      setIsInWishlist(inWishlist);
-    };
-    checkWishlist();
+    const inWishlist = checkInWishlist(product._id);
+    setIsInWishlist(inWishlist);
   }, [product._id, checkInWishlist]);
 
   // Revoke blob URLs to avoid memory leaks
@@ -266,7 +262,7 @@ const ProductCard = ({ product }) => {
 
         {/* Price */}
         <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          {formatPrice(product.price, currency, rates)}
+          ${product.price}
         </Text>
 
         {/* Tags */}
@@ -363,7 +359,7 @@ const ProductCard = ({ product }) => {
         </Stack>
       </Box>
 
-      {/* ── Delete Confirmation Dialog ── */}
+      {/*  Delete Confirmation Dialog  */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -397,7 +393,7 @@ const ProductCard = ({ product }) => {
         </AlertDialogOverlay>
       </AlertDialog>
 
-      {/* ── Edit / Update Modal ── */}
+      {/*Edit / Update Modal*/}
       <Modal isOpen={isOpen} onClose={handleClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
@@ -620,10 +616,7 @@ const ProductCard = ({ product }) => {
             >
               Update
             </Button>
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-            >
+            <Button variant="ghost" onClick={handleClose}>
               Cancel
             </Button>
           </ModalFooter>
