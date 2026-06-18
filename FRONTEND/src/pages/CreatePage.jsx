@@ -7,7 +7,7 @@ const CreatePage = () => {
     name: "",
     price: "",
     image: "",
-    tags: [],  // ← Add this
+    tags: [],
   });
 
   const toast = useToast();
