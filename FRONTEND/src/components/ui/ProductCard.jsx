@@ -87,32 +87,32 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
-   <Box
-  role="group"
-  shadow="lg"
-  rounded="lg"
-  overflow="hidden"
-  borderWidth="1px"
-  borderColor={borderColor}
-  transition="all 0.3s"
-  _hover={{
-    transform: "translateY(-8px)",
-    shadow: "2xl",
-  }}
-  bg={bg}
->
-    <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-      <Image 
-        src={product.image} 
-        alt={product.name} 
-        h={48} 
-        w='full' 
-        objectFit='cover'  
-        transition="transform 0.4s"
-        _groupHover={{transform: "scale(1.05)"}} 
-        cursor="pointer"
-      />
-    </Link>
+    <Box
+      role="group"
+      shadow="lg"
+      rounded="lg"
+      overflow="hidden"
+      borderWidth="1px"
+      borderColor={borderColor}
+      transition="all 0.3s"
+      _hover={{
+        transform: "translateY(-8px)",
+        shadow: "2xl",
+      }}
+      bg={bg}
+    >
+      <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+        <Image 
+          src={product.image} 
+          alt={product.name} 
+          h={48} 
+          w='full' 
+          objectFit='cover'  
+          transition="transform 0.4s"
+          _groupHover={{transform: "scale(1.05)"}} 
+          cursor="pointer"
+        />
+      </Link>
 
       <Box p={4}>
         <Heading as='h3' size='md' mb={2} noOfLines={1}>
@@ -127,43 +127,63 @@ const ProductCard = ({ product }) => {
           ${product.price}
         </Text>
 
-      <HStack spacing={2}>
-        {/* 2. Updated Edit Button with clean icon child rendering */}
-        <IconButton 
-          icon={<FaEdit />} 
-          onClick={onOpen}
-          colorScheme='blue' 
-          aria-label={`Edit ${product.name}`}
-          transition="all 0.2s"
-          _hover={{
-          transform: "scale(1.1)",
-  }}
-        />
-        
-        {/* 3. Updated Delete Button with clean icon child rendering */}
-        <IconButton 
-          icon={<FaTrash />} 
-          onClick={onDeleteOpen} 
-          colorScheme='red' 
-          aria-label={`Delete ${product.name}`}
-          transition="all 0.2s"
-          _hover={{
-            transform: "scale(1.1)",
-          }}
-        />
-        
-        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
-          transition="all 0.2s"
-          aria-label={`Add ${product.name} to cart`}
-          _hover={{
-            transform: "translateY(-2px)",
-          }}
-        >
-          Add to Cart
-        </Button>
-      </HStack>
-    </Box>
-      
+        {/* ─── TAGS DISPLAY ────────────────────────────────────────── */}
+        {product.tags && product.tags.length > 0 && (
+          <HStack spacing={1} mb={3} flexWrap="wrap">
+            {product.tags.map((tag, index) => (
+              <Text
+                key={index}
+                fontSize="xs"
+                px={2}
+                py={1}
+                borderRadius="full"
+                bg="blue.100"
+                color="blue.800"
+                _dark={{
+                  bg: "blue.900",
+                  color: "blue.200"
+                }}
+              >
+                #{tag}
+              </Text>
+            ))}
+          </HStack>
+        )}
+
+        <HStack spacing={2}>
+          <IconButton 
+            icon={<FaEdit />} 
+            onClick={onOpen}
+            colorScheme='blue' 
+            aria-label={`Edit ${product.name}`}
+            transition="all 0.2s"
+            _hover={{
+              transform: "scale(1.1)",
+            }}
+          />
+          
+          <IconButton 
+            icon={<FaTrash />} 
+            onClick={onDeleteOpen} 
+            colorScheme='red' 
+            aria-label={`Delete ${product.name}`}
+            transition="all 0.2s"
+            _hover={{
+              transform: "scale(1.1)",
+            }}
+          />
+          
+          <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
+            transition="all 0.2s"
+            aria-label={`Add ${product.name} to cart`}
+            _hover={{
+              transform: "translateY(-2px)",
+            }}
+          >
+            Add to Cart
+          </Button>
+        </HStack>
+      </Box>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog
@@ -269,6 +289,19 @@ const ProductCard = ({ product }) => {
                 aria-label="Original Price"
                 value={updatedProduct.originalPrice || ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: Number(e.target.value) })}
+              />
+              
+              <Input
+                placeholder='Tags (comma separated, e.g. wireless, premium)'
+                name='tags'
+                value={updatedProduct.tags ? updatedProduct.tags.join(', ') : ''}
+                onChange={(e) => {
+                  const tagsArray = e.target.value
+                    .split(',')
+                    .map(tag => tag.trim())
+                    .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
+                  setUpdatedProduct({ ...updatedProduct, tags: tagsArray.slice(0, 5) });
+                }}
               />
               
               <Input
