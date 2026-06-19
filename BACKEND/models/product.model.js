@@ -29,7 +29,25 @@ const productSchema = new mongoose.Schema({
       trim: true,
      
     },
-    
+
+    // ─── TAGS ──────────────────────────────────────────────────────
+    tags: {
+        type: [String],
+        default: [],
+        validate: {
+            validator: function (tags) {
+                return tags.length <= 5 && tags.every(tag => tag.length >= 2 && tag.length <= 30);
+            },
+            message: "Maximum 5 tags, each 2-30 characters"
+        }
+    }
+}, {
+    timestamps: true
+});
+
+const Product = mongoose.model("Product", productSchema);
+
+export default Product;
     // Optional Fields - Extra Product Details
     description: {
         type: String,
