@@ -27,7 +27,10 @@ const productSchema = new mongoose.Schema({
       type: String,
       required: [true, "Image URL is required"],
       trim: true,
-     
+    },
+    images: {
+      type: [String],
+      default: [],
     },
 
     // ─── TAGS ──────────────────────────────────────────────────────
@@ -64,42 +67,27 @@ export default Product;
         trim: true,
         default: ''
     },
+    tags: {
+        type: [String],
+        default: []
+    },
     stock: {
         type: Number,
         min: [0, 'Stock cannot be negative'],
         default: 0
     },
-    originalPrice: {
-        type: Number,
-        min: [0, 'Original price cannot be negative'],
-        default: null
-    },
-    discount: {
-        type: Number,
-        min: [0, 'Discount cannot be negative'],
-        max: [100, 'Discount cannot exceed 100%'],
-        default: 0
-    },
-    
-    // Review Aggregates
-    averageRating: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 5
-    },
-    reviewCount: {
-        type: Number,
-        default: 0
-    },
-
-    // System Fields
-    isDeleted: {
-        type: Boolean,
-        default: false
+    tags:{
+        type: [String],
+        default: [],
+        validate: {
+            validator: function (tags){
+              return tags.length <= 5 && tags.every(tag => tag.length >= 2 && tag.length <= 30);
+            },
+            message: "Maximum 5 tags, each 2-30 characters"
+        }
     }
 },{
-   timestamps: true //createdAt,updatedAt
+   timestamps: true
 });
 
 const Product = mongoose.model("Product", productSchema);
