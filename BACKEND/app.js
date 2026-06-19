@@ -62,7 +62,7 @@ app.use(
         scriptSrc,
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://via.placeholder.com"],
         connectSrc,
         workerSrc: ["'self'", "blob:"],
       },
@@ -75,7 +75,7 @@ app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: "Too many requests from this IP, please try again later.",
 });
 const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);

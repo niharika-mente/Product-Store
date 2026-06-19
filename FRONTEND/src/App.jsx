@@ -1,4 +1,4 @@
-import { Box, useColorModeValue } from "@chakra-ui/react"
+import { Box, useColorModeValue, useDisclosure } from "@chakra-ui/react"
 import { Route, Routes } from "react-router-dom";
 import CreatePage from "./pages/CreatePage";
 import HomePage from "./pages/HomePage";
@@ -16,8 +16,14 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import ComparePage from "./pages/ComparePage";
+import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 function App() {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  useKeyboardShortcuts({ onOpenShortcuts: onOpen });
+
   return (
     <WishlistProvider>
       <Box minH={"100vh"} bg={useColorModeValue("gray.100", "gray.900")}>
@@ -38,6 +44,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
+        <KeyboardShortcutsModal isOpen={isOpen} onClose={onClose} />
       </Box>
     </WishlistProvider>
   );
