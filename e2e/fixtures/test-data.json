@@ -1,5 +1,5 @@
 {
-  "testUser": {
+  "user": {
     "name": "Test User",
     "email": "test@example.com",
     "password": "password123"
@@ -8,26 +8,31 @@
     "email": "invalid@example.com",
     "password": "wrongpassword"
   },
-  "sampleProducts": [
-    {
-      "name": "Automated Test Product",
-      "price": 49.99,
-      "description": "A product created by E2E tests",
-      "image": "https://via.placeholder.com/300x300?text=E2E+Product",
-      "category": "Test",
-      "brand": "TestBrand",
-      "stock": 100
-    }
-  ],
-  "edgeCaseProducts": [
-    {
-      "name": "",
-      "price": -10,
-      "description": "",
-      "image": "",
-      "category": "",
-      "brand": "",
-      "stock": -5
-    }
-  ]
+  "newProduct": {
+    "name": "E2E Test Product",
+    "price": "299",
+    "image": "https://via.placeholder.com/300x300?text=E2E+Product",
+    "category": "Testing",
+    "brand": "Playwright",
+    "stock": "15",
+    "description": "Product created during automated testing"
+  },
+  "editedProduct": {
+    "name": "E2E Test Product - Edited",
+    "price": "349",
+    "image": "https://via.placeholder.com/300x300?text=Edited",
+    "category": "Testing Edited",
+    "brand": "Playwright Edit",
+    "stock": "20",
+    "description": "Product edited during automated testing"
+  },
+  "edgeCaseProduct": {
+    "name": "Negative Price Item",
+    "price": "-50",
+    "image": "https://via.placeholder.com/300x300?text=Negative",
+    "category": "Testing",
+    "brand": "Playwright",
+    "stock": "5",
+    "description": "Product with negative price"
+  }
 }
