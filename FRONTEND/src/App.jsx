@@ -17,6 +17,7 @@ import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import ProfilePage from "./pages/ProfilePage";
 import ComparePage from "./pages/ComparePage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
@@ -43,6 +44,7 @@ function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
