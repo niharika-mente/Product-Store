@@ -76,12 +76,30 @@ export const useProductStore = create((set) =>({
         }
     },
 
-    fetchProducts: async (page = 1, limit = 10, sort = "", category = "") => {
+    fetchProducts: async (options = {}) => {
+        const {
+            page = 1,
+            limit = 10,
+            sort = "",
+            category = "",
+            minPrice,
+            maxPrice,
+            brand,
+            minRating,
+            inStock
+        } = options;
+
         set({ isLoading: true, error: null });
         try {
             let url = `${API}/api/products?page=${page}&limit=${limit}`;
             if (sort) url += `&sort=${sort}`;
             if (category) url += `&category=${encodeURIComponent(category)}`;
+            if (minPrice !== undefined && minPrice !== null) url += `&minPrice=${minPrice}`;
+            if (maxPrice !== undefined && maxPrice !== null) url += `&maxPrice=${maxPrice}`;
+            if (brand) url += `&brand=${encodeURIComponent(brand)}`;
+            if (minRating !== undefined && minRating !== null) url += `&minRating=${minRating}`;
+            if (inStock) url += `&inStock=true`;
+
             const res = await fetch(url);
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
@@ -205,7 +223,7 @@ export const useProductStore = create((set) =>({
 compareList: [],
     addToCompare: (product) => set((state) => {
       if (state.compareList.find((p) => p._id === product._id)) return state;
-      if (state.compareList.length >= 2) return state;
+      if (state.compareList.length >= 4) return state;
       return { compareList: [...state.compareList, product] };
     }),
     removeFromCompare: (pid) => set((state) => ({
