@@ -137,6 +137,8 @@ export const logoutUser = async (req, res) => {
   }
 };
 
+const SAFE_RESET_RESPONSE = { success: true, message: "If that email exists, a reset link has been sent." };
+
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -146,26 +148,35 @@ export const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    // Always return 200 to avoid user enumeration
+    // Artificial delay on early-return paths so response time doesn't reveal user existence
     if (!user || user.provider !== 'local') {
-      return res.status(200).json({ success: true, message: "If that email exists, a reset link has been sent." });
+      await new Promise(r => setTimeout(r, 250));
+      return res.status(200).json(SAFE_RESET_RESPONSE);
     }
 
     const rawToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-
-    user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-    await user.save();
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password/${rawToken}`;
 
-    await sendPasswordResetEmail(user.email, resetUrl);
+    // Send email BEFORE persisting token — prevents orphaned tokens if email fails
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (emailErr) {
+      console.error('[Email] Password reset send failed:', emailErr.message);
+      return res.status(500).json({ success: false, message: "Failed to send reset email. Please try again later." });
+    }
 
-    res.status(200).json({ success: true, message: "If that email exists, a reset link has been sent." });
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = tokenExpiry;
+    await user.save();
+
+    res.status(200).json(SAFE_RESET_RESPONSE);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[ForgotPassword] Unexpected error:', error.message);
+    res.status(500).json({ success: false, message: "An unexpected error occurred. Please try again." });
   }
 };
 
@@ -200,6 +211,7 @@ export const resetPassword = async (req, res) => {
 
     res.status(200).json({ success: true, message: "Password updated successfully. You can now log in." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[ResetPassword] Unexpected error:', error.message);
+    res.status(500).json({ success: false, message: "An unexpected error occurred. Please try again." });
   }
 };

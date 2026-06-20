@@ -11,7 +11,7 @@ import {
 } from "../controllers/auth.controller.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
-import { loginLimiter, logoutLimiter, registerLimiter, passwordResetLimiter } from "../middleware/rateLimiter.js";
+import { loginLimiter, logoutLimiter, registerLimiter, forgotPasswordLimiter, resetPasswordLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -21,8 +21,8 @@ router.post("/login",loginLimiter, loginUser);
 
 router.post("/logout", logoutLimiter, authMiddleware,logoutUser);
 
-router.post("/forgot-password", passwordResetLimiter, forgotPassword);
-router.post("/reset-password/:token", passwordResetLimiter, resetPassword);
+router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
+router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
 
 
 // Social OAuth Routes
