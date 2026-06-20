@@ -128,7 +128,10 @@ const HomePage = () => {
           </Text>
           <Select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => {
+                 setSort(e.target.value);
+                 setPage(1);
+           }}
             maxW="250px"
             aria-label="Sort products"
           >
