@@ -1,5 +1,18 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeAll(async ({ request }) => {
+  await request.post('/api/products', {
+    data: {
+      name: 'Gaming Laptop Pro',
+      price: 1299,
+      image: 'https://via.placeholder.com/150',
+      description: 'High-end gaming laptop',
+      category: 'Electronics',
+      stock: 5
+    }
+  });
+});
+
 test('User can browse products and use the search bar', async ({ page }) => {
   await page.goto('/');
   

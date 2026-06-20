@@ -94,8 +94,9 @@ const HomePage = () => {
           await searchProducts(query);
           return;
         }
-        const category = (filters.categories || []).join(',');
-        const response = await fetchProducts({ page, limit, sort, ...filters });
+        const { categories, ...restFilters } = filters;
+        const categoryStr = (categories || []).join(',');
+        const response = await fetchProducts({ page, limit, sort, ...restFilters, category: categoryStr });
         if (response && response.success && !ignore) {
           const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
           if (page !== normalizedPage) {
