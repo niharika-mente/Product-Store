@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
+import ComparePage from "./pages/ComparePage";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
@@ -32,6 +33,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/compare" element={<ComparePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
