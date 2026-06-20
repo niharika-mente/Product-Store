@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Heading, Text, Select, Button, VStack, HStack, useToast } from '@chakra-ui/react';
 import axios from 'axios';
+import { getSocket } from '../socket';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -55,6 +56,26 @@ const ProductPage = () => {
       }
     }
   }, [selectedSize, selectedColor, product]);
+
+  useEffect(() => {
+    if (!product) return;
+    
+    const socket = getSocket();
+    const handleStockUpdate = (data) => {
+      if (data.productId === product._id) {
+        setProduct((prev) => ({ ...prev, baseStock: data.newStock }));
+        if (!product.hasVariants) {
+          setDisplayStock(data.newStock);
+        }
+      }
+    };
+
+    socket.on("stockUpdate", handleStockUpdate);
+
+    return () => {
+      socket.off("stockUpdate", handleStockUpdate);
+    };
+  }, [product]);
 
   const handleAddToCart = async () => {
     try {

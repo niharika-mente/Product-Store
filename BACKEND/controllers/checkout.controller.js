@@ -4,6 +4,7 @@ import Coupon from '../models/coupon.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 import { processReferralOnPurchase } from '../services/referral.service.js';
+import { io } from '../server.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -211,6 +212,12 @@ export const stripeWebhook = async (req, res) => {
             await restoreStock(deductions);
             return res.json({ received: true });
           }
+
+          // Emit real-time stock update
+          io.emit("stockUpdate", {
+            productId: item._id,
+            newStock: updated.stock - item.quantity
+          });
 
           deductions.push({ productId: item._id, quantity: item.quantity });
         }

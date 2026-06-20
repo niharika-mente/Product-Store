@@ -31,6 +31,7 @@
     "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.19.1",
     "serverless-http": "^3.0.0",
+    "socket.io": "^4.8.3",
     "stripe": "^22.2.1",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
