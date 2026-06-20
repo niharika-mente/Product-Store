@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-test.beforeAll(async ({ request }) => {
+import { request } from '@playwright/test';
+
+test.beforeAll(async () => {
+  const apiContext = await request.newContext();
   // Seed a product to ensure the DB is not empty for tests
-  await request.post('http://localhost:5000/api/products', {
+  await apiContext.post('http://localhost:5000/api/products', {
     data: {
       name: 'Gaming Laptop',
       price: 1200,
@@ -13,6 +16,7 @@ test.beforeAll(async ({ request }) => {
       category: 'Electronics'
     }
   });
+  await apiContext.dispose();
 });
 
 test('User can browse products and use the search bar', async ({ page }) => {
