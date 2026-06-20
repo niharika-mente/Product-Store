@@ -30,15 +30,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from "react-router-dom";
 import { FaEdit, FaTrash, FaHeart, FaRegHeart, FaBalanceScale } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
+  VStack,
+} from "@chakra-ui/react";
+import React, { useEffect, useRef, useState } from "react";
+import { FaBalanceScale, FaEdit, FaHeart, FaRegHeart, FaTrash } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import { useCart } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
-import { formatPrice } from "../../utils/currency";
+import { useProductStore } from "../../store/product";
 import { useWishlist } from "../../context/WishlistContext.jsx";
+import { formatPrice } from "../../utils/currency";
 import {
-  showSuccessToast,
   showErrorToast,
-  showWarningToast,
   showInfoToast,
+  showSuccessToast,
+  showWarningToast,
 } from "../../utils/toastHelpers";
 
 const ProductCard = ({ product }) => {
@@ -46,10 +52,7 @@ const ProductCard = ({ product }) => {
   const [imagePreview, setImagePreview] = useState(product.image);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    if (product) setUpdatedProduct(product);
-  }, [product]);
+  const cancelRef = useRef();
 
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
@@ -57,17 +60,37 @@ const ProductCard = ({ product }) => {
   const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
   const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
+  const {
+    deleteProduct,
+    updateProduct,
+    addToCompare,
+    compareList = [],
+    isSubmitting,
+    isDeleting,
+  } = useProductStore();
+
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { currency, rates } = useCurrencyStore();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
+
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  const cancelRef = useRef();
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose,
+  } = useDisclosure();
 
   const isOutOfStock = product.stock != null && product.stock === 0;
 
+  // Sync updatedProduct when product prop changes
+  useEffect(() => {
+    setUpdatedProduct(product);
+    setImagePreview(product.image);
+  }, [product]);
+
+  // Check wishlist status on mount
   useEffect(() => {
     const checkWishlist = async () => {
       const inWishlist = await checkInWishlist(product._id);
@@ -76,15 +99,11 @@ const ProductCard = ({ product }) => {
     checkWishlist();
   }, [product._id, checkInWishlist]);
 
-  useEffect(() => {
-    setUpdatedProduct(product);
-    setImagePreview(product.image);
-  }, [product]);
-
+  // Revoke blob URLs to avoid memory leaks
   useEffect(() => {
     const url = imagePreview;
     return () => {
-      if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+      if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
     };
   }, [imagePreview]);
 
@@ -105,7 +124,7 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     const { status } = addToCart(product);
-    if (status === 'capped') {
+    if (status === "capped") {
       showWarningToast(
         toast,
         "Stock limit reached",
@@ -113,7 +132,7 @@ const ProductCard = ({ product }) => {
       );
       return;
     }
-    if (status === 'out_of_stock') return;
+    if (status === "out_of_stock") return;
     showSuccessToast(
       toast,
       "Added to Cart",
@@ -200,6 +219,21 @@ const ProductCard = ({ product }) => {
       <Box p={4}>
         <Heading as='h3' size='md' mb={2} noOfLines={1}>
           <Link to={`/product/${product._id}`} style={{ textDecoration: 'none' }}>
+      {/* Product Image */}
+      <Image
+        src={product.image}
+        alt={product.name}
+        h={48}
+        w="full"
+        objectFit="cover"
+        transition="transform 0.4s"
+        _groupHover={{ transform: "scale(1.05)" }}
+      />
+
+      <Box p={4}>
+        {/* Product Name with Link */}
+        <Heading as="h3" size="md" mb={2} noOfLines={1}>
+          <Link to={`/product/${product._id}`} style={{ textDecoration: "none" }}>
             <Text _hover={{ color: "cyan.500" }} transition="color 0.2s">
               {product.name}
             </Text>
@@ -211,6 +245,12 @@ const ProductCard = ({ product }) => {
         </Text>
 
         {/* ─── TAGS DISPLAY ────────────────────────────────────────── */}
+        {/* Price */}
+        <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
+          {formatPrice(product.price, currency, rates)}
+        </Text>
+
+        {/* Tags */}
         {product.tags && product.tags.length > 0 && (
           <HStack spacing={1} mb={3} flexWrap="wrap">
             {product.tags.map((tag, index) => (
@@ -226,6 +266,7 @@ const ProductCard = ({ product }) => {
                   bg: "blue.900",
                   color: "blue.200"
                 }}
+                _dark={{ bg: "blue.900", color: "blue.200" }}
               >
                 #{tag}
               </Text>
@@ -234,19 +275,22 @@ const ProductCard = ({ product }) => {
         )}
 
         {/* Button row */}
+        {/* Action Buttons */}
         <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
           <HStack spacing={2}>
+            {/* Wishlist */}
             <IconButton
               icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
               onClick={handleWishlistToggle}
               colorScheme={isInWishlist ? "red" : "gray"}
               variant="ghost"
-              aria-label='Add to Wishlist'
+              aria-label="Add to Wishlist"
               size="sm"
               transition="all 0.2s"
               _hover={{ transform: "scale(1.1)" }}
             />
 
+            {/* Edit */}
             <IconButton
               icon={<FaEdit />}
               onClick={handleModalOpen}
@@ -257,6 +301,7 @@ const ProductCard = ({ product }) => {
               _hover={{ transform: "scale(1.1)" }}
             />
 
+            {/* Delete */}
             <IconButton
               icon={<FaTrash />}
               onClick={onDeleteOpen}
@@ -267,19 +312,27 @@ const ProductCard = ({ product }) => {
               _hover={{ transform: "scale(1.1)" }}
             />
 
+            {/* Compare */}
             <IconButton
               icon={<FaBalanceScale />}
               onClick={() => addToCompare(product)}
               colorScheme={isInCompare ? "purple" : "gray"}
               aria-label="Add to compare"
-              isDisabled={!isInCompare && compareList.length >= 2}
-              title={isInCompare ? "Added to compare" : compareList.length >= 2 ? "Remove one to compare" : "Add to compare"}
+              isDisabled={!isInCompare && compareList.length >= 4}
+              title={
+                isInCompare
+                  ? "Added to compare"
+                  : compareList.length >= 4
+                  ? "Remove one to compare"
+                  : "Add to compare"
+              }
               size="sm"
               transition="all 0.2s"
               _hover={{ transform: "scale(1.1)" }}
             />
           </HStack>
 
+          {/* Add to Cart */}
           <Button
             colorScheme="teal"
             onClick={handleAddToCart}
@@ -297,6 +350,7 @@ const ProductCard = ({ product }) => {
       </Box>
 
       {/* Delete Confirmation Dialog */}
+      {/* ── Delete Confirmation Dialog ── */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -309,7 +363,8 @@ const ProductCard = ({ product }) => {
               Delete Product
             </AlertDialogHeader>
             <AlertDialogBody>
-              Are you sure you want to delete <strong>{product.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{product.name}</strong>? This action
+              cannot be undone.
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onDeleteClose}>
@@ -330,6 +385,7 @@ const ProductCard = ({ product }) => {
       </AlertDialog>
 
       {/* Edit Product Modal */}
+      {/* ── Edit / Update Modal ── */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
@@ -342,7 +398,9 @@ const ProductCard = ({ product }) => {
                 name="name"
                 aria-label="Product Name"
                 value={updatedProduct.name}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, name: e.target.value })}
+                onChange={(e) =>
+                  setUpdatedProduct({ ...updatedProduct, name: e.target.value })
+                }
               />
 
               <Input
@@ -351,7 +409,9 @@ const ProductCard = ({ product }) => {
                 type="number"
                 aria-label="Price"
                 value={updatedProduct.price}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: Number(e.target.value) })}
+                onChange={(e) =>
+                  setUpdatedProduct({ ...updatedProduct, price: Number(e.target.value) })
+                }
               />
 
               <Box w="full">
@@ -374,7 +434,11 @@ const ProductCard = ({ product }) => {
                 aria-label="Image URL"
                 value={updatedProduct.imageFile ? "" : updatedProduct.image}
                 onChange={(e) => {
-                  setUpdatedProduct({ ...updatedProduct, image: e.target.value, imageFile: null });
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    image: e.target.value,
+                    imageFile: null,
+                  });
                   setImagePreview(e.target.value || product.image);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
@@ -393,7 +457,13 @@ const ProductCard = ({ product }) => {
                 />
               )}
 
-              <Text fontSize="sm" fontWeight="bold" alignSelf="start" color={optionalLabelColor} mt={2}>
+              <Text
+                fontSize="sm"
+                fontWeight="bold"
+                alignSelf="start"
+                color={optionalLabelColor}
+                mt={2}
+              >
                 Optional Details
               </Text>
 
@@ -401,24 +471,30 @@ const ProductCard = ({ product }) => {
                 placeholder="Description (optional)"
                 name="description"
                 aria-label="Description"
-                value={updatedProduct.description || ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
+                value={updatedProduct.description || ""}
+                onChange={(e) =>
+                  setUpdatedProduct({ ...updatedProduct, description: e.target.value })
+                }
               />
 
               <Input
                 placeholder="Category (optional)"
                 name="category"
                 aria-label="Category"
-                value={updatedProduct.category || ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, category: e.target.value })}
+                value={updatedProduct.category || ""}
+                onChange={(e) =>
+                  setUpdatedProduct({ ...updatedProduct, category: e.target.value })
+                }
               />
 
               <Input
                 placeholder="Brand (optional)"
                 name="brand"
                 aria-label="Brand"
-                value={updatedProduct.brand || ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, brand: e.target.value })}
+                value={updatedProduct.brand || ""}
+                onChange={(e) =>
+                  setUpdatedProduct({ ...updatedProduct, brand: e.target.value })
+                }
               />
 
               <Input
@@ -426,8 +502,13 @@ const ProductCard = ({ product }) => {
                 name="stock"
                 type="number"
                 aria-label="Stock Quantity"
-                value={updatedProduct.stock ?? ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })}
+                value={updatedProduct.stock ?? ""}
+                onChange={(e) =>
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    stock: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
               />
 
               <Input
@@ -435,21 +516,45 @@ const ProductCard = ({ product }) => {
                 name="originalPrice"
                 type="number"
                 aria-label="Original Price"
-                value={updatedProduct.originalPrice ?? ''}
-                onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
+                value={updatedProduct.originalPrice ?? ""}
+                onChange={(e) =>
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    originalPrice: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
               />
 
               {/* ─── TAGS INPUT ────────────────────────────────────────── */}
               <Input
-                placeholder='Tags (comma separated, e.g. wireless, premium)'
-                name='tags'
-                value={updatedProduct.tags ? updatedProduct.tags.join(', ') : ''}
+                placeholder="Discount % (optional)"
+                name="discount"
+                type="number"
+                aria-label="Discount Percentage"
+                value={updatedProduct.discount ?? ""}
+                onChange={(e) =>
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    discount: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+              />
+
+              {/* Tags Input */}
+              <Input
+                placeholder="Tags (comma separated, e.g. wireless, premium)"
+                name="tags"
+                value={updatedProduct.tags ? updatedProduct.tags.join(", ") : ""}
                 onChange={(e) => {
                   const tagsArray = e.target.value
                     .split(',')
                     .map(tag => tag.trim())
                     .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
                   setUpdatedProduct({ ...updatedProduct, tags: tagsArray.slice(0, 5) });
+                    .split(",")
+                    .map((tag) => tag.trim())
+                    .filter((tag) => tag && tag.length >= 2 && tag.length <= 30);
+                  setUpdatedProduct({ ...updatedProduct, tags: tagsArray });
                 }}
               />
 
