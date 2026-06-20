@@ -1,0 +1,33 @@
+{
+  "testUser": {
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123"
+  },
+  "invalidUser": {
+    "email": "invalid@example.com",
+    "password": "wrongpassword"
+  },
+  "sampleProducts": [
+    {
+      "name": "Automated Test Product",
+      "price": 49.99,
+      "description": "A product created by E2E tests",
+      "image": "https://via.placeholder.com/300x300?text=E2E+Product",
+      "category": "Test",
+      "brand": "TestBrand",
+      "stock": 100
+    }
+  ],
+  "edgeCaseProducts": [
+    {
+      "name": "",
+      "price": -10,
+      "description": "",
+      "image": "",
+      "category": "",
+      "brand": "",
+      "stock": -5
+    }
+  ]
+}
