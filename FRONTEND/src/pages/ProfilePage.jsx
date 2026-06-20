@@ -32,6 +32,7 @@ const ProfilePage = () => {
   const cardBg = useColorModeValue("white", "gray.800");
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.400");
+  const readOnlyBg = useColorModeValue("gray.50", "gray.700");
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -162,7 +163,7 @@ const ProfilePage = () => {
 
                 <FormControl>
                   <FormLabel fontSize="sm">Email <Text as="span" color={labelColor}>(read-only)</Text></FormLabel>
-                  <Input value={profile?.email || ""} isReadOnly bg={useColorModeValue("gray.50", "gray.700")} />
+                  <Input value={profile?.email || ""} isReadOnly bg={readOnlyBg} />
                 </FormControl>
 
                 <FormControl>

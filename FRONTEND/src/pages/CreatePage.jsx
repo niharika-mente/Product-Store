@@ -33,9 +33,7 @@ const CreatePage = () => {
     setNewProduct({ name: "", price: "", image: "", tags: [] });
   };
 
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const toggleBg = useColorModeValue("blue.50", "blue.900");
-  const infoColor = useColorModeValue("gray.700", "gray.300");
+  const cardBg = useColorModeValue("white", "gray.800");
 
   return (
     <Container maxW={"container.sm"}>
@@ -45,7 +43,7 @@ const CreatePage = () => {
         </Heading>
 
         <Box
-          w={"full"} bg={useColorModeValue("white", "gray.800")}
+          w={"full"} bg={cardBg}
           p={6} rounded={"lg"} shadow={"md"}
         >
           <VStack spacing={4}>
