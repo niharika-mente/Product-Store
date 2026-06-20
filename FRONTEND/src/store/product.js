@@ -209,7 +209,7 @@ export const useProductStore = create((set) =>({
 compareList: [],
     addToCompare: (product) => set((state) => {
       if (state.compareList.find((p) => p._id === product._id)) return state;
-      if (state.compareList.length >= 2) return state;
+      if (state.compareList.length >= 4) return state;
       return { compareList: [...state.compareList, product] };
     }),
     removeFromCompare: (pid) => set((state) => ({
