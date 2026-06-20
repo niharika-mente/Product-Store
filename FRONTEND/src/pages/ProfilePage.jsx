@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box, Button, Container, Divider, Flex, FormControl, FormLabel,
   Heading, HStack, IconButton, Input, Spinner, Tab, TabList,
@@ -33,13 +33,7 @@ const ProfilePage = () => {
   const border = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.600", "gray.400");
 
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) { navigate("/login"); return; }
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await api.get("/user/profile");
@@ -51,7 +45,13 @@ const ProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) { navigate("/login"); return; }
+    fetchProfile();
+  }, [navigate, fetchProfile]);
 
   const handleProfileSave = async () => {
     setSaving(true);
