@@ -239,15 +239,14 @@ export const restockProduct = async (req, res, next) => {
         return next(new AppError("Invalid Product Id format", 404));
     }
 
-    const parsed = Number(amount);
-    if (!amount || !Number.isInteger(parsed) || parsed <= 0) {
+    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0) {
         return next(new AppError("Restock amount must be a positive integer", 400));
     }
 
     try {
-        const product = await Product.findByIdAndUpdate(
-            id,
-            { $inc: { stock: parsed } },
+        const product = await Product.findOneAndUpdate(
+            { _id: id, isDeleted: { $ne: true } },
+            { $inc: { stock: amount } },
             { new: true, runValidators: true }
         );
         if (!product) return next(new AppError("Product not found", 404));

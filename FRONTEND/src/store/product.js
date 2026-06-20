@@ -200,6 +200,7 @@ export const useProductStore = create((set) =>({
     },
 
     restockProduct: async (pid, amount) => {
+        set({ isSubmitting: true, error: null });
         try {
             const res = await fetch(`${API}/api/products/${pid}/restock`, {
                 method: "PATCH",
@@ -208,14 +209,17 @@ export const useProductStore = create((set) =>({
             });
             const data = await res.json();
             if (!data.success) {
+                set({ isSubmitting: false, error: data.message });
                 return { success: false, message: data.message };
             }
             set((state) => ({
                 products: state.products.map((p) => p._id === pid ? data.data : p),
+                isSubmitting: false,
             }));
             return { success: true, data: data.data };
         } catch (error) {
             console.error("Network error restocking product:", error);
+            set({ isSubmitting: false, error: "Network error - could not reach API" });
             return { success: false, message: "Network error - could not reach API" };
         }
     },

@@ -57,6 +57,7 @@ const ProductCard = ({ product }) => {
   const {
     deleteProduct,
     updateProduct,
+    restockProduct,
     addToCompare,
     compareList = [],
     isSubmitting,
@@ -525,12 +526,30 @@ const ProductCard = ({ product }) => {
                         size="xs"
                         colorScheme="orange"
                         variant="outline"
-                        onClick={() =>
-                          setUpdatedProduct((prev) => ({
-                            ...prev,
-                            stock: (Number(prev.stock) || 0) + amount,
-                          }))
-                        }
+                        isLoading={isSubmitting}
+                        onClick={async () => {
+                          const result = await restockProduct(product._id, amount);
+                          if (result.success) {
+                            setUpdatedProduct((prev) => ({
+                              ...prev,
+                              stock: result.data.stock,
+                            }));
+                            toast({
+                              title: `Restocked +${amount}`,
+                              status: "success",
+                              duration: 2000,
+                              isClosable: true,
+                            });
+                          } else {
+                            toast({
+                              title: "Restock failed",
+                              description: result.message,
+                              status: "error",
+                              duration: 3000,
+                              isClosable: true,
+                            });
+                          }
+                        }}
                       >
                         +{amount}
                       </Button>
