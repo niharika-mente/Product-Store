@@ -13,6 +13,7 @@ import checkoutRoutes from "./routes/checkout.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import ordersRoutes from "./routes/orders.route.js";
+import userRoutes from "./routes/user.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -108,6 +109,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/user", userRoutes);
 
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============

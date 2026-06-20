@@ -282,9 +282,14 @@ const Navbar = () => {
               </Button>
 
               {isLoggedIn && (
-                <Button onClick={handleLogout} colorScheme="red" variant="outline">
-                  Logout
-                </Button>
+                <>
+                  <Link to="/profile">
+                    <Button variant="ghost" size="sm">My Profile</Button>
+                  </Link>
+                  <Button onClick={handleLogout} colorScheme="red" variant="outline" size="sm">
+                    Logout
+                  </Button>
+                </>
               )}
             </HStack>
 
@@ -346,6 +351,12 @@ const Navbar = () => {
                 )}
               </Button>
             </Link>
+
+            {isLoggedIn && (
+              <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+                <Button w="full">My Profile</Button>
+              </Link>
+            )}
 
             <Link to="/compare" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
               <Button w="full" leftIcon={<FaBalanceScale />} position="relative">
