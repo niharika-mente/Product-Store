@@ -1,5 +1,20 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ request }) => {
+  // Seed a product to ensure the DB is not empty for tests
+  await request.post('http://localhost:5000/api/products', {
+    data: {
+      name: 'Gaming Laptop',
+      price: 1200,
+      image: 'https://via.placeholder.com/150',
+      description: 'A powerful laptop',
+      stock: 10,
+      brand: 'TechCorp',
+      category: 'Electronics'
+    }
+  });
+});
+
 test('User can browse products and use the search bar', async ({ page }) => {
   await page.goto('/');
   
