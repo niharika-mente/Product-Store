@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  VStack, Box, Badge, useColorModeValue, useToast
+  VStack, Box, Badge, useColorModeValue, useToast, InputGroup, InputRightElement, Tag, TagLabel, TagCloseButton
 } from '@chakra-ui/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,9 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [promoInput, setPromoInput] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discount, finalTotal }
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -63,6 +66,30 @@ const Navbar = () => {
     return () => window.removeEventListener('open-cart', handleOpenCart);
   }, [handleCartOpen]);
 
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput.trim(), orderTotal: totalPrice ?? 0 }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        toast({ title: 'Invalid coupon', description: data.message, status: 'error', duration: 3000, isClosable: true });
+        return;
+      }
+      setAppliedCoupon(data.data);
+      setPromoInput('');
+      toast({ title: `Coupon applied!`, description: `You save $${data.data.discount.toFixed(2)}`, status: 'success', duration: 3000, isClosable: true });
+    } catch {
+      toast({ title: 'Error', description: 'Could not validate coupon', status: 'error', duration: 3000, isClosable: true });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setIsCheckoutLoading(true);
@@ -71,7 +98,7 @@ const Navbar = () => {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cartItems }),
+        body: JSON.stringify({ items: cartItems, couponCode: appliedCoupon?.code || null }),
       });
       if (!res.ok) {
         throw new Error(`Server error: ${res.status} ${res.statusText}`);
@@ -89,6 +116,7 @@ const Navbar = () => {
         return;
       }
       emptyCart();
+      setAppliedCoupon(null);
       onClose();
       navigate("/success");
     } catch (err) {
@@ -458,12 +486,46 @@ const Navbar = () => {
               )}
             </DrawerBody>
 
-            <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch">
-              <HStack justify="space-between" mb={4}>
+            <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch" gap={3}>
+              {/* Promo code input */}
+              {cartItems.length > 0 && (
+                appliedCoupon ? (
+                  <HStack justify="space-between">
+                    <Tag colorScheme="green" size="md" borderRadius="full">
+                      <TagLabel>{appliedCoupon.code} — save ${appliedCoupon.discount.toFixed(2)}</TagLabel>
+                      <TagCloseButton onClick={() => setAppliedCoupon(null)} />
+                    </Tag>
+                  </HStack>
+                ) : (
+                  <InputGroup size="sm">
+                    <Input
+                      placeholder="Promo code"
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                      textTransform="uppercase"
+                    />
+                    <InputRightElement width="4.5rem">
+                      <Button h="1.5rem" size="xs" colorScheme="cyan" onClick={handleApplyPromo} isLoading={promoLoading}>
+                        Apply
+                      </Button>
+                    </InputRightElement>
+                  </InputGroup>
+                )
+              )}
+
+              <HStack justify="space-between">
                 <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <Text fontWeight="bold" fontSize="lg" color="cyan.500">
-                  {formatPrice(totalPrice ?? 0, currency, rates)}
-                </Text>
+                <VStack align="flex-end" spacing={0}>
+                  {appliedCoupon && (
+                    <Text fontSize="sm" color="gray.400" textDecoration="line-through">
+                      {formatPrice(totalPrice ?? 0, currency, rates)}
+                    </Text>
+                  )}
+                  <Text fontWeight="bold" fontSize="lg" color="cyan.500">
+                    {formatPrice(appliedCoupon ? appliedCoupon.finalTotal : (totalPrice ?? 0), currency, rates)}
+                  </Text>
+                </VStack>
               </HStack>
               <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
                 Proceed to Checkout
