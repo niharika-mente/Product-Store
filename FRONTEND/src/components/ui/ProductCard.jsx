@@ -57,7 +57,6 @@ const ProductCard = ({ product }) => {
   const {
     deleteProduct,
     updateProduct,
-    restockProduct,
     addToCompare,
     compareList = [],
     isSubmitting,
