@@ -6,10 +6,12 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/auth.controller.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
-import { loginLimiter, logoutLimiter, registerLimiter } from "../middleware/rateLimiter.js";
+import { loginLimiter, logoutLimiter, registerLimiter, passwordResetLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -18,6 +20,9 @@ router.post("/register",registerLimiter, registerUser);
 router.post("/login",loginLimiter, loginUser);
 
 router.post("/logout", logoutLimiter, authMiddleware,logoutUser);
+
+router.post("/forgot-password", passwordResetLimiter, forgotPassword);
+router.post("/reset-password/:token", passwordResetLimiter, resetPassword);
 
 
 // Social OAuth Routes
