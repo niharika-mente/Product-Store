@@ -1,11 +1,10 @@
 import express from 'express';
 import { getMyOrders, updateOrderStatus } from '../controllers/orders.controller.js';
-import { protect } from '../middleware/auth.js';
+import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.get('/', protect, getMyOrders);
-// TODO: Use admin middleware for this route when available
-router.put('/:orderId/status', protect, updateOrderStatus);
+router.put('/:orderId/status', protect, admin, updateOrderStatus);
 
 export default router;

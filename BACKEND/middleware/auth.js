@@ -27,6 +27,14 @@ export async function protect(req, res, next) {
     }
 }
 
+export async function admin(req, res, next) {
+    if (req.user && req.user.isAdmin) {
+        next();
+    } else {
+        return res.status(403).json({ success: false, message: 'Not authorized as an admin' });
+    }
+}
+
 export async function optionalProtect(req, res, next) {
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {

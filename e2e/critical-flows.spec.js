@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.beforeEach(async ({ request }) => {
+test.beforeAll(async ({ request }) => {
   // Seed a product to ensure the DB is not empty for tests
   await request.post('http://localhost:5000/api/products', {
     data: {
