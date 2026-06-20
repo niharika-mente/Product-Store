@@ -33,6 +33,28 @@ export const logoutLimiter = rateLimit({
   },
 });
 
+export const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many password reset requests. Please try again after 1 hour.",
+  },
+});
+
+export const resetPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many reset attempts. Please try again after 1 hour.",
+  },
+});
+
 export const checkoutLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 10,
