@@ -25,22 +25,6 @@ function apiPost(path, body) {
   });
 }
 
-function apiDelete(path) {
-  return new Promise((resolve, reject) => {
-    const url = new URL(`${BACKEND}${path}`);
-    const req = http.request(url, {
-      method: 'DELETE',
-    }, (res) => {
-      let raw = '';
-      res.on('data', chunk => { raw += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(raw)); } catch { resolve(raw); }
-      });
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
 
 async function waitForBackend() {
   for (let i = 0; i < 30; i++) {
@@ -55,7 +39,7 @@ async function waitForBackend() {
         console.log('[globalSetup] Backend is ready.');
         return;
       }
-    } catch (err) {
+    } catch {
       await new Promise(r => setTimeout(r, 1000));
     }
   }

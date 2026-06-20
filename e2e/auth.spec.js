@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { BASE_URL, TEST_USER, login } from './helpers.js';
-import testData from './fixtures/test-data.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+
+const testData = JSON.parse(readFileSync(new URL('./fixtures/test-data.json', import.meta.url)));
 
 test.describe('Authentication Flow', () => {
   test('User can sign up with valid credentials', async ({ page }) => {
