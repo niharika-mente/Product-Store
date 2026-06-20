@@ -5,6 +5,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  Badge,
   Box,
   Button,
   Heading,
@@ -56,6 +57,7 @@ const ProductCard = ({ product }) => {
   const {
     deleteProduct,
     updateProduct,
+    restockProduct,
     addToCompare,
     compareList = [],
     isSubmitting,
@@ -75,7 +77,9 @@ const ProductCard = ({ product }) => {
     onClose: onDeleteClose,
   } = useDisclosure();
 
+  const LOW_STOCK_THRESHOLD = 5;
   const isOutOfStock = product.stock != null && product.stock === 0;
+  const isLowStock = product.stock != null && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   // Sync updatedProduct when product prop changes
   useEffect(() => {
@@ -196,16 +200,52 @@ const ProductCard = ({ product }) => {
       }}
       bg={bg}
     >
-      {/* Product Image */}
-      <Image
-        src={product.image}
-        alt={product.name}
-        h={48}
-        w="full"
-        objectFit="cover"
-        transition="transform 0.4s"
-        _groupHover={{ transform: "scale(1.05)" }}
-      />
+      <Box position="relative">
+        <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+          <Image
+            src={product.image}
+            alt={product.name}
+            h={48}
+            w="full"
+            objectFit="cover"
+            transition="transform 0.4s"
+            _groupHover={{ transform: "scale(1.05)" }}
+            cursor="pointer"
+          />
+        </Link>
+        {isLowStock && (
+          <Badge
+            position="absolute"
+            top={2}
+            left={2}
+            colorScheme="orange"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="md"
+            zIndex={1}
+            boxShadow="sm"
+          >
+            Low Stock
+          </Badge>
+        )}
+        {isOutOfStock && (
+          <Badge
+            position="absolute"
+            top={2}
+            left={2}
+            colorScheme="red"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="md"
+            zIndex={1}
+            boxShadow="sm"
+          >
+            Out of Stock
+          </Badge>
+        )}
+      </Box>
 
       <Box p={4}>
         {/* Product Name with Link */}
@@ -474,6 +514,49 @@ const ProductCard = ({ product }) => {
                   })
                 }
               />
+              {updatedProduct.stock != null && updatedProduct.stock !== '' && updatedProduct.stock <= LOW_STOCK_THRESHOLD && (
+                <Box w="full">
+                  <Text fontSize="xs" color="orange.500" fontWeight="semibold" mb={1}>
+                    ⚠ Low stock — quick restock:
+                  </Text>
+                  <HStack spacing={2}>
+                    {[10, 25, 50].map((amount) => (
+                      <Button
+                        key={amount}
+                        size="xs"
+                        colorScheme="orange"
+                        variant="outline"
+                        isLoading={isSubmitting}
+                        onClick={async () => {
+                          const result = await restockProduct(product._id, amount);
+                          if (result.success) {
+                            setUpdatedProduct((prev) => ({
+                              ...prev,
+                              stock: result.data.stock,
+                            }));
+                            toast({
+                              title: `Restocked +${amount}`,
+                              status: "success",
+                              duration: 2000,
+                              isClosable: true,
+                            });
+                          } else {
+                            toast({
+                              title: "Restock failed",
+                              description: result.message,
+                              status: "error",
+                              duration: 3000,
+                              isClosable: true,
+                            });
+                          }
+                        }}
+                      >
+                        +{amount}
+                      </Button>
+                    ))}
+                  </HStack>
+                </Box>
+              )}
 
               <Input
                 placeholder="Original Price (optional)"
