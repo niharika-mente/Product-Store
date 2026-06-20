@@ -206,6 +206,33 @@ export const updateProduct = async (req, res, next) => {
     }
 };
 
+// @desc    Restock a product by incrementing its stock
+export const restockProduct = async (req, res, next) => {
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError("Invalid Product Id format", 404));
+    }
+
+    const parsed = Number(amount);
+    if (!amount || !Number.isInteger(parsed) || parsed <= 0) {
+        return next(new AppError("Restock amount must be a positive integer", 400));
+    }
+
+    try {
+        const product = await Product.findByIdAndUpdate(
+            id,
+            { $inc: { stock: parsed } },
+            { new: true, runValidators: true }
+        );
+        if (!product) return next(new AppError("Product not found", 404));
+        res.status(200).json({ success: true, data: product });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Delete a product (soft delete)
 export const deleteProduct = async (req, res, next) => {
     const { id } = req.params;

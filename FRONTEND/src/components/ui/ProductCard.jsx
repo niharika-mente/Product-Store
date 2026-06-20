@@ -2,7 +2,7 @@ import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
   AlertDialogHeader, AlertDialogOverlay, Box, Button, Heading, HStack,
   IconButton, Image, Input, ModalOverlay, ModalHeader, ModalBody, ModalFooter, Modal, ModalCloseButton, ModalContent,
-  Text, useColorModeValue,
+  Text, useColorModeValue, Badge,
   useDisclosure, useToast, VStack
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -28,7 +28,7 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
-const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
+const { deleteProduct, updateProduct, restockProduct, addToCompare, compareList, isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
@@ -37,7 +37,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = useRef();
 
+  const LOW_STOCK_THRESHOLD = 5;
   const isOutOfStock = product.stock != null && product.stock === 0;
+  const isLowStock = product.stock != null && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   useEffect(() => {
     const checkWishlist = async () => {
@@ -171,18 +173,52 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
       }}
       bg={bg}
     >
-      <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-        <Image
-          src={product.image}
-          alt={product.name}
-          h={48}
-          w="full"
-          objectFit="cover"
-          transition="transform 0.4s"
-          _groupHover={{ transform: "scale(1.05)" }}
-          cursor="pointer"
-        />
-      </Link>
+      <Box position="relative">
+        <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+          <Image
+            src={product.image}
+            alt={product.name}
+            h={48}
+            w="full"
+            objectFit="cover"
+            transition="transform 0.4s"
+            _groupHover={{ transform: "scale(1.05)" }}
+            cursor="pointer"
+          />
+        </Link>
+        {isLowStock && (
+          <Badge
+            position="absolute"
+            top={2}
+            left={2}
+            colorScheme="orange"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="md"
+            zIndex={1}
+            boxShadow="sm"
+          >
+            Low Stock
+          </Badge>
+        )}
+        {isOutOfStock && (
+          <Badge
+            position="absolute"
+            top={2}
+            left={2}
+            colorScheme="red"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="md"
+            zIndex={1}
+            boxShadow="sm"
+          >
+            Out of Stock
+          </Badge>
+        )}
+      </Box>
 
       <Box p={4}>
         <Heading as="h3" size="md" mb={2} noOfLines={1}>
@@ -380,6 +416,31 @@ const { deleteProduct, updateProduct, addToCompare, compareList, isSubmitting, i
                 value={updatedProduct.stock ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: e.target.value === '' ? '' : Number(e.target.value) })}
               />
+              {updatedProduct.stock != null && updatedProduct.stock !== '' && updatedProduct.stock <= LOW_STOCK_THRESHOLD && (
+                <Box w="full">
+                  <Text fontSize="xs" color="orange.500" fontWeight="semibold" mb={1}>
+                    ⚠ Low stock — quick restock:
+                  </Text>
+                  <HStack spacing={2}>
+                    {[10, 25, 50].map((amount) => (
+                      <Button
+                        key={amount}
+                        size="xs"
+                        colorScheme="orange"
+                        variant="outline"
+                        onClick={() =>
+                          setUpdatedProduct((prev) => ({
+                            ...prev,
+                            stock: (Number(prev.stock) || 0) + amount,
+                          }))
+                        }
+                      >
+                        +{amount}
+                      </Button>
+                    ))}
+                  </HStack>
+                </Box>
+              )}
 
               <Input
                 placeholder="Original Price (optional)"
