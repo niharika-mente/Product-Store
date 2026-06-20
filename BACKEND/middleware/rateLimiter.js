@@ -9,6 +9,7 @@ export const loginLimiter = rateLimit({
     success: false,
     message: "Too many login attempts. Please try again after 15 minutes.",
   },
+  skip: (req, res) => process.env.NODE_ENV === 'test',
 });
 
 export const registerLimiter = rateLimit({
@@ -20,6 +21,7 @@ export const registerLimiter = rateLimit({
     success: false,
     message: "Too many registration attempts. Please try again after 15 minutes.",
   },
+  skip: (req, res) => process.env.NODE_ENV === 'test',
 });
 
 export const logoutLimiter = rateLimit({
@@ -31,6 +33,7 @@ export const logoutLimiter = rateLimit({
     success: false,
     message: "Too many logout attempts. Please try again after 15 minutes.",
   },
+  skip: (req, res) => process.env.NODE_ENV === 'test',
 });
 
 export const forgotPasswordLimiter = rateLimit({
@@ -42,6 +45,7 @@ export const forgotPasswordLimiter = rateLimit({
     success: false,
     message: "Too many password reset requests. Please try again after 1 hour.",
   },
+  skip: (req, res) => process.env.NODE_ENV === 'test',
 });
 
 export const resetPasswordLimiter = rateLimit({
@@ -53,6 +57,7 @@ export const resetPasswordLimiter = rateLimit({
     success: false,
     message: "Too many reset attempts. Please try again after 1 hour.",
   },
+  skip: (req, res) => process.env.NODE_ENV === 'test',
 });
 
 export const checkoutLimiter = rateLimit({
@@ -64,4 +69,5 @@ export const checkoutLimiter = rateLimit({
     success: false,
     message: "Too many checkout attempts. Please try again later.",
   },
+  skip: (req, res) => process.env.NODE_ENV === 'test',
 });

@@ -58,6 +58,10 @@ const productSchema = new mongoose.Schema({
         min: [0, 'Stock cannot be negative'],
         default: 0
     },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
     tags:{
         type: [String],
         default: [],
