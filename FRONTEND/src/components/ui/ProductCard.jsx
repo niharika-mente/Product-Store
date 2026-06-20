@@ -1,13 +1,39 @@
-import { Box, Button, Heading, HStack, IconButton, Image, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Text, useColorModeValue, useDisclosure, useToast, VStack } from '@chakra-ui/react';
-import React from 'react'
-import { useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Box,
+  Button,
+  Heading,
+  HStack,
+  IconButton,
+  Image,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Stack,
+  Text,
+  useColorModeValue,
+  useDisclosure,
+  useToast,
+  VStack
+} from '@chakra-ui/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from "react-router-dom";
+import { FaEdit, FaTrash, FaHeart, FaRegHeart, FaBalanceScale } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
 import { useCart } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
 import { formatPrice } from "../../utils/currency";
 import { useWishlist } from "../../context/WishlistContext.jsx";
-import { FaBalanceScale } from "react-icons/fa";
 import {
   showSuccessToast,
   showErrorToast,
@@ -30,7 +56,7 @@ const ProductCard = ({ product }) => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const optionalLabelColor = useColorModeValue("gray.600", "gray.300");
 
-const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
+  const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { currency, rates } = useCurrencyStore();
@@ -159,66 +185,30 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
       bg={bg}
     >
       <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-        <Image 
-          src={product.image} 
-          alt={product.name} 
-          h={48} 
-          w='full' 
-          objectFit='cover'  
+        <Image
+          src={product.image}
+          alt={product.name}
+          h={48}
+          w='full'
+          objectFit='cover'
           transition="transform 0.4s"
-          _groupHover={{transform: "scale(1.05)"}} 
+          _groupHover={{ transform: "scale(1.05)" }}
           cursor="pointer"
         />
       </Link>
-   <Box
-  role="group"
-  shadow="lg"
-  rounded="lg"
-  overflow="hidden"
-  borderWidth="1px"
-  borderColor={borderColor}
-  transition="all 0.3s"
-  _hover={{
-    transform: "translateY(-8px)",
-    shadow: "2xl",
-  }}
-  bg={bg}
->
-    <Image src={product.image} alt={product.name} h={48} w='full' objectFit='cover'  transition="transform 0.4s"
-  _groupHover={{transform: "scale(1.05)",
-            }} />
 
-    <Box p={4}>
-      <Heading as='h3' size='md' mb={2} noOfLines={1}>
-        {product.name}
-      </Heading>
-
-      <Text fontWeight='bold' fontSize='xl' color={textColor} mb={4}>
-        ${product.price}
-      </Text>
-
-      {/* ─── TAGS DISPLAY ────────────────────────────────────────── */}
-      {product.tags && product.tags.length > 0 && (
-        <HStack spacing={1} mb={3} flexWrap="wrap">
-          {product.tags.map((tag, index) => (
-            <Text
-              key={index}
-              fontSize="xs"
-              px={2}
-              py={1}
-              borderRadius="full"
-              bg="blue.100"
-              color="blue.800"
-              _dark={{
-                bg: "blue.900",
-                color: "blue.200"
-              }}
-            >
-              #{tag}
+      <Box p={4}>
+        <Heading as='h3' size='md' mb={2} noOfLines={1}>
+          <Link to={`/product/${product._id}`} style={{ textDecoration: 'none' }}>
+            <Text _hover={{ color: "cyan.500" }} transition="color 0.2s">
+              {product.name}
             </Text>
-          ))}
-        </HStack>
-      )}
+          </Link>
+        </Heading>
+
+        <Text fontWeight='bold' fontSize='xl' color={textColor} mb={4}>
+          {formatPrice(product.price, currency, rates)}
+        </Text>
 
         {/* ─── TAGS DISPLAY ────────────────────────────────────────── */}
         {product.tags && product.tags.length > 0 && (
@@ -243,89 +233,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           </HStack>
         )}
 
-        <HStack spacing={2}>
-          <IconButton 
-            icon={<FaEdit />} 
-            onClick={onOpen}
-            colorScheme='blue' 
-            aria-label={`Edit ${product.name}`}
-            transition="all 0.2s"
-            _hover={{
-              transform: "scale(1.1)",
-            }}
-          />
-          
-          <IconButton 
-            icon={<FaTrash />} 
-            onClick={onDeleteOpen} 
-            colorScheme='red' 
-            aria-label={`Delete ${product.name}`}
-            transition="all 0.2s"
-            _hover={{
-              transform: "scale(1.1)",
-            }}
-          />
-          
-          <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
-            transition="all 0.2s"
-            aria-label={`Add ${product.name} to cart`}
-            _hover={{
-              transform: "translateY(-2px)",
-            }}
-          >
-            Add to Cart
-          </Button>
-        </HStack>
-      <HStack spacing={2}>
-        <IconButton 
-          icon={<FaEdit />} 
-          onClick={onOpen}
-          colorScheme='blue' 
-          aria-label='Edit Product'
-          transition="all 0.2s"
-          _hover={{
-          transform: "scale(1.1)",
-  }}
-        />
-        
-        <IconButton 
-          icon={<FaTrash />} 
-          onClick={() => handleDeleteProduct(product._id)} 
-          colorScheme='red' 
-          aria-label='Delete Product' 
-          transition="all 0.2s"
-          _hover={{
-            transform: "scale(1.1)",
-          }}
-        />
-        
-        <Button colorScheme='teal' onClick={handleAddToCart} size='sm' flex={1}
-          transition="all 0.2s"
-          _hover={{
-            transform: "translateY(-2px)",
-          }}
-        >
-          Add to Cart
-        </Button>
-      </HStack>
-    </Box>
-      <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay/>
-
-      <Box p={4}>
-        <Heading as="h3" size="md" mb={2} noOfLines={1}>
-          <Link to={`/product/${product._id}`} style={{ textDecoration: 'none' }}>
-            <Text _hover={{ color: "cyan.500" }} transition="color 0.2s">
-              {product.name}
-            </Text>
-          </Link>
-        </Heading>
-
-        <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          {formatPrice(product.price, currency, rates)}
-        </Text>
-
-        {/* Button row: stacks vertically on very small screens, horizontal on sm+ */}
+        {/* Button row */}
         <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
           <HStack spacing={2}>
             <IconButton
@@ -336,9 +244,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
               aria-label='Add to Wishlist'
               size="sm"
               transition="all 0.2s"
-              _hover={{
-                transform: "scale(1.1)",
-              }}
+              _hover={{ transform: "scale(1.1)" }}
             />
 
             <IconButton
@@ -350,6 +256,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
               transition="all 0.2s"
               _hover={{ transform: "scale(1.1)" }}
             />
+
             <IconButton
               icon={<FaTrash />}
               onClick={onDeleteOpen}
@@ -359,6 +266,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
               transition="all 0.2s"
               _hover={{ transform: "scale(1.1)" }}
             />
+
             <IconButton
               icon={<FaBalanceScale />}
               onClick={() => addToCompare(product)}
@@ -371,6 +279,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
               _hover={{ transform: "scale(1.1)" }}
             />
           </HStack>
+
           <Button
             colorScheme="teal"
             onClick={handleAddToCart}
@@ -387,6 +296,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
         </Stack>
       </Box>
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -418,6 +328,8 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
+      {/* Edit Product Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
@@ -432,6 +344,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
                 value={updatedProduct.name}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, name: e.target.value })}
               />
+
               <Input
                 placeholder="Price"
                 name="price"
@@ -526,6 +439,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
               />
 
+              {/* ─── TAGS INPUT ────────────────────────────────────────── */}
               <Input
                 placeholder='Tags (comma separated, e.g. wireless, premium)'
                 name='tags'
@@ -538,11 +452,8 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
                   setUpdatedProduct({ ...updatedProduct, tags: tagsArray.slice(0, 5) });
                 }}
               />
-              
+
               <Input
-                placeholder='Discount % (optional)'
-                name='discount'
-                type='number'
                 placeholder="Discount % (optional)"
                 name="discount"
                 type="number"
@@ -550,21 +461,9 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
                 value={updatedProduct.discount ?? ''}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, discount: e.target.value === '' ? '' : Number(e.target.value) })}
               />
-              {/* ─── TAGS INPUT IN EDIT MODAL ───────────────────────── */}
-              <Input
-                placeholder='Tags (comma separated, e.g. wireless, premium)'
-                name='tags'
-                value={updatedProduct.tags ? updatedProduct.tags.join(', ') : ''}
-                onChange={(e) => {
-                  const tagsArray = e.target.value
-                    .split(',')
-                    .map(tag => tag.trim())
-                    .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
-                  setUpdatedProduct({ ...updatedProduct, tags: tagsArray });
-                }}
-              />
             </VStack>
           </ModalBody>
+
           <ModalFooter>
             <Button
               colorScheme="blue"
