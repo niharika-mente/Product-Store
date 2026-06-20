@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useProductStore } from '../store/product';
 import { Box, Button, Container, Heading, Input, useColorModeValue, useToast, VStack } from '@chakra-ui/react';
 import React, { useState } from 'react';
@@ -10,10 +9,6 @@ const CreatePage = () => {
     image: "",
     tags: [],
   });
-  const [preview, setPreview] = useState(null);
-  const [extraImageInput, setExtraImageInput] = useState("");
-  const [showExtraDetails, setShowExtraDetails] = useState(false);
-  const fileInputRef = useRef(null);
 
   const toast = useToast();
   const { createProduct } = useProductStore();
@@ -38,9 +33,7 @@ const CreatePage = () => {
     setNewProduct({ name: "", price: "", image: "", tags: [] });
   };
 
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const toggleBg = useColorModeValue("blue.50", "blue.900");
-  const infoColor = useColorModeValue("gray.700", "gray.300");
+  const cardBg = useColorModeValue("white", "gray.800");
 
   return (
     <Container maxW={"container.sm"}>
@@ -50,7 +43,7 @@ const CreatePage = () => {
         </Heading>
 
         <Box
-          w={"full"} bg={useColorModeValue("white", "gray.800")}
+          w={"full"} bg={cardBg}
           p={6} rounded={"lg"} shadow={"md"}
         >
           <VStack spacing={4}>
