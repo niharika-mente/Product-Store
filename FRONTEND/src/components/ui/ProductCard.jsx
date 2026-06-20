@@ -1,4 +1,3 @@
-//.
 import {
   AlertDialog,
   AlertDialogBody,
@@ -31,23 +30,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from "react-router-dom";
 import { FaEdit, FaTrash, FaHeart, FaRegHeart, FaBalanceScale } from "react-icons/fa";
 import { useProductStore } from "../../store/product";
-  VStack,
-} from "@chakra-ui/react";
-import React, { useEffect, useRef, useState } from "react";
-import { FaBalanceScale, FaEdit, FaHeart, FaRegHeart, FaTrash } from "react-icons/fa";
-import { Link } from "react-router-dom";
 import { useCart } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
-import { useProductStore } from "../../store/product";
-import { useWishlist } from "../../context/WishlistContext.jsx";
 import { formatPrice } from "../../utils/currency";
+import { useWishlist } from "../../context/WishlistContext.jsx";
 import {
-  showErrorToast,
-  showInfoToast,
   showSuccessToast,
+  showErrorToast,
   showWarningToast,
+  showInfoToast,
 } from "../../utils/toastHelpers";
-
 const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
   const [imagePreview, setImagePreview] = useState(product.image);
