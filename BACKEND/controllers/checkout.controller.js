@@ -3,6 +3,7 @@ import Order from '../models/order.model.js';
 import Coupon from '../models/coupon.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
+import { processReferralOnPurchase } from '../services/referral.service.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -208,7 +209,7 @@ export const stripeWebhook = async (req, res) => {
           deductions.push({ productId: item._id, quantity: item.quantity });
         }
 
-        await Order.create({
+        const order = await Order.create({
           user: session.metadata?.userId || null,
           items: orderItems,
           totalAmount: session.amount_total / 100,
@@ -222,6 +223,13 @@ export const stripeWebhook = async (req, res) => {
             { code: session.metadata.couponCode },
             { $inc: { usedCount: 1 } }
           );
+        }
+
+        // Trigger referral reward
+        if (order.user) {
+          processReferralOnPurchase(order._id).catch(err => {
+            console.error("Referral process error on purchase:", err);
+          });
         }
     }
 

@@ -16,6 +16,7 @@ import ordersRoutes from "./routes/orders.route.js";
 import userRoutes from "./routes/user.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
+import referralRoutes from "./routes/referral.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -115,23 +116,22 @@ app.use("/api/user", userRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
+app.use("/api/referrals", referralRoutes);
 
+
+// ============= ERROR HANDLERS =============
+// Must come before the production catch-all so unmatched /api/* routes
+// get a JSON 404 instead of index.html
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
+// notFoundHandler calls next() for non-API paths, which falls through here
 if (process.env.NODE_ENV === "production") {
-  // Serve static files from FRONTEND/dist
   app.use(express.static(path.join(__dirname, "..", "FRONTEND", "dist")));
-
-  // Catch-all route for React app (client-side routing)
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "FRONTEND", "dist", "index.html"));
   });
 }
-
-// ============= ERROR HANDLERS (ALWAYS AT THE BOTTOM) =============
-// 404 handler for unmatched routes (API routes that don't exist)
-app.use(notFoundHandler);
-// Global error handler
-app.use(errorHandler);
 
 export default app;

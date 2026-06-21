@@ -14,7 +14,10 @@ import {
   useColorModeValue,
   Alert,
   AlertIcon,
+  useToast,
+  Icon,
 } from '@chakra-ui/react';
+import { DownloadIcon } from '@chakra-ui/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import Breadcrumbs from "../components/ui/Breadcrumbs";
 
@@ -29,7 +32,9 @@ const MyOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(null);
   const navigate = useNavigate();
+  const toast = useToast();
 
   const bg = useColorModeValue('white', 'gray.800');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
@@ -63,6 +68,47 @@ const MyOrdersPage = () => {
 
     fetchOrders();
   }, [navigate]);
+
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      setDownloading(orderId);
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(`/api/orders/${orderId}/invoice`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        throw new Error('Invoice unavailable');
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice-INV-2026-${String(orderId).substring(0, 6).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'Invoice downloaded',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (err) {
+      toast({
+        title: 'Failed to download invoice',
+        description: err.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -129,6 +175,11 @@ const MyOrdersPage = () => {
                   <Text fontWeight="semibold" fontSize="sm" fontFamily="mono">
                     {order._id}
                   </Text>
+                  {['completed'].includes(order.paymentStatus) && (
+                    <Text fontSize="xs" color="gray.500" mt={1}>
+                      Inv: INV-2026-{String(order._id).substring(0, 6).toUpperCase()}
+                    </Text>
+                  )}
                 </VStack>
                 <VStack align="start" spacing={0}>
                   <Text fontSize="xs" color={textColor} textTransform="uppercase" letterSpacing="wide">
@@ -192,6 +243,21 @@ const MyOrdersPage = () => {
                 </HStack>
               ))}
             </VStack>
+
+            {['completed'].includes(order.paymentStatus) && (
+              <Box px={6} py={3} bg={cardBg} borderTopWidth="1px" borderColor={borderColor} display="flex" justifyContent="flex-end">
+                <Button
+                  size="sm"
+                  colorScheme="cyan"
+                  variant="outline"
+                  leftIcon={<DownloadIcon />}
+                  isLoading={downloading === order._id}
+                  onClick={() => handleDownloadInvoice(order._id)}
+                >
+                  Download Invoice
+                </Button>
+              </Box>
+            )}
           </Box>
         ))}
       </VStack>
