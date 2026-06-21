@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
   Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
@@ -80,6 +80,18 @@ const HomePage = () => {
       setSearchQuery(urlSearch);
     }
   }, [searchParams, setSearchQuery]);
+
+  const prevSearchRef = useRef("");
+
+  useEffect(() => {
+    const prevSearch = prevSearchRef.current;
+
+    if (prevSearch.trim() !== "" && debouncedSearch.trim() === "") {
+      setPage(1);
+    }
+
+    prevSearchRef.current = debouncedSearch;
+  }, [debouncedSearch]);
 
   useEffect(() => {
     let ignore = false;
