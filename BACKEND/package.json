@@ -9,7 +9,6 @@
   "dependencies": {
     "@elastic/elasticsearch": "^9.4.2",
     "bcrypt": "^6.0.0",
-    "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -21,6 +20,7 @@
     "mongodb-memory-server": "^11.0.1",
     "mongoose": "^8.13.2",
     "multer": "^2.1.1",
+    "nodemailer": "^9.0.1",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
