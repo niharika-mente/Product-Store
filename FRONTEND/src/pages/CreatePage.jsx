@@ -108,7 +108,6 @@ const CreatePage = () => {
         <Heading as={"h1"} size={"2xl"} textAlign={"center"} mb={4}>
           Create New Product
         </Heading>
-
         <Box
           w={"full"}
           bg={useColorModeValue("white", "gray.800")}
@@ -141,7 +140,6 @@ const CreatePage = () => {
                   onChange={(e) => handleChange("price", e.target.value)}
                   size="lg"
                 />
-
                 <Box w="full">
                   <Text fontSize="sm" mb={1} color="gray.500">
                     Upload an image or paste a URL below
@@ -155,7 +153,6 @@ const CreatePage = () => {
                     p={1}
                   />
                 </Box>
-
                 <Input
                   placeholder="Or paste an Image URL"
                   name="image"
@@ -168,7 +165,6 @@ const CreatePage = () => {
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 />
-
                 {preview && (
                   <Image
                     src={preview}
@@ -181,7 +177,6 @@ const CreatePage = () => {
                     w="full"
                   />
                 )}
-
                 <Box w="full">
                   <Text fontSize="sm" mb={1} color="gray.500">
                     Additional Images (optional, max 4)
@@ -220,9 +215,7 @@ const CreatePage = () => {
                 </Box>
               </VStack>
             </Box>
-
             <Divider my={2} />
-
             <Button
               w="full"
               variant="outline"
@@ -234,7 +227,6 @@ const CreatePage = () => {
             >
               {showExtraDetails ? "Hide" : "Add"} Extra Details (Optional)
             </Button>
-
             <Collapse in={showExtraDetails} animateOpacity style={{ width: '100%' }}>
               <VStack spacing={4} w="full" pt={4}>
                 <HStack w="full" align="start" spacing={2} color={infoColor} fontSize="sm">
@@ -243,7 +235,6 @@ const CreatePage = () => {
                     Adding extra details helps customers make informed decisions and improves product visibility.
                   </Text>
                 </HStack>
-
                 <Textarea
                   placeholder="Product Description (detailed information about the product)"
                   name="description"
@@ -253,7 +244,6 @@ const CreatePage = () => {
                   rows={4}
                   resize="vertical"
                 />
-
                 <Select
                   placeholder="Select Category"
                   name="category"
@@ -271,7 +261,6 @@ const CreatePage = () => {
                   <option value="Food">Food & Beverage</option>
                   <option value="Other">Other</option>
                 </Select>
-
                 <Input
                   placeholder="Brand / Manufacturer"
                   name="brand"
@@ -279,7 +268,6 @@ const CreatePage = () => {
                   value={newProduct.brand}
                   onChange={(e) => handleChange("brand", e.target.value)}
                 />
-
                 <Input
                   placeholder="Stock Quantity (available units)"
                   name="stock"
@@ -289,7 +277,6 @@ const CreatePage = () => {
                   value={newProduct.stock}
                   onChange={(e) => handleChange("stock", e.target.value)}
                 />
-
                 <Input
                   placeholder="Original Price (before discount)"
                   name="originalPrice"
@@ -300,7 +287,6 @@ const CreatePage = () => {
                   value={newProduct.originalPrice}
                   onChange={(e) => handleChange("originalPrice", e.target.value)}
                 />
-
                 <Input
                   placeholder="Discount Percentage (0-100)"
                   name="discount"
@@ -313,7 +299,6 @@ const CreatePage = () => {
                 />
               </VStack>
             </Collapse>
-
             <Button
               colorScheme='blue'
               onClick={handleAddProduct}
