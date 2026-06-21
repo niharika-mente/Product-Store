@@ -4,6 +4,7 @@ import User from '../models/user.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 import { sendOrderConfirmationEmail } from '../services/email.service.js';
+import { processReferralOnPurchase } from '../services/referral.service.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -198,6 +199,13 @@ export const stripeWebhook = async (req, res) => {
               );
             }
           }).catch(() => {});
+        }
+
+        // Trigger referral reward
+        if (order.user) {
+          processReferralOnPurchase(order._id).catch(err => {
+            console.error("Referral process error on purchase:", err);
+          });
         }
     }
 

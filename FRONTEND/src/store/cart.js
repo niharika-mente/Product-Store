@@ -14,7 +14,7 @@ export const useCartStore = create(
         let added = 0;
 
         set((state) => {
-          const existingItem = state.cartItems.find((item) => item._id === product._id);
+          const existingItem = state.cartItems.find((item) => item._id === product._id && !item.bundleId);
           const currentQty = existingItem ? existingItem.quantity : 0;
 
           let canAdd = quantity;
@@ -49,14 +49,15 @@ export const useCartStore = create(
         }));
       },
 
-      addBundleToCart: (items) => {
+      addBundleToCart: (items, discount = 0) => {
         let addedCount = 0;
         let skippedCount = 0;
+        const bundleId = `bundle-${items.map((i) => i._id).sort().join('-')}`;
         set((state) => {
           const updated = [...state.cartItems];
           for (const item of items) {
             const stockTracked = item.stock != null;
-            const idx = updated.findIndex((i) => i._id === item._id);
+            const idx = updated.findIndex((i) => i._id === item._id && i.bundleId === bundleId);
             const currentQty = idx >= 0 ? updated[idx].quantity : 0;
 
             if (stockTracked) {
@@ -70,7 +71,7 @@ export const useCartStore = create(
             if (idx >= 0) {
               updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + 1 };
             } else {
-              updated.push({ ...item, quantity: 1 });
+              updated.push({ ...item, quantity: 1, bundleId, discountApplied: discount });
             }
             addedCount++;
           }
@@ -78,7 +79,6 @@ export const useCartStore = create(
         });
         return { addedCount, skippedCount };
       },
-
       emptyCart: () => set({ cartItems: [] }),
     }),
     {
@@ -94,7 +94,10 @@ export const useCart = () => {
   const addBundleToCart = useCartStore((state) => state.addBundleToCart);
   const emptyCart = useCartStore((state) => state.emptyCart);
 
-  const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const totalPrice = cartItems.reduce((total, item) => {
+    const effectivePrice = item.discountApplied ? item.price * (1 - item.discountApplied) : item.price;
+    return total + effectivePrice * item.quantity;
+  }, 0);
 
   return { cartItems, addToCart, removeFromCart, addBundleToCart, emptyCart, totalPrice };
 };
