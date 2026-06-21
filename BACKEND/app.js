@@ -15,6 +15,7 @@ import newsletterRoutes from "./routes/newsletter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import userRoutes from "./routes/user.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
+import referralRoutes from "./routes/referral.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -113,6 +114,7 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
+app.use("/api/referrals", referralRoutes);
 
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
