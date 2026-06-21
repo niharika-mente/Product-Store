@@ -2,6 +2,8 @@ import express from "express";
 import upload, { handleUploadError } from "../middleware/upload.js";
 import { createProduct, deleteProduct, getProducts, getProductCategories, updateProduct, getProductById, getRelatedProducts, searchProducts, getProductBundle, restockProduct } from "../controllers/product.controller.js";
 import reviewRoutes from './review.route.js';
+import authMiddleware from "../middleware/authMiddleware.js";
+import adminMiddleware from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
@@ -11,11 +13,10 @@ router.get("/related/:id", getRelatedProducts);
 router.get("/search", searchProducts);
 router.get("/:id/bundle", getProductBundle);
 router.get("/:id", getProductById);
-router.post("/", upload.single("image"), handleUploadError, createProduct);
-router.put("/:id", upload.single("image"), handleUploadError, updateProduct);
-router.patch("/:id/restock", restockProduct);
-router.delete("/:id", deleteProduct);
-
+router.post("/", authMiddleware, adminMiddleware, upload.single("image"), handleUploadError, createProduct);
+router.put("/:id", authMiddleware, adminMiddleware, upload.single("image"), handleUploadError, updateProduct);
+router.patch("/:id/restock", authMiddleware, adminMiddleware, restockProduct);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
 
 router.use('/:productId/reviews', reviewRoutes);
 

@@ -13,6 +13,8 @@ import { WishlistProvider } from './context/WishlistContext';
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -43,6 +45,7 @@ function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
