@@ -31,6 +31,7 @@ const Navbar = () => {
   const location = useLocation();
   const toast = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -46,6 +47,12 @@ const Navbar = () => {
 
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem("authToken"));
+    try {
+      const user = JSON.parse(localStorage.getItem("authUser") || '{}');
+      setIsAdmin(user?.role === 'admin');
+    } catch {
+      setIsAdmin(false);
+    }
   }, [location]);
 
   // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
@@ -283,6 +290,11 @@ const Navbar = () => {
 
               {isLoggedIn && (
                 <>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" colorScheme="purple">Dashboard</Button>
+                    </Link>
+                  )}
                   <Link to="/profile">
                     <Button variant="ghost" size="sm">My Profile</Button>
                   </Link>
