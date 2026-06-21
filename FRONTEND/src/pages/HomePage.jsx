@@ -94,7 +94,6 @@ const HomePage = () => {
           await searchProducts(query);
           return;
         }
-        const category = (filters.categories || []).join(',');
         const response = await fetchProducts({ page, limit, sort, ...filters });
         if (response && response.success && !ignore) {
           const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
@@ -140,7 +139,10 @@ const HomePage = () => {
           </Text>
           <Select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => {
+                 setSort(e.target.value);
+                 setPage(1);
+           }}
             maxW="250px"
             aria-label="Sort products"
           >

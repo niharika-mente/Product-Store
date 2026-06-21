@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button, Container, Flex, HStack, Text, Input, useColorMode, useDisclosure,
   Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
@@ -13,6 +13,7 @@ import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
+import { FaBalanceScale } from "react-icons/fa";
 import { useCurrencyStore } from "../../store/currency";
 import { formatPrice } from "../../utils/currency";
 
@@ -25,23 +26,12 @@ const Navbar = () => {
   const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
   const { currency, rates, setCurrency } = useCurrencyStore();
   const { wishlistCount, clearWishlist } = useWishlist();
-  const { searchQuery, setSearchQuery, products, fetchProducts } = useProductStore();
+  const { searchQuery, setSearchQuery, products, fetchProducts, compareList } = useProductStore();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("authToken"));
-  }, [location]);
-
-  useEffect(() => {
-    const handleOpenCart = () => {
-      handleCartOpen();
-    };
-    window.addEventListener('open-cart', handleOpenCart);
-    return () => window.removeEventListener('open-cart', handleOpenCart);
-  }, []);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -55,10 +45,30 @@ const Navbar = () => {
   const searchBg = useColorModeValue("gray.50", "gray.700");
   const searchBorder = useColorModeValue("gray.200", "gray.600");
 
-  const handleCartOpen = async () => {
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("authToken"));
+    try {
+      const user = JSON.parse(localStorage.getItem("authUser") || '{}');
+      setIsAdmin(user?.role === 'admin');
+    } catch {
+      setIsAdmin(false);
+    }
+  }, [location]);
+
+  // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
+  const handleCartOpen = useCallback(async () => {
     await fetchProducts();
     onOpen();
-  };
+  }, [fetchProducts, onOpen]);
+
+  // ✅ handleCartOpen is now stable — no missing-deps warning
+  useEffect(() => {
+    const handleOpenCart = () => {
+      handleCartOpen();
+    };
+    window.addEventListener('open-cart', handleOpenCart);
+    return () => window.removeEventListener('open-cart', handleOpenCart);
+  }, [handleCartOpen]);
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
@@ -218,6 +228,25 @@ const Navbar = () => {
                 </Button>
               </Link>
 
+              <Link to={"/compare"}>
+                <Button size="sm" position="relative" aria-label="Compare products">
+                  <FaBalanceScale size="18" />
+                  {compareList.length > 0 && (
+                    <Badge
+                      colorScheme="purple"
+                      borderRadius="full"
+                      position="absolute"
+                      top="-5px"
+                      right="-5px"
+                      px={1.5}
+                      fontSize="10px"
+                    >
+                      {compareList.length}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+
               <Button size="sm" onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
                 <LuShoppingCart size="18" />
                 {totalItemsCount > 0 && (
@@ -260,9 +289,19 @@ const Navbar = () => {
               </Button>
 
               {isLoggedIn && (
-                <Button onClick={handleLogout} colorScheme="red" variant="outline">
-                  Logout
-                </Button>
+                <>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" colorScheme="purple">Dashboard</Button>
+                    </Link>
+                  )}
+                  <Link to="/profile">
+                    <Button variant="ghost" size="sm">My Profile</Button>
+                  </Link>
+                  <Button onClick={handleLogout} colorScheme="red" variant="outline" size="sm">
+                    Logout
+                  </Button>
+                </>
               )}
             </HStack>
 
@@ -320,6 +359,30 @@ const Navbar = () => {
                     transform="translateY(-50%)"
                   >
                     {wishlistCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
+            {isLoggedIn && (
+              <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+                <Button w="full">My Profile</Button>
+              </Link>
+            )}
+
+            <Link to="/compare" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+              <Button w="full" leftIcon={<FaBalanceScale />} position="relative">
+                Compare
+                {compareList.length > 0 && (
+                  <Badge
+                    colorScheme="purple"
+                    borderRadius="full"
+                    position="absolute"
+                    right="12px"
+                    top="50%"
+                    transform="translateY(-50%)"
+                  >
+                    {compareList.length}
                   </Badge>
                 )}
               </Button>
@@ -418,7 +481,6 @@ const Navbar = () => {
                 Proceed to Checkout
               </Button>
             </DrawerFooter>
-
           </DrawerContent>
         </Drawer>
       </Container>

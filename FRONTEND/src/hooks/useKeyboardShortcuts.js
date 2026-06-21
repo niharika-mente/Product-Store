@@ -103,8 +103,6 @@ export const useKeyboardShortcuts = ({ onOpenShortcuts }) => {
             const dx = centerX - currentCenterX;
             const dy = centerY - currentCenterY;
 
-            let isMatch = false;
-
             // Simple distance matching based on direction
             if (e.key === 'ArrowLeft' && dx < -5) {
               // moving left: penalize vertical delta
