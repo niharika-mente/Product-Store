@@ -17,6 +17,13 @@ const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
   const [imagePreview, setImagePreview] = useState(product.image);
   const [isInWishlist, setIsInWishlist] = useState(false);
+
+  const handleClose = () => {
+  setUpdatedProduct(product);
+  setImagePreview(product.image);
+  onClose();
+  };
+
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -283,7 +290,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+      <Modal isOpen={isOpen} onClose={handleClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
           <ModalHeader>Update Product</ModalHeader>
@@ -413,10 +420,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
             </Button>
             <Button
               variant="ghost"
-              onClick={() => {
-                onClose();
-                setUpdatedProduct(product);
-              }}
+              onClick={handleClose}
             >
               Cancel
             </Button>
