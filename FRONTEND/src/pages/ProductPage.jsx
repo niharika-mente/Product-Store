@@ -8,6 +8,7 @@ import {
 import { FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo, FaInfoCircle, FaGift, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useCart } from '../store/cart.js';
 import { useRecentlyViewed } from "../store/product";
+import Breadcrumbs from "../components/ui/Breadcrumbs";
 import RelatedProducts from '../components/ui/RelatedProducts';
 import ProductReviews from '../components/ui/ProductReviews';
 
@@ -24,6 +25,7 @@ const ProductPage = () => {
   const [activeImg, setActiveImg] = useState(0);
 
   const { addToCart, addBundleToCart } = useCart();
+
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
 
@@ -34,8 +36,10 @@ const ProductPage = () => {
   const featureBg = useColorModeValue("gray.50", "gray.700");
   const infoColor = useColorModeValue("gray.700", "gray.300");
 
+  const LOW_STOCK_THRESHOLD = 5;
   const hasStock = product && product.stock !== undefined && product.stock !== null;
   const isOutOfStock = hasStock && product.stock === 0;
+  const isLowStock = hasStock && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
   const maxQty = hasStock && product.stock > 0 ? Math.min(product.stock, 10) : 10;
 
   useEffect(() => {
@@ -211,7 +215,8 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
   return (
     <>
       <Container maxW="container.xl" py={8}>
-        {/* Breadcrumb */}
+        <Breadcrumbs currentPage={product?.name || "Product Details"} />
+
         <Button
           as={RouterLink}
           to="/"
@@ -288,16 +293,30 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
               <Box>
                 {/* Stock Badge - Only show if stock data exists */}
                 {product.stock !== undefined && product.stock !== null && (
-                  <Badge
-                    colorScheme={product.stock > 0 ? "green" : "red"}
-                    fontSize="sm"
-                    mb={3}
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    {product.stock > 0 ? `In Stock (${product.stock} available)` : "Out of Stock"}
-                  </Badge>
+                  <>
+                    <Badge
+                      colorScheme={product.stock === 0 ? "red" : isLowStock ? "orange" : "green"}
+                      fontSize="sm"
+                      mb={2}
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {product.stock === 0
+                        ? "Out of Stock"
+                        : isLowStock
+                        ? `Low Stock — Only ${product.stock} left!`
+                        : `In Stock (${product.stock} available)`}
+                    </Badge>
+                    {isLowStock && (
+                      <Alert status="warning" borderRadius="md" mb={3} py={2} px={3}>
+                        <AlertIcon />
+                        <Text fontSize="sm" fontWeight="medium">
+                          Hurry! Only <strong>{product.stock}</strong> item{product.stock !== 1 ? "s" : ""} left in stock — order soon before it sells out.
+                        </Text>
+                      </Alert>
+                    )}
+                  </>
                 )}
 
                 <Heading

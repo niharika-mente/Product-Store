@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     Box,
     Button,
@@ -17,6 +17,7 @@ import {
     Image,
 } from '@chakra-ui/react';
 import { FaStar, FaPen } from 'react-icons/fa';
+import Pagination from './Pagination';
 
 const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
@@ -52,7 +53,7 @@ const StarRating = ({ value, onChange, readonly = false, size = 'md' }) => {
     );
 };
 
-const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
+const RatingSummary = ({ reviews, filterStar, onFilterChange, distribution, averageRating, totalReviews }) => {
     const labelColor = useColorModeValue('gray.600', 'gray.400');
     const barBg = useColorModeValue('gray.100', 'gray.700');
     const barFill = useColorModeValue('yellow.400', 'yellow.300');
@@ -61,12 +62,12 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     const activeRowBg = useColorModeValue('yellow.50', 'yellow.900');
     const hoverRowBg = useColorModeValue('gray.50', 'gray.600');
 
-    if (reviews.length === 0) return null;
+    const totalCount = totalReviews ?? reviews.length;
+    if (totalCount === 0) return null;
 
-    const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-    const rounded = Math.round(avg * 10) / 10;
+    const rounded = averageRating ?? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalCount) * 10) / 10;
 
-    const distribution = [5, 4, 3, 2, 1].map((star) => ({
+    const dist = distribution || [5, 4, 3, 2, 1].map((star) => ({
         star,
         count: reviews.filter((r) => r.rating === star).length,
     }));
@@ -94,14 +95,14 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
                     </Text>
                     <StarRating value={Math.round(rounded)} readonly size="sm" />
                     <Text fontSize="xs" color={labelColor}>
-                        {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                        {totalCount} {totalCount === 1 ? 'review' : 'reviews'}
                     </Text>
                 </VStack>
 
                 {/* Distribution bars */}
                 <VStack spacing={1} flex={1} w="full" align="stretch">
-                    {distribution.map(({ star, count }) => {
-                        const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                    {dist.map(({ star, count }) => {
+                        const pct = totalCount > 0 ? (count / totalCount) * 100 : 0;
                         const isActive = filterStar === star;
                         return (
                             <HStack
@@ -139,7 +140,7 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange }) => {
     );
 };
 
-    const ReviewCard = ({ review, onReviewUpdated }) => {
+const ReviewCard = ({ review, onReviewUpdated }) => {
     const bg = useColorModeValue('white', 'gray.800');
     const borderCol = useColorModeValue('gray.200', 'gray.700');
     const textColor = useColorModeValue('gray.600', 'gray.400');
@@ -494,37 +495,67 @@ const ReviewForm = ({ productId, onReviewAdded }) => {
     );
 };
 
-// Main exported component
+const LIMIT = 5;
+
 const ProductReviews = ({ productId }) => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalReviews, setTotalReviews] = useState(0);
+    const [averageRating, setAverageRating] = useState(0);
+    const [distribution, setDistribution] = useState(null);
     const [filterStar, setFilterStar] = useState(null);
     const [sortOrder, setSortOrder] = useState('newest');
 
     const textColor = useColorModeValue('gray.500', 'gray.400');
 
+    const buildQuery = useCallback(() => {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(LIMIT));
+        params.set('sort', sortOrder);
+        if (filterStar) params.set('star', String(filterStar));
+        return params.toString();
+    }, [page, sortOrder, filterStar]);
 
-    const fetchReviews = async () => {
+    const fetchReviews = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/api/products/${productId}/reviews`);
+            const res = await fetch(`${API}/api/products/${productId}/reviews?${buildQuery()}`);
             if (!res.ok) {
                 throw new Error(`Server error: ${res.status} ${res.statusText}`);
             }
             const data = await res.json();
-            if (data.success) setReviews(data.data);
+            if (data.success) {
+                setReviews(data.data);
+                setTotalPages(data.totalPages);
+                setTotalReviews(data.totalReviews);
+                setAverageRating(data.averageRating);
+                setDistribution(data.distribution);
+            }
         } catch (err) {
             console.error("Failed to fetch reviews:", err);
-            // Reviews are non-critical; silently fail
         } finally {
             setLoading(false);
         }
-    };
+    }, [productId, buildQuery]);
 
     useEffect(() => {
         if (productId) fetchReviews();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [productId]);
+    }, [productId, fetchReviews]);
+
+    const handleFilterChange = (star) => {
+        setFilterStar((prev) => (prev === star ? null : star));
+        setPage(1);
+    };
+
+    const handleSortChange = (order) => {
+        if (order !== sortOrder) {
+            setSortOrder(order);
+            setPage(1);
+        }
+    };
 
     return (
         <Box mt={16}>
@@ -535,7 +566,7 @@ const ProductReviews = ({ productId }) => {
                 <Heading as="h2" size="md">
                     Customer Reviews
                 </Heading>
-                {reviews.length > 0 && (
+                {totalReviews > 0 && (
                     <Badge
                         bgGradient="linear(to-r, cyan.400, blue.500)"
                         color="white"
@@ -544,16 +575,19 @@ const ProductReviews = ({ productId }) => {
                         py={1}
                         borderRadius="full"
                     >
-                        {reviews.length}
+                        {totalReviews}
                     </Badge>
                 )}
             </HStack>
 
-            {!loading && reviews.length > 0 && (
+            {!loading && totalReviews > 0 && (
                 <RatingSummary
                     reviews={reviews}
                     filterStar={filterStar}
-                    onFilterChange={(star) => setFilterStar((prev) => prev === star ? null : star)}
+                    onFilterChange={handleFilterChange}
+                    distribution={distribution}
+                    averageRating={averageRating}
+                    totalReviews={totalReviews}
                 />
             )}
 
@@ -569,7 +603,7 @@ const ProductReviews = ({ productId }) => {
                         <Text color={textColor} fontSize="sm">
                             Loading reviews...
                         </Text>
-                    ) : reviews.length === 0 ? (
+                    ) : totalReviews === 0 ? (
                         <VStack spacing={4} py={12} w="full">
                             <Image
                                 src="/no-reviews.svg"
@@ -591,37 +625,37 @@ const ProductReviews = ({ productId }) => {
                             <HStack mb={2} justify="flex-end">
                                 <Button
                                     size="xs" variant={sortOrder === 'newest' ? 'solid' : 'outline'}
-                                    colorScheme="blue" onClick={() => setSortOrder('newest')}
+                                    colorScheme="blue" onClick={() => handleSortChange('newest')}
                                 >Newest</Button>
                                 <Button
                                     size="xs" variant={sortOrder === 'highest' ? 'solid' : 'outline'}
-                                    colorScheme="blue" onClick={() => setSortOrder('highest')}
+                                    colorScheme="blue" onClick={() => handleSortChange('highest')}
                                 >Highest Rated</Button>
                                 <Button
                                     size="xs" variant={sortOrder === 'lowest' ? 'solid' : 'outline'}
-                                    colorScheme="blue" onClick={() => setSortOrder('lowest')}
+                                    colorScheme="blue" onClick={() => handleSortChange('lowest')}
                                 >Lowest Rated</Button>
                             </HStack>
                             {filterStar && (
                                 <HStack>
                                     <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="sm">
-                                        Showing {filterStar}★ reviews ({reviews.filter(r => r.rating === filterStar).length})
+                                        Showing {filterStar}★ reviews ({totalReviews})
                                     </Badge>
-                                    <Button size="xs" variant="ghost" onClick={() => setFilterStar(null)}>
+                                    <Button size="xs" variant="ghost" onClick={() => { setFilterStar(null); setPage(1); }}>
                                         Clear filter
                                     </Button>
                                 </HStack>
                             )}
-                            {reviews
-                                .filter((r) => filterStar ? r.rating === filterStar : true)
-                                .sort((a, b) => {
-                                    if (sortOrder === 'highest') return b.rating - a.rating;
-                                    if (sortOrder === 'lowest') return a.rating - b.rating;
-                                    return new Date(b.createdAt) - new Date(a.createdAt);
-                                })
-                                .map((r) => (
-                                    <ReviewCard key={r._id} review={r} onReviewUpdated={fetchReviews} />
-                                ))}
+                            {reviews.map((r) => (
+                                <ReviewCard key={r._id} review={r} onReviewUpdated={fetchReviews} />
+                            ))}
+                            {totalPages > 1 && (
+                                <Pagination
+                                    currentPage={page}
+                                    totalPages={totalPages}
+                                    onPageChange={setPage}
+                                />
+                            )}
                         </VStack>
                     )}
                 </Box>

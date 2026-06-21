@@ -5,6 +5,9 @@ import App from './App';
 import './i18n';
 import { BrowserRouter } from "react-router-dom";
 
+import { useCurrencyStore } from './store/currency';
+useCurrencyStore.getState().fetchRates();
+
 const root = createRoot(document.getElementById('root'));
 
 root.render(

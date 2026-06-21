@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon BACKEND/server.js",
     "build": "npm install && npm install --prefix FRONTEND && npm run build --prefix FRONTEND",
-    "start": "cross-env NODE_ENV=production node BACKEND/server.js"
+    "start": "cross-env NODE_ENV=production node BACKEND/server.js",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "type": "module",
   "keywords": [],
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@playwright/test": "^1.61.0",
     "cross-env": "^7.0.3",
     "eslint": "^9.22.0",
     "globals": "^17.6.0",

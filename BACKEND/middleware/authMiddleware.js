@@ -1,4 +1,3 @@
-
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 
@@ -26,9 +25,18 @@ const authMiddleware = async (req, res, next) => {
           message: "Token has expired. Please login again.",
         });
       }
+
       return res.status(401).json({
         success: false,
         message: "Invalid token. Authentication failed.",
+      });
+    }
+
+    // Validate decoded payload before DB lookup
+    if (!decoded?.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token payload.",
       });
     }
 
@@ -42,11 +50,11 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Sensitive fields exclude — sirf safe data attach karo
     req.user = {
       id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       themePreference: user.themePreference,
     };
 
@@ -60,3 +68,4 @@ const authMiddleware = async (req, res, next) => {
 };
 
 export default authMiddleware;
+
