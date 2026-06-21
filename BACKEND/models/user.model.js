@@ -65,6 +65,12 @@ const userSchema = new mongoose.Schema(
       default: 'local',
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     resetPasswordToken: {
       type: String,
       default: null,

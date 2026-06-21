@@ -15,6 +15,7 @@ import newsletterRoutes from "./routes/newsletter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import userRoutes from "./routes/user.route.js";
 import returnRoutes from "./routes/return.route.js";
+import analyticsRoutes from "./routes/analytics.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -113,7 +114,7 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/returns", returnRoutes);
-
+app.use("/api/admin/analytics", analyticsRoutes);
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
 if (process.env.NODE_ENV === "production") {
