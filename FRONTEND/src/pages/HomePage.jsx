@@ -301,8 +301,8 @@ const HomePage = () => {
                   borderRadius="md"
                   border="1px solid"
                   borderColor={drawerBorder}
-                  as="a"
-                  href={`/product/${p._id}`}
+                  as={Link}
+                  to={`/product/${p._id}`}
                   _hover={{ textDecoration: "none", borderColor: "teal.400" }}
                   transition="all 0.2s"
                 >
