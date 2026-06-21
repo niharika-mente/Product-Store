@@ -3,11 +3,12 @@ import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendPasswordResetEmail } from "../services/email.service.js";
+import { processReferralOnRegister } from "../services/referral.service.js";
 
 export const registerUser = async (req, res) => {
   try {
     
-    const { name, email, password } = req.body;
+    const { name, email, password, referralCode } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -42,6 +43,13 @@ export const registerUser = async (req, res) => {
         email: user.email,
       },
     });
+
+    // Process referral asynchronously so it doesn't block response
+    if (referralCode) {
+      processReferralOnRegister(referralCode, user).catch(err => {
+        console.error("Referral Error:", err);
+      });
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
