@@ -292,7 +292,11 @@ const Navbar = () => {
                 <>
                   {isAdmin && (
                     <Link to="/admin">
+<<<<<<< HEAD
                       <Button colorScheme="purple" variant="outline" size="sm">Dashboard</Button>
+=======
+                      <Button variant="ghost" size="sm" colorScheme="purple">Dashboard</Button>
+>>>>>>> upstream/main
                     </Link>
                   )}
                   <Link to="/profile">

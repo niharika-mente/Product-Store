@@ -50,7 +50,6 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Sensitive fields exclude — sirf safe data attach karo
     req.user = {
       id: user._id,
       name: user.name,
