@@ -113,10 +113,9 @@ const Navbar = () => {
         });
         return;
       }
-      emptyCart();
       setAppliedCoupon(null);
       onClose();
-      navigate("/success");
+      window.location.href = data.url;
     } catch (err) {
       console.error("Checkout failed:", err);
 
