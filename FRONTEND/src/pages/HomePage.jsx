@@ -140,9 +140,9 @@ const HomePage = () => {
           <Select
             value={sort}
             onChange={(e) => {
-                 setSort(e.target.value);
-                 setPage(1);
-           }}
+              setSort(e.target.value);
+              setPage(1);
+            }}
             maxW="250px"
             aria-label="Sort products"
           >
@@ -183,22 +183,30 @@ const HomePage = () => {
             </Box>
           </VStack>
 
-          <Box w="full" display={{ base: "block", lg: "grid" }} gridTemplateColumns="300px 1fr" gap={8} alignItems="start">
-            {/* Sidebar with Filters */}
-            <Box position={{ lg: "sticky" }} top={{ lg: "100px" }} mb={{ base: 8, lg: 0 }}>
-              <FilterPanel filters={filters} setFilters={setFilters} />
-            </Box>
+          <Box
+            w="full"
+            display={hasNoProducts ? "block" : "grid"}
+            gridTemplateColumns={hasNoProducts ? "1fr" : "300px 1fr"}
+            gap={8}
+            alignItems="start"
+          >
+            {/* Sidebar with Filters — hidden when store has no products */}
+            {!hasNoProducts && (
+              <Box position="sticky" top="100px">
+                <FilterPanel filters={filters} setFilters={setFilters} />
+              </Box>
+            )}
 
             {/* Product grid — skeletons while loading, real cards when ready */}
             <Box>
               <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={10} w="full">
                 {loading
                   ? Array.from({ length: 6 }).map((_, i) => (
-                      <ProductCardSkeleton key={i} />
-                    ))
+                    <ProductCardSkeleton key={i} />
+                  ))
                   : products.map((product) => (
-                      <ProductCard key={product._id} product={product} />
-                    ))}
+                    <ProductCard key={product._id} product={product} />
+                  ))}
               </SimpleGrid>
 
               {/* Empty state — no products in store */}
@@ -228,8 +236,8 @@ const HomePage = () => {
                       _active={{ transform: "scale(0.98)" }}
                       sx={{
                         "@keyframes pulse": {
-                          "0%":   { boxShadow: "0 0 0 0 rgba(66,153,225,0.6)" },
-                          "70%":  { boxShadow: "0 0 0 10px rgba(66,153,225,0)" },
+                          "0%": { boxShadow: "0 0 0 0 rgba(66,153,225,0.6)" },
+                          "70%": { boxShadow: "0 0 0 10px rgba(66,153,225,0)" },
                           "100%": { boxShadow: "0 0 0 0 rgba(66,153,225,0)" },
                         },
                       }}
