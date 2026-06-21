@@ -10,6 +10,7 @@ import ErrorBoundary from "./components/ui/ErrorBoundary";
 import WishlistPage from './pages/WishlistPage';
 import NotFound from "./pages/NotFound";
 import { WishlistProvider } from './context/WishlistContext';
+import { AuthProvider } from './context/AuthContext';
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -21,6 +22,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ComparePage from "./pages/ComparePage";
+import ReferralDashboardPage from "./pages/ReferralDashboardPage";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
@@ -30,6 +32,7 @@ function App() {
   useKeyboardShortcuts({ onOpenShortcuts: onOpen });
 
   return (
+    <AuthProvider>
     <WishlistProvider>
       <Box minH={"100vh"} bg={useColorModeValue("gray.100", "gray.900")}>
         <Navbar />
@@ -46,6 +49,7 @@ function App() {
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
+            <Route path="/referrals" element={<ProtectedRoute><ReferralDashboardPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
@@ -56,6 +60,7 @@ function App() {
         <KeyboardShortcutsModal isOpen={isOpen} onClose={onClose} />
       </Box>
     </WishlistProvider>
+    </AuthProvider>
   );
 }
 

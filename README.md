@@ -48,11 +48,14 @@ cd Product-Store
 
 ### 2. Install Dependencies
 
-Install dependencies for the **backend** (root) and **frontend** separately:
+Install dependencies for the root project, backend, and frontend:
 
 ```bash
-# Install backend dependencies
+# Install root dependencies
 npm install
+
+# Install backend dependencies
+cd BACKEND && npm install && cd ..
 
 # Install frontend dependencies
 cd FRONTEND && npm install && cd ..

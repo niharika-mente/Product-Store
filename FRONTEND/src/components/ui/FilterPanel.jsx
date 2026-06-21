@@ -78,7 +78,7 @@ const FilterPanel = ({ filters, setFilters }) => {
       borderColor={borderColor}
       borderRadius="xl"
       shadow="sm"
-      w="full"
+      w="280px"
     >
       <HStack justify="space-between" mb={4}>
         <Text fontSize="xl" fontWeight="bold">Filters</Text>
