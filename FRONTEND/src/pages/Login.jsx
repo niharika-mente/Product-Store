@@ -147,6 +147,12 @@ function Login() {
                   Login to your account
                 </Button>
 
+                <Text textAlign="right" fontSize="sm">
+                  <Link as={RouterLink} to="/forgot-password" color="cyan.500">
+                    Forgot password?
+                  </Link>
+                </Text>
+
                 <Stack spacing={3} mt={4}>
                   <Button
                     variant="outline"
