@@ -11,8 +11,9 @@ import productRoutes from "./routes/product.route.js";
 import authRoutes from "./routes/auth.routes.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
-import reviewRoutes from "./routes/review.route.js";
+import newsletterRoutes from "./routes/newsletter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
+import userRoutes from "./routes/user.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -71,7 +72,7 @@ app.use(
         scriptSrc,
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://via.placeholder.com"],
         connectSrc,
         workerSrc: ["'self'", "blob:"],
       },
@@ -84,7 +85,7 @@ app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: "Too many requests from this IP, please try again later.",
 });
 const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
@@ -117,6 +118,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============

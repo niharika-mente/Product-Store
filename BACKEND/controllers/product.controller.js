@@ -3,6 +3,25 @@ import mongoose from "mongoose";
 import { escapeRegex } from '../utils/escapeRegex.js';
 import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
+import { indexProduct, deleteProductFromIndex, searchProductsES } from '../services/elasticsearch.service.js';
+import redis from '../config/redis.js';
+
+const CACHE_TTL = 300; // seconds
+
+function buildCacheKey(query) {
+    const sorted = Object.keys(query).sort().reduce((acc, k) => { acc[k] = query[k]; return acc; }, {});
+    return `products:list:${JSON.stringify(sorted)}`;
+}
+
+async function invalidateProductCache() {
+    if (!redis) return;
+    try {
+        const keys = await redis.keys('products:*');
+        if (keys.length) await redis.del(...keys);
+    } catch (err) {
+        console.warn('[Redis] Cache invalidation error:', err.message);
+    }
+}
 
 const cloudinaryConfigured = () =>
     process.env.CLOUDINARY_CLOUD_NAME &&
@@ -46,6 +65,19 @@ export const getProducts = async (req, res, next) => {
             });
         }
 
+        // Check Redis cache first
+        const cacheKey = buildCacheKey(req.query);
+        if (redis) {
+            try {
+                const cached = await redis.get(cacheKey);
+                if (cached) {
+                    return res.status(200).json(JSON.parse(cached));
+                }
+            } catch (err) {
+                console.warn('[Redis] Cache read error:', err.message);
+            }
+        }
+
         let sortOption = {};
         if (sort === "price_asc") {
             sortOption = { price: 1 };
@@ -79,14 +111,25 @@ export const getProducts = async (req, res, next) => {
         const products = await Product.find(filter).sort(sortOption).skip(skip).limit(limit);
         const totalPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
 
-        res.status(200).json({
+        const result = {
             success: true,
             currentPage: page,
             totalPages,
             totalProducts,
             limit,
             data: products,
-        });
+        };
+
+        // Store in Redis cache
+        if (redis) {
+            try {
+                await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL);
+            } catch (err) {
+                console.warn('[Redis] Cache write error:', err.message);
+            }
+        }
+
+        res.status(200).json(result);
     } catch (error) {
         next(error);
     }
@@ -147,6 +190,8 @@ export const createProduct = async (req, res, next) => {
 
     try {
         await newProduct.save();
+        await indexProduct(newProduct);
+        await invalidateProductCache();
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
         next(error);
@@ -220,7 +265,36 @@ export const updateProduct = async (req, res, next) => {
                 }
         }
 
+        await indexProduct(updatedProduct);
+        await invalidateProductCache();
+
         res.status(200).json({ success: true, data: updatedProduct });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Restock a product by incrementing its stock
+export const restockProduct = async (req, res, next) => {
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError("Invalid Product Id format", 404));
+    }
+
+    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0) {
+        return next(new AppError("Restock amount must be a positive integer", 400));
+    }
+
+    try {
+        const product = await Product.findOneAndUpdate(
+            { _id: id, isDeleted: { $ne: true } },
+            { $inc: { stock: amount } },
+            { new: true, runValidators: true }
+        );
+        if (!product) return next(new AppError("Product not found", 404));
+        res.status(200).json({ success: true, data: product });
     } catch (error) {
         next(error);
     }
@@ -231,17 +305,20 @@ export const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("Invalid Product Id format", 404));
+        return res.status(404).json({ success: false, message: "Invalid Product Id" });
     }
 
     try {
         const product = await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
         if (!product) {
-            return next(new AppError("Product not found", 404));
+            return res.status(404).json({ success: false, message: "Product not found" });
         }
+        await deleteProductFromIndex(id);
+        await invalidateProductCache();
         res.status(200).json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
-        next(error);
+        console.log("error in deleting product:", error.message);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 
@@ -399,11 +476,18 @@ export const searchProducts = async (req, res, next) => {
     }
 
     try {
-    const safeQuery = escapeRegex(q);
-    const regex = new RegExp(safeQuery, 'i');
-    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
-    res.status(200).json({ success: true, data: products });
-} catch (error) {
+        // Try Elasticsearch first
+        const esProducts = await searchProductsES(q);
+        if (esProducts) {
+            return res.status(200).json({ success: true, data: esProducts });
+        }
+
+        // Fallback to MongoDB regex search
+        const safeQuery = escapeRegex(q);
+        const regex = new RegExp(safeQuery, 'i');
+        const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
         next(error);
     }
 };
