@@ -271,8 +271,8 @@ const HomePage = () => {
       {recentlyViewed.length > 0 && (
         <Button
           position="fixed"
-          bottom="20px"
-          right="20px"
+          bottom="16px"
+          right="70px"
           zIndex={99}
           colorScheme="teal"
           size="sm"
