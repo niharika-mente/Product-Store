@@ -10,6 +10,7 @@ import ErrorBoundary from "./components/ui/ErrorBoundary";
 import WishlistPage from './pages/WishlistPage';
 import NotFound from "./pages/NotFound";
 import { WishlistProvider } from './context/WishlistContext';
+import { AuthProvider } from './context/AuthContext';
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -29,6 +30,7 @@ function App() {
   useKeyboardShortcuts({ onOpenShortcuts: onOpen });
 
   return (
+    <AuthProvider>
     <WishlistProvider>
       <Box minH={"100vh"} bg={useColorModeValue("gray.100", "gray.900")}>
         <Navbar />
@@ -55,6 +57,7 @@ function App() {
         <KeyboardShortcutsModal isOpen={isOpen} onClose={onClose} />
       </Box>
     </WishlistProvider>
+    </AuthProvider>
   );
 }
 
