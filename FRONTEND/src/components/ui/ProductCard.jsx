@@ -389,7 +389,6 @@ const ProductCard = ({ product }) => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-      </Modal>
 
       {/* ── Edit / Update Modal ── */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
