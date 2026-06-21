@@ -65,6 +65,12 @@ const userSchema = new mongoose.Schema(
       default: 'local',
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     resetPasswordToken: {
       type: String,
       default: null,
@@ -73,6 +79,25 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: {
       type: Date,
       default: null,
+    },
+
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
+
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+
+    walletBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {

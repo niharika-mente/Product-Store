@@ -46,6 +46,13 @@ const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
   const [imagePreview, setImagePreview] = useState(product.image);
   const [isInWishlist, setIsInWishlist] = useState(false);
+
+  const handleClose = () => {
+  setUpdatedProduct(product);
+  setImagePreview(product.image);
+  onClose();
+  };
+
   const fileInputRef = useRef(null);
   const cancelRef = useRef();
 
@@ -391,7 +398,7 @@ const ProductCard = ({ product }) => {
       </AlertDialog>
 
       {/* ── Edit / Update Modal ── */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+      <Modal isOpen={isOpen} onClose={handleClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
           <ModalHeader>Update Product</ModalHeader>
@@ -615,10 +622,7 @@ const ProductCard = ({ product }) => {
             </Button>
             <Button
               variant="ghost"
-              onClick={() => {
-                onClose();
-                setUpdatedProduct(product);
-              }}
+              onClick={handleClose}
             >
               Cancel
             </Button>

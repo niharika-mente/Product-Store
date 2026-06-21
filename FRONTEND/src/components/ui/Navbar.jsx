@@ -16,6 +16,7 @@ import { useProductStore } from "../../store/product";
 import { FaBalanceScale } from "react-icons/fa";
 import { useCurrencyStore } from "../../store/currency";
 import { formatPrice } from "../../utils/currency";
+import { useAuth } from "../../context/AuthContext";
 
 const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
@@ -30,7 +31,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, logout, user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -43,10 +45,6 @@ const Navbar = () => {
   const mobileInputBorder = useColorModeValue("gray.200", "gray.600");
   const searchBg = useColorModeValue("gray.50", "gray.700");
   const searchBorder = useColorModeValue("gray.200", "gray.600");
-
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("authToken"));
-  }, [location]);
 
   // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
   const handleCartOpen = useCallback(async () => {
@@ -88,9 +86,8 @@ const Navbar = () => {
         });
         return;
       }
-      emptyCart();
       onClose();
-      navigate("/success");
+      window.location.href = data.url;
     } catch (err) {
       console.error("Checkout failed:", err);
 
@@ -116,22 +113,7 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      try {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-      } catch (err) {
-        console.error("Failed to call logout API:", err);
-      }
-    }
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
+    await logout();
     emptyCart();
     clearWishlist();
     navigate("/login");
@@ -283,6 +265,11 @@ const Navbar = () => {
 
               {isLoggedIn && (
                 <>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" colorScheme="purple">Dashboard</Button>
+                    </Link>
+                  )}
                   <Link to="/profile">
                     <Button variant="ghost" size="sm">My Profile</Button>
                   </Link>
