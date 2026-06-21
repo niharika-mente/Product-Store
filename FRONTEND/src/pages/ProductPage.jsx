@@ -138,10 +138,12 @@ const ProductPage = () => {
   };
 
   const handleAddBundleToCart = () => {
+    const isFullBundle = selectedBundleItems.length === bundleData.items.length;
+    const discount = isFullBundle ? bundleData.bundleDiscount : 0;
     const allItems = [product, ...bundleData.items
       .filter(i => selectedBundleItems.includes(i.product._id))
       .map(i => i.product)];
-    const { addedCount, skippedCount } = addBundleToCart(allItems);
+    const { addedCount, skippedCount } = addBundleToCart(allItems, discount);
 
     if (addedCount > 0) {
       toast({

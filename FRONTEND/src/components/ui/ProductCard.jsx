@@ -336,6 +336,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+      </Modal>
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
