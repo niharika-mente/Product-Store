@@ -17,6 +17,8 @@ import { formatPrice } from '../utils/currency';
 import RecentlyViewedCarousel from "../components/ui/RecentlyViewedCarousel";
 import FilterPanel from "../components/ui/FilterPanel";
 
+
+
 const ProductCardSkeleton = () => {
   const bg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -52,6 +54,7 @@ const HomePage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+  
   const limit = 10;
 
   const [filters, setFilters] = useState({

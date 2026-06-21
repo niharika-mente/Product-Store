@@ -21,6 +21,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ComparePage from "./pages/ComparePage";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { ToastContainer } from "./utils/toastService";
 
 function App() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -51,6 +52,7 @@ function App() {
           </Routes>
         </ErrorBoundary>
         <KeyboardShortcutsModal isOpen={isOpen} onClose={onClose} />
+        <ToastContainer />
       </Box>
     </WishlistProvider>
   );
