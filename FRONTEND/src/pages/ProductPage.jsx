@@ -278,7 +278,7 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                       _hover={{ borderColor: "blue.300" }}
                       aria-label={`View image ${idx + 1}`}
                     >
-                      <Image src={img} alt={`thumb ${idx}`} objectFit="cover" w="full" h="full" />
+                      <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} objectFit="cover" w="full" h="full" />
                     </Box>
                   ))}
                 </HStack>
