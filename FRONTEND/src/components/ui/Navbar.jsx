@@ -34,6 +34,7 @@ const Navbar = () => {
   const location = useLocation();
   const toast = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -64,10 +65,20 @@ const Navbar = () => {
   const searchBorder = useColorModeValue("gray.200", "gray.600");
 
   useEffect(() => {
-    const token = !!localStorage.getItem("authToken");
+   const token = !!localStorage.getItem("authToken");
     setIsLoggedIn(token);
+
+    // Fetch saved items if the user is logged in
     if (token) {
       fetchSavedItems();
+    }
+
+    // Check if the user is an admin
+    try {
+      const user = JSON.parse(localStorage.getItem("authUser") || '{}');
+      setIsAdmin(user?.role === 'admin');
+    } catch {
+      setIsAdmin(false);
     }
   }, [location, fetchSavedItems]);
 
@@ -307,6 +318,11 @@ const Navbar = () => {
 
               {isLoggedIn && (
                 <>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" colorScheme="purple">Dashboard</Button>
+                    </Link>
+                  )}
                   <Link to="/profile">
                     <Button variant="ghost" size="sm">My Profile</Button>
                   </Link>
