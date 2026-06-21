@@ -6,9 +6,11 @@ import {
 } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const CreatePage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [newProduct, setNewProduct] = useState({
     name: "",
     price: "",
@@ -25,10 +27,38 @@ const CreatePage = () => {
   const [preview, setPreview] = useState(null);
   const [extraImageInput, setExtraImageInput] = useState("");
   const [showExtraDetails, setShowExtraDetails] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef(null);
 
   const toast = useToast();
   const { createProduct, isSubmitting } = useProductStore();
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      const link = e.target.closest('a');
+      if (link && isDirty) {
+        e.preventDefault();
+        const confirmed = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+        if (confirmed) {
+          setIsDirty(false);
+          navigate(link.getAttribute('href'));
+        }
+      }
+    };
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [isDirty, navigate]);
 
   useEffect(() => {
     const url = preview;
@@ -42,6 +72,7 @@ const CreatePage = () => {
     if (!file) return;
     setNewProduct({ ...newProduct, imageFile: file, image: "" });
     setPreview(URL.createObjectURL(file));
+    setIsDirty(true);
   };
 
   const handleAddProduct = async () => {
@@ -57,8 +88,14 @@ const CreatePage = () => {
       setPreview(null);
       setExtraImageInput("");
       setShowExtraDetails(false);
+      setIsDirty(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleChange = (field, value) => {
+    setNewProduct((prev) => ({ ...prev, [field]: value }));
+    setIsDirty(true);
   };
 
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -92,7 +129,7 @@ const CreatePage = () => {
                   name="name"
                   aria-label="Product Name"
                   value={newProduct.name}
-                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                  onChange={(e) => handleChange("name", e.target.value)}
                   size="lg"
                 />
                 <Input
@@ -101,7 +138,7 @@ const CreatePage = () => {
                   type="number"
                   aria-label="Price"
                   value={newProduct.price}
-                  onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                  onChange={(e) => handleChange("price", e.target.value)}
                   size="lg"
                 />
 
@@ -125,7 +162,8 @@ const CreatePage = () => {
                   aria-label="Image URL"
                   value={newProduct.image}
                   onChange={(e) => {
-                    setNewProduct({ ...newProduct, image: e.target.value, imageFile: null });
+                    handleChange("image", e.target.value);
+                    setNewProduct((prev) => ({ ...prev, imageFile: null }));
                     setPreview(e.target.value || null);
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
@@ -160,7 +198,7 @@ const CreatePage = () => {
                       isDisabled={!extraImageInput.trim() || newProduct.images.length >= 4}
                       onClick={() => {
                         if (extraImageInput.trim()) {
-                          setNewProduct({ ...newProduct, images: [...newProduct.images, extraImageInput.trim()] });
+                          handleChange("images", [...newProduct.images, extraImageInput.trim()]);
                           setExtraImageInput("");
                         }
                       }}
@@ -172,7 +210,7 @@ const CreatePage = () => {
                         <HStack key={idx} bg={toggleBg} px={3} py={1} borderRadius="md" fontSize="sm">
                           <Text flex={1} noOfLines={1} color={infoColor}>{url}</Text>
                           <Button size="xs" colorScheme="red" variant="ghost"
-                            onClick={() => setNewProduct({ ...newProduct, images: newProduct.images.filter((_, i) => i !== idx) })}
+                            onClick={() => handleChange("images", newProduct.images.filter((_, i) => i !== idx))}
                           >✕</Button>
                         </HStack>
                       ))}
@@ -211,7 +249,7 @@ const CreatePage = () => {
                   name="description"
                   aria-label="Product Description"
                   value={newProduct.description}
-                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                  onChange={(e) => handleChange("description", e.target.value)}
                   rows={4}
                   resize="vertical"
                 />
@@ -221,7 +259,7 @@ const CreatePage = () => {
                   name="category"
                   aria-label="Select Category"
                   value={newProduct.category}
-                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  onChange={(e) => handleChange("category", e.target.value)}
                 >
                   <option value="Electronics">Electronics</option>
                   <option value="Clothing">Clothing & Fashion</option>
@@ -239,7 +277,7 @@ const CreatePage = () => {
                   name="brand"
                   aria-label="Brand"
                   value={newProduct.brand}
-                  onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+                  onChange={(e) => handleChange("brand", e.target.value)}
                 />
 
                 <Input
@@ -249,7 +287,7 @@ const CreatePage = () => {
                   min="0"
                   aria-label="Stock Quantity"
                   value={newProduct.stock}
-                  onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                  onChange={(e) => handleChange("stock", e.target.value)}
                 />
 
                 <Input
@@ -260,7 +298,7 @@ const CreatePage = () => {
                   step="0.01"
                   aria-label="Original Price"
                   value={newProduct.originalPrice}
-                  onChange={(e) => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                  onChange={(e) => handleChange("originalPrice", e.target.value)}
                 />
 
                 <Input
@@ -271,14 +309,14 @@ const CreatePage = () => {
                   max="100"
                   aria-label="Discount Percentage"
                   value={newProduct.discount}
-                  onChange={(e) => setNewProduct({ ...newProduct, discount: e.target.value })}
+                  onChange={(e) => handleChange("discount", e.target.value)}
                 />
               </VStack>
             </Collapse>
 
-            <Button 
-              colorScheme='blue' 
-              onClick={handleAddProduct} 
+            <Button
+              colorScheme='blue'
+              onClick={handleAddProduct}
               w='full'
               size="lg"
               mt={4}
