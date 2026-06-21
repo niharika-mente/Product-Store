@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useProductStore } from '../store/product';
 import {
   Box, Button, Collapse, Container, Divider, Heading, HStack, Icon,
@@ -15,14 +14,7 @@ const CreatePage = () => {
     name: "",
     price: "",
     image: "",
-    imageFile: null,
-    images: [],
-    description: "",
-    category: "",
-    brand: "",
-    stock: "",
-    originalPrice: "",
-    discount: ""
+    tags: [],
   });
   const [preview, setPreview] = useState(null);
   const [extraImageInput, setExtraImageInput] = useState("");
@@ -78,12 +70,18 @@ const CreatePage = () => {
   const handleAddProduct = async () => {
     const { success, message } = await createProduct(newProduct);
     if (!success) {
-      toast({ title: "Error", description: message, status: "error", isClosable: true, duration: 3000 });
+      toast({
+        title: "Error",
+        description: message,
+        status: "error",
+        isClosable: true
+      });
     } else {
-      toast({ title: "Success", description: message, status: "success", isClosable: true, duration: 3000 });
-      setNewProduct({
-        name: "", price: "", image: "", imageFile: null, images: [],
-        description: "", category: "", brand: "", stock: "", originalPrice: "", discount: ""
+      toast({
+        title: "Success",
+        description: message,
+        status: "success",
+        isClosable: true
       });
       setPreview(null);
       setExtraImageInput("");
@@ -91,6 +89,7 @@ const CreatePage = () => {
       setIsDirty(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+    setNewProduct({ name: "", price: "", image: "", tags: [] });
   };
 
   const handleChange = (field, value) => {
@@ -103,19 +102,14 @@ const CreatePage = () => {
   const infoColor = useColorModeValue("gray.700", "gray.300");
 
   return (
-    <Container maxW={"container.sm"} py={12}>
+    <Container maxW={"container.sm"}>
       <VStack spacing={8}>
-        <Heading as={"h1"} size={"2xl"} textAlign={"center"} mb={4}>
+        <Heading as={"h1"} size={"2xl"} textAlign={"center"} mb={8}>
           Create New Product
         </Heading>
         <Box
-          w={"full"}
-          bg={useColorModeValue("white", "gray.800")}
-          p={6}
-          rounded={"lg"}
-          shadow={"md"}
-          borderWidth="1px"
-          borderColor={borderColor}
+          w={"full"} bg={cardBg}
+          p={6} rounded={"lg"} shadow={"md"}
         >
           <VStack spacing={4}>
             <Box w="full">
@@ -146,7 +140,6 @@ const CreatePage = () => {
                   </Text>
                   <Input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
                     aria-label="Upload product image"
                     ref={fileInputRef}
                     onChange={handleFileChange}
@@ -283,7 +276,8 @@ const CreatePage = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  aria-label="Original Price"
+                  aria   accept="image/jpeg,image/png,image/webp,image/gif"
+                 -label="Original Price"
                   value={newProduct.originalPrice}
                   onChange={(e) => handleChange("originalPrice", e.target.value)}
                 />

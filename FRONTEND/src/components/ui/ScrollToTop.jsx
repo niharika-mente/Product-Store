@@ -36,8 +36,8 @@ const ScrollToTop = () => {
       icon={<LuArrowUp />}
       onClick={handleScrollToTop}
       position="fixed"
-      bottom={6}
-      right={6}
+      bottom={3}
+      right={3}
       zIndex={1000}
       rounded="full"
       size="lg"
