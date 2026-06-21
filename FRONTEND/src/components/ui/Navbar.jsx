@@ -11,6 +11,8 @@ import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCart } from "../../store/cart";
+import { useSavedForLater } from "../../store/savedForLater";
+import { Divider } from "@chakra-ui/react";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
 import { FaBalanceScale } from "react-icons/fa";
@@ -23,7 +25,8 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { cartItems, removeFromCart, totalPrice, emptyCart, addToCart } = useCart();
+  const { savedItems, saveForLater, removeFromSaved, fetchSavedItems, clearLocalSavedItems } = useSavedForLater();
   const { currency, rates, setCurrency } = useCurrencyStore();
   const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts, compareList } = useProductStore();
@@ -33,6 +36,22 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleSaveForLater = async (item) => {
+    await saveForLater(item);
+    removeFromCart(item._id);
+  };
+
+  const handleMoveToCart = async (item) => {
+    const res = addToCart(item, item.quantity || 1);
+    if (res.status === "added") {
+      await removeFromSaved(item._id);
+    } else if (res.status === "capped") {
+      toast({ title: "Stock Limit", description: "You can't add more of this item.", status: "warning", duration: 3000 });
+    } else if (res.status === "out_of_stock") {
+      toast({ title: "Out of Stock", description: "This item is currently out of stock.", status: "error", duration: 3000 });
+    }
+  };
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -45,8 +64,12 @@ const Navbar = () => {
   const searchBorder = useColorModeValue("gray.200", "gray.600");
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("authToken"));
-  }, [location]);
+    const token = !!localStorage.getItem("authToken");
+    setIsLoggedIn(token);
+    if (token) {
+      fetchSavedItems();
+    }
+  }, [location, fetchSavedItems]);
 
   // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
   const handleCartOpen = useCallback(async () => {
@@ -134,6 +157,7 @@ const Navbar = () => {
     localStorage.removeItem("authUser");
     emptyCart();
     clearWishlist();
+    clearLocalSavedItems();
     navigate("/login");
   };
 
@@ -443,18 +467,51 @@ const Navbar = () => {
                             {t('cart.quantity')}: {item.quantity} × {formatPrice(currentPrice, currency, rates)}
                           </Text>
                         </Box>
-                        <Button
-                          size="sm"
-                          colorScheme="red"
-                          variant="ghost"
-                          onClick={() => removeFromCart(item._id)}
-                        >
-                          Remove
-                        </Button>
+                        <VStack>
+                          <Button size="sm" colorScheme="blue" variant="outline" onClick={() => handleSaveForLater(item)} width="100%">
+                            Save for Later
+                          </Button>
+                          <Button size="sm" colorScheme="red" variant="ghost" onClick={() => removeFromCart(item._id)} width="100%">
+                            Remove
+                          </Button>
+                        </VStack>
                       </HStack>
                     );
                   })}
                 </VStack>
+              )}
+              {savedItems && savedItems.length > 0 && (
+                <Box mt={6}>
+                  <Divider mb={4} />
+                  <Text fontWeight="bold" fontSize="lg" mb={3}>{t("cart.savedForLater") || "Saved for Later"} ({savedItems.length})</Text>
+                  <VStack align="stretch" spacing={4}>
+                    {savedItems.map((item) => (
+                      <HStack
+                        key={item._id}
+                        justify="space-between"
+                        p={3}
+                        borderWidth="1px"
+                        borderRadius="lg"
+                        borderColor={colorMode === "light" ? "gray.200" : "gray.600"}
+                      >
+                        <Box>
+                          <Text fontWeight="bold">{item.name}</Text>
+                          <Text fontSize="sm" color={labelColor}>
+                            {formatPrice(item.price, currency, rates)}
+                          </Text>
+                        </Box>
+                        <VStack>
+                          <Button size="sm" colorScheme="teal" variant="outline" onClick={() => handleMoveToCart(item)} width="100%">
+                            Move to Cart
+                          </Button>
+                          <Button size="sm" colorScheme="red" variant="ghost" onClick={() => removeFromSaved(item._id)} width="100%">
+                            Remove
+                          </Button>
+                        </VStack>
+                      </HStack>
+                    ))}
+                  </VStack>
+                </Box>
               )}
             </DrawerBody>
 

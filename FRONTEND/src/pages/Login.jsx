@@ -23,6 +23,7 @@ import {
   showErrorToast,
   showWarningToast,
 } from "../utils/toastHelpers";
+import { useSavedForLaterStore } from "../store/savedForLater";
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -59,6 +60,9 @@ function Login() {
 
       localStorage.setItem('authToken', data.token)
       localStorage.setItem('authUser', JSON.stringify(data.user))
+
+      // Sync local saved items with the backend profile
+      await useSavedForLaterStore.getState().syncWithBackend();
 
       showSuccessToast(
         toast,
