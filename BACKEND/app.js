@@ -20,6 +20,7 @@ import swaggerSpec from './swagger.js';
 import { stripeWebhook } from "./controllers/checkout.controller.js";
 import { expressMiddleware } from "@as-integrations/express4";
 import { apolloServer } from "./graphql/server.js";
+import { optionalProtect } from "./middleware/auth.js";
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
@@ -62,7 +63,12 @@ await apolloServer.start();
 app.use(
   "/graphql",
   express.json(),
-  expressMiddleware(apolloServer)
+  optionalProtect,
+  expressMiddleware(apolloServer, {
+    context: async ({ req }) => ({
+      user: req.user || null,
+    }),
+  })
 );
 app.use(
   helmet({
@@ -140,3 +146,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;
+
+
+
+
