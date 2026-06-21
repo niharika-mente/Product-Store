@@ -1,7 +1,9 @@
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
+import User from '../models/user.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
+import { sendOrderConfirmationEmail } from '../services/email.service.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -174,13 +176,29 @@ export const stripeWebhook = async (req, res) => {
           deductions.push({ productId: item._id, quantity: item.quantity });
         }
 
-        await Order.create({
+        const order = await Order.create({
           user: session.metadata?.userId || null,
           items: orderItems,
           totalAmount: session.amount_total / 100,
           stripeSessionId: session.id,
           paymentStatus: "completed",
         });
+
+        // Send confirmation email — non-blocking; failures never break fulfillment
+        const customerEmail = session.customer_details?.email;
+        if (customerEmail) {
+          sendOrderConfirmationEmail(customerEmail, order).catch((err) =>
+            console.error('[Email] Order confirmation failed:', err.message)
+          );
+        } else if (session.metadata?.userId) {
+          User.findById(session.metadata.userId).select('email').lean().then((u) => {
+            if (u?.email) {
+              sendOrderConfirmationEmail(u.email, order).catch((err) =>
+                console.error('[Email] Order confirmation failed:', err.message)
+              );
+            }
+          }).catch(() => {});
+        }
     }
 
     res.json({ received: true });
