@@ -411,6 +411,7 @@ const ProductCard = ({ product }) => {
                 placeholder="Price"
                 name="price"
                 type="number"
+                min={0}
                 aria-label="Price"
                 value={updatedProduct.price}
                 onChange={(e) =>

@@ -15,7 +15,7 @@ const RelatedProducts = ({ productId }) => {
   const [loading, setLoading] = useState(true);
 
   const cardBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.250", "gray.700");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
   const titleColor = useColorModeValue("gray.800", "white");
   const priceColor = useColorModeValue("gray.600", "gray.300");
 

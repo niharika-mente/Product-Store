@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 function createTransporter() {
   const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS } = process.env;
   if (!EMAIL_HOST || !EMAIL_USER || !EMAIL_PASS) {
-    console.warn('[Email] SMTP env vars missing — emails will be skipped.');
+    console.warn('[Email] EMAIL_HOST / EMAIL_USER / EMAIL_PASS not set — emails will not be sent.');
     return null;
   }
   return nodemailer.createTransport({
@@ -113,21 +113,31 @@ export async function sendOrderConfirmationEmail(toEmail, order) {
   await send(toEmail, `Order Confirmation — $${order.totalAmount.toFixed(2)}`, html);
 }
 
-export async function sendPasswordResetEmail(toEmail, resetUrl) {
-  const html = `
-<!DOCTYPE html>
-<html>
-<body style="font-family:Arial,sans-serif;background:#f4f4f5;padding:32px 0;">
-  <table width="600" align="center" style="background:#fff;border-radius:12px;padding:40px;">
-    <tr><td>
-      <h2 style="color:#00b5d8;">Reset your password</h2>
-      <p>Click the button below to set a new password. The link expires in <strong>1 hour</strong>.</p>
-      <a href="${resetUrl}" style="display:inline-block;margin:16px 0;padding:12px 28px;background:#00b5d8;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Reset Password</a>
-      <p style="color:#888;font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+export const sendPasswordResetEmail = async (toEmail, resetUrl) => {
+  if (!transporter) {
+    console.warn(`[Email] Would have sent password-reset email to ${toEmail}: ${resetUrl}`);
+    return;
+  }
 
-  await send(toEmail, 'Reset your Product Store password', html);
-}
+  await transporter.sendMail({
+    from: FROM,
+    to: toEmail,
+    subject: 'Password Reset Request – Product Store',
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:auto">
+        <h2 style="color:#3182CE">Reset your password</h2>
+        <p>You requested a password reset. Click the button below to set a new password.
+           This link expires in <strong>1 hour</strong>.</p>
+        <a href="${resetUrl}"
+           style="display:inline-block;padding:12px 24px;background:#3182CE;color:#fff;
+                  border-radius:6px;text-decoration:none;font-weight:600;margin:16px 0">
+          Reset Password
+        </a>
+        <p style="color:#718096;font-size:13px">
+          If you did not request this, you can safely ignore this email.<br/>
+          The link will expire automatically after 1 hour.
+        </p>
+      </div>
+    `,
+  });
+};
