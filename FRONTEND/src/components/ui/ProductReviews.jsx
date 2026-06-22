@@ -508,6 +508,12 @@ const ProductReviews = ({ productId }) => {
     const [filterStar, setFilterStar] = useState(null);
     const [sortOrder, setSortOrder] = useState('newest');
 
+    useEffect(() => {
+        setFilterStar(null);
+        setSortOrder('newest');
+        setPage(1);
+    }, [productId]);
+
     const textColor = useColorModeValue('gray.500', 'gray.400');
 
     const buildQuery = useCallback(() => {

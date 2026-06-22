@@ -24,7 +24,7 @@ import {
   showWarningToast,
 } from "../utils/toastHelpers";
 import { useSavedForLaterStore } from "../store/savedForLater";
-
+import { useAuth } from '../context/AuthContext';
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,6 +32,7 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -58,8 +59,7 @@ function Login() {
         throw new Error(data.message || 'Login failed. Please check your credentials.')
       }
 
-      localStorage.setItem('authToken', data.token)
-      localStorage.setItem('authUser', JSON.stringify(data.user))
+      login(data.token, data.user)
 
       // Sync local saved items with the backend profile
       await useSavedForLaterStore.getState().syncWithBackend();

@@ -8,6 +8,11 @@ jobs:
   build-and-lint:
     name: Build & Lint
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
 
     steps:
       - name: Checkout code
@@ -21,6 +26,7 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             FRONTEND/package-lock.json
+            BACKEND/package-lock.json
 
       - name: Install root dependencies
         run: npm ci
@@ -29,6 +35,10 @@ jobs:
         run: npm ci
         working-directory: FRONTEND
 
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: BACKEND
+
       - name: Build frontend
         run: npm run build
         working-directory: FRONTEND
@@ -36,6 +46,14 @@ jobs:
       - name: Lint frontend
         run: npm run lint
         working-directory: FRONTEND
+
+      - name: Run backend tests
+        run: npm test
+        working-directory: BACKEND
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/test_db
+          JWT_SECRET: testsecret12345678901234567890123
 
   e2e-tests:
     name: Playwright E2E Tests
