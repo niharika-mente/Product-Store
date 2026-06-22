@@ -81,10 +81,26 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    role: {
+   role: {
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    walletBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {
