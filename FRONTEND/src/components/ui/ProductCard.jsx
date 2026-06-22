@@ -5,6 +5,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  Badge,
   Box,
   Button,
   Heading,
@@ -45,6 +46,13 @@ const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
   const [imagePreview, setImagePreview] = useState(product.image);
   const [isInWishlist, setIsInWishlist] = useState(false);
+
+  const handleClose = () => {
+  setUpdatedProduct(product);
+  setImagePreview(product.image);
+  onClose();
+  };
+
   const fileInputRef = useRef(null);
   const cancelRef = useRef();
 
@@ -55,6 +63,16 @@ const ProductCard = ({ product }) => {
 
   // ✅ SINGLE declaration - NO duplicates
   const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitting, isDeleting } = useProductStore();
+  const {
+    deleteProduct,
+    updateProduct,
+    restockProduct,
+    addToCompare,
+    compareList = [],
+    isSubmitting,
+    isDeleting,
+  } = useProductStore();
+
   const isInCompare = compareList.some((p) => p._id === product._id);
   const { addToCart } = useCart();
   const { currency, rates } = useCurrencyStore();
@@ -64,7 +82,9 @@ const ProductCard = ({ product }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
 
+  const LOW_STOCK_THRESHOLD = 5;
   const isOutOfStock = product.stock != null && product.stock === 0;
+  const isLowStock = product.stock != null && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   useEffect(() => {
     setUpdatedProduct(product);
@@ -194,6 +214,52 @@ const ProductCard = ({ product }) => {
           cursor="pointer"
         />
       </Link>
+      <Box position="relative">
+        <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+          <Image
+            src={product.image}
+            alt={product.name}
+            h={48}
+            w="full"
+            objectFit="cover"
+            transition="transform 0.4s"
+            _groupHover={{ transform: "scale(1.05)" }}
+            cursor="pointer"
+          />
+        </Link>
+        {isLowStock && (
+          <Badge
+            position="absolute"
+            top={2}
+            left={2}
+            colorScheme="orange"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="md"
+            zIndex={1}
+            boxShadow="sm"
+          >
+            Low Stock
+          </Badge>
+        )}
+        {isOutOfStock && (
+          <Badge
+            position="absolute"
+            top={2}
+            left={2}
+            colorScheme="red"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="md"
+            zIndex={1}
+            boxShadow="sm"
+          >
+            Out of Stock
+          </Badge>
+        )}
+      </Box>
 
       <Box p={4}>
         <Heading as='h3' size='md' mb={2} noOfLines={1}>
@@ -335,6 +401,8 @@ const ProductCard = ({ product }) => {
 
       {/* Edit Product Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+      {/* ── Edit / Update Modal ── */}
+      <Modal isOpen={isOpen} onClose={handleClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
           <ModalHeader>Update Product</ModalHeader>
@@ -353,6 +421,7 @@ const ProductCard = ({ product }) => {
                 placeholder="Price"
                 name="price"
                 type="number"
+                min={0}
                 aria-label="Price"
                 value={updatedProduct.price}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: Number(e.target.value) })}
@@ -433,6 +502,49 @@ const ProductCard = ({ product }) => {
                 value={updatedProduct.stock ?? ""}
                 onChange={(e) => setUpdatedProduct({ ...updatedProduct, stock: e.target.value === "" ? "" : Number(e.target.value) })}
               />
+              {updatedProduct.stock != null && updatedProduct.stock !== '' && updatedProduct.stock <= LOW_STOCK_THRESHOLD && (
+                <Box w="full">
+                  <Text fontSize="xs" color="orange.500" fontWeight="semibold" mb={1}>
+                    ⚠ Low stock — quick restock:
+                  </Text>
+                  <HStack spacing={2}>
+                    {[10, 25, 50].map((amount) => (
+                      <Button
+                        key={amount}
+                        size="xs"
+                        colorScheme="orange"
+                        variant="outline"
+                        isLoading={isSubmitting}
+                        onClick={async () => {
+                          const result = await restockProduct(product._id, amount);
+                          if (result.success) {
+                            setUpdatedProduct((prev) => ({
+                              ...prev,
+                              stock: result.data.stock,
+                            }));
+                            toast({
+                              title: `Restocked +${amount}`,
+                              status: "success",
+                              duration: 2000,
+                              isClosable: true,
+                            });
+                          } else {
+                            toast({
+                              title: "Restock failed",
+                              description: result.message,
+                              status: "error",
+                              duration: 3000,
+                              isClosable: true,
+                            });
+                          }
+                        }}
+                      >
+                        +{amount}
+                      </Button>
+                    ))}
+                  </HStack>
+                </Box>
+              )}
 
               <Input
                 placeholder="Original Price (optional)"
@@ -480,10 +592,7 @@ const ProductCard = ({ product }) => {
             </Button>
             <Button
               variant="ghost"
-              onClick={() => {
-                onClose();
-                setUpdatedProduct(product);
-              }}
+              onClick={handleClose}
             >
               Cancel
             </Button>

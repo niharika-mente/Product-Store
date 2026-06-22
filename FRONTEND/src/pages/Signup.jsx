@@ -17,7 +17,7 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   showSuccessToast,
   showErrorToast,
@@ -25,14 +25,25 @@ import {
 } from "../utils/toastHelpers";
 
 function Signup() {
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const initialRef = queryParams.get('ref') || localStorage.getItem('referralCode') || ''
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [referralCode, setReferralCode] = useState(initialRef)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
+
+  React.useEffect(() => {
+    if (initialRef) {
+      localStorage.setItem('referralCode', initialRef);
+    }
+  }, [initialRef])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -55,7 +66,7 @@ function Signup() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, referralCode }),
       })
 
       const data = await response.json()
@@ -74,6 +85,8 @@ function Signup() {
       setEmail('')
       setPassword('')
       setConfirmPassword('')
+      setReferralCode('')
+      localStorage.removeItem('referralCode')
 
       setTimeout(() => {
         navigate('/login')
@@ -174,6 +187,16 @@ function Signup() {
                       </Button>
                     </InputRightElement>
                   </InputGroup>
+                </FormControl>
+
+                <FormControl id="referralCode">
+                  <FormLabel>Referral Code (Optional)</FormLabel>
+                  <Input
+                    placeholder="If you have a referral code"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    focusBorderColor="cyan.400"
+                  />
                 </FormControl>
 
                 <Button

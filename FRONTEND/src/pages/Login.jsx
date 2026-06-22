@@ -23,6 +23,7 @@ import {
   showErrorToast,
   showWarningToast,
 } from "../utils/toastHelpers";
+import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -31,6 +32,7 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -57,8 +59,7 @@ function Login() {
         throw new Error(data.message || 'Login failed. Please check your credentials.')
       }
 
-      localStorage.setItem('authToken', data.token)
-      localStorage.setItem('authUser', JSON.stringify(data.user))
+      login(data.token, data.user)
 
       showSuccessToast(
         toast,
@@ -145,6 +146,12 @@ function Login() {
                 >
                   Login to your account
                 </Button>
+
+                <Text textAlign="right" fontSize="sm">
+                  <Link as={RouterLink} to="/forgot-password" color="cyan.500">
+                    Forgot password?
+                  </Link>
+                </Text>
 
                 <Stack spacing={3} mt={4}>
                   <Button

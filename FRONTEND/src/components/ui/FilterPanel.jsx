@@ -15,8 +15,6 @@ const FilterPanel = ({ filters, setFilters }) => {
 
   const bg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const badgeBg = useColorModeValue('blue.50', 'blue.900');
-
   // Fetch categories from API
   useEffect(() => {
     const loadCategories = async () => {
@@ -24,7 +22,7 @@ const FilterPanel = ({ filters, setFilters }) => {
       if (res.success) setCategories(res.data);
     };
     loadCategories();
-  }, []);
+  }, [fetchCategories]);
 
   // Extract unique brands dynamically from products
   useEffect(() => {
@@ -80,7 +78,7 @@ const FilterPanel = ({ filters, setFilters }) => {
       borderColor={borderColor}
       borderRadius="xl"
       shadow="sm"
-      w="full"
+      w="280px"
     >
       <HStack justify="space-between" mb={4}>
         <Text fontSize="xl" fontWeight="bold">Filters</Text>
