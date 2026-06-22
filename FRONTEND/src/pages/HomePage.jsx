@@ -145,6 +145,7 @@ const HomePage = () => {
            }}
             maxW="250px"
             aria-label="Sort products"
+            isDisabled={isSearching}
           >
             <option value="">Default</option>
             <option value="price_asc">Price: Low to High</option>
@@ -186,7 +187,11 @@ const HomePage = () => {
           <Box w="full" display={{ base: "block", lg: "grid" }} gridTemplateColumns="300px 1fr" gap={8} alignItems="start">
             {/* Sidebar with Filters */}
             <Box position={{ lg: "sticky" }} top={{ lg: "100px" }} mb={{ base: 8, lg: 0 }}>
-              <FilterPanel filters={filters} setFilters={setFilters} />
+              <FilterPanel
+                filters={filters}
+                setFilters={setFilters}
+                isDisabled={isSearching}
+              />
             </Box>
 
             {/* Product grid — skeletons while loading, real cards when ready */}
