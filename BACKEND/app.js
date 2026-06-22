@@ -17,6 +17,7 @@ import userRoutes from "./routes/user.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import referralRoutes from "./routes/referral.route.js";
+import returnRoutes from "./routes/return.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -132,6 +133,7 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/referrals", referralRoutes);
+app.use("/api/returns", returnRoutes);
 
 
 // ============= ERROR HANDLERS =============
