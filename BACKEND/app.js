@@ -14,6 +14,7 @@ import wishlistRoutes from "./routes/wishlist.route.js";
 import newsletterRoutes from "./routes/newsletter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import userRoutes from "./routes/user.route.js";
+import couponRoutes from "./routes/coupon.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import referralRoutes from "./routes/referral.route.js";
 import passport from "./config/passport.js";
@@ -113,6 +114,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/newsletter", newsletterRoutes);
+app.use("/api/coupons", couponRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/referrals", referralRoutes);
 
