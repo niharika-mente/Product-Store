@@ -178,6 +178,7 @@ const { deleteProduct, updateProduct, addToCompare, compareList = [], isSubmitti
           h={48}
           w="full"
           objectFit="cover"
+          fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
           transition="transform 0.4s"
           _groupHover={{ transform: "scale(1.05)" }}
           cursor="pointer"
