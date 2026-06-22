@@ -67,11 +67,15 @@ const RatingSummary = ({ reviews, filterStar, onFilterChange, distribution, aver
 
     const rounded = averageRating ?? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalCount) * 10) / 10;
 
-    const dist = distribution || [5, 4, 3, 2, 1].map((star) => ({
-        star,
-        count: reviews.filter((r) => r.rating === star).length,
-    }));
-
+    const dist = distribution
+            ? [5, 4, 3, 2, 1].map((star) => ({
+                star,
+                count: distribution[star] ?? 0,
+            }))
+            : [5, 4, 3, 2, 1].map((star) => ({
+                star,
+                count: reviews.filter((r) => r.rating === star).length,
+            }));
     return (
         <Box
             p={5}
