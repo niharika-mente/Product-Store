@@ -17,10 +17,14 @@ import userRoutes from "./routes/user.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import referralRoutes from "./routes/referral.route.js";
+import returnRoutes from "./routes/return.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import { stripeWebhook } from "./controllers/checkout.controller.js";
+import { expressMiddleware } from "@as-integrations/express4";
+import { apolloServer } from "./graphql/server.js";
+import { optionalProtect } from "./middleware/auth.js";
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
@@ -58,6 +62,18 @@ if (process.env.VITE_API_URL) {
 }
 
 const app = express();
+await apolloServer.start();
+
+app.use(
+  "/graphql",
+  express.json(),
+  optionalProtect,
+  expressMiddleware(apolloServer, {
+    context: async ({ req }) => ({
+      user: req.user || null,
+    }),
+  })
+);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -117,6 +133,7 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/referrals", referralRoutes);
+app.use("/api/returns", returnRoutes);
 
 
 // ============= ERROR HANDLERS =============
@@ -134,4 +151,14 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+// ============= ERROR HANDLERS (ALWAYS AT THE BOTTOM) =============
+// 404 handler for unmatched routes (API routes that don't exist)
+app.use(notFoundHandler);
+// Global error handler
+app.use(errorHandler);
+
 export default app;
+
+
+
+

@@ -96,7 +96,6 @@ export const getProducts = async (req, res, next) => {
             if (maxPrice) filter.price.$lte = Number(maxPrice);
         }
         if (brand) {
-            // Case-insensitive brand search
             filter.brand = { $regex: new RegExp(brand, 'i') };
         }
         if (minRating) {
@@ -158,6 +157,7 @@ export const createProduct = async (req, res, next) => {
     }
 
     let finalImageUrl = imageUrl || '';
+    let cloudinaryPublicId; // track uploaded image's public ID for potential cleanup
 
     if (req.file) {
         if (!cloudinaryConfigured()) {
@@ -166,7 +166,8 @@ export const createProduct = async (req, res, next) => {
         try {
             const result = await uploadToCloudinary(req.file.buffer);
             finalImageUrl = result.secure_url;
-        } catch (error) {
+            cloudinaryPublicId = result.public_id; // save public ID for cleanup if needed
+        } catch (_error) {
             return next(new AppError("Image upload failed", 500));
         }
     }
@@ -194,7 +195,15 @@ export const createProduct = async (req, res, next) => {
         await invalidateProductCache();
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
-        next(error);
+        // CLEANUP: delete uploaded Cloudinary image if save failed
+        if (cloudinaryPublicId) {
+            try {
+                await cloudinary.uploader.destroy(cloudinaryPublicId);
+            } catch (destroyError) {
+                console.error("Failed to delete Cloudinary image:", destroyError.message);
+            }
+        }
+        return next(error);
     }
 };
 
@@ -245,8 +254,7 @@ export const updateProduct = async (req, res, next) => {
         try {
             const result = await uploadToCloudinary(req.file.buffer);
             updateData.image = result.secure_url;
-
-        } catch (error) {
+        } catch (_error) {
             return next(new AppError("Image upload failed", 500));
         }
     }
@@ -256,13 +264,13 @@ export const updateProduct = async (req, res, next) => {
         if (!updatedProduct) {
             return next(new AppError("Product not found", 404));
         }
-        if (req.file){
+        if (req.file) {
             const oldPublicId = extractCloudinaryPublicId(existing.image);
-                if (oldPublicId) {
-                    cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-                        console.warn("Old image cleanup failed:", err.message);
-                    });
-                }
+            if (oldPublicId) {
+                cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+                    console.warn("Old image cleanup failed:", err.message);
+                });
+            }
         }
 
         await indexProduct(updatedProduct);
@@ -305,20 +313,19 @@ export const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).json({ success: false, message: "Invalid Product Id" });
+        return next(new AppError("Invalid Product Id format", 404));
     }
 
     try {
         const product = await Product.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
         if (!product) {
-            return res.status(404).json({ success: false, message: "Product not found" });
+            return next(new AppError("Product not found", 404));
         }
         await deleteProductFromIndex(id);
         await invalidateProductCache();
         res.status(200).json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
-        console.log("error in deleting product:", error.message);
-        res.status(500).json({ success: false, message: "Server Error" });
+        next(error);
     }
 };
 
@@ -371,7 +378,7 @@ export const getRelatedProducts = async (req, res) => {
         const orConditions = [];
         if (product.category) orConditions.push({ category: product.category });
         if (product.brand) orConditions.push({ brand: product.brand });
-        if (targetTagsSet.size > 0) orConditions.push({ tags: { $in: [ ...targetTagsSet ] } });
+        if (targetTagsSet.size > 0) orConditions.push({ tags: { $in: [...targetTagsSet] } });
 
         const query = {
             _id: { $ne: product._id },
@@ -396,7 +403,7 @@ export const getRelatedProducts = async (req, res) => {
 
             if (c.tags && c.tags.length > 0) {
                 for (const tag of c.tags) {
-                    if (targetTags.has(tag.toLowerCase())) {
+                    if (targetTagsSet.has(tag.toLowerCase())) {
                         score += 2;
                     }
                 }
@@ -441,11 +448,15 @@ export const getProductBundle = async (req, res) => {
             .slice(0, 3);
 
         const bundleTotal = [product, ...items.map(i => i.product)]
-            .reduce((sum, p) => sum + p.price, 0);
+            .reduce((sum, p) => sum + (Number(p?.price) || 0), 0);
 
         const bundleDiscount = 0.1;
-        const bundlePrice = +(bundleTotal * (1 - bundleDiscount)).toFixed(2);
-        const savings = +(bundleTotal * bundleDiscount).toFixed(2);
+        const bundlePrice = bundleTotal > 0
+            ? +(bundleTotal * (1 - bundleDiscount)).toFixed(2)
+            : 0;
+        const savings = bundleTotal > 0
+            ? +(bundleTotal * bundleDiscount).toFixed(2)
+            : 0;
 
         res.status(200).json({
             success: true,
@@ -476,16 +487,20 @@ export const searchProducts = async (req, res, next) => {
     }
 
     try {
-        // Try Elasticsearch first
         const esProducts = await searchProductsES(q);
         if (esProducts) {
             return res.status(200).json({ success: true, data: esProducts });
         }
 
-        // Fallback to MongoDB regex search
         const safeQuery = escapeRegex(q);
         const regex = new RegExp(safeQuery, 'i');
-        const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
+        const products = await Product.find({
+            $or: [
+                { name: regex },
+                { tags: { $in: [regex] } }
+            ],
+            isDeleted: { $ne: true }
+        });
         res.status(200).json({ success: true, data: products });
     } catch (error) {
         next(error);

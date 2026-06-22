@@ -1,7 +1,7 @@
 import express from "express";
 import passport from "../config/passport.js";
 import jwt from "jsonwebtoken";
-
+import User from "../models/user.model.js";
 import {
   registerUser,
   loginUser,
@@ -41,10 +41,34 @@ router.get('/github/callback', passport.authenticate('github', { session: false,
 });
 
 router.get('/me', authMiddleware, async (req, res) => {
-    res.json({
-        success: true,
-        data: { id: req.user._id, name: req.user.name, email: req.user.email, avatar: req.user.avatar, provider: req.user.provider }
-    });
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                provider: user.provider,
+                themePreference: user.themePreference
+            }
+        });
+    } catch (error) {
+        console.error('GET ME ERROR:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
 });
 
 export default router;
