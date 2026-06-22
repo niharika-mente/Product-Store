@@ -494,7 +494,13 @@ export const searchProducts = async (req, res, next) => {
 
         const safeQuery = escapeRegex(q);
         const regex = new RegExp(safeQuery, 'i');
-        const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
+        const products = await Product.find({
+            $or: [
+                { name: regex },
+                { tags: { $in: [regex] } }
+            ],
+            isDeleted: { $ne: true }
+        });
         res.status(200).json({ success: true, data: products });
     } catch (error) {
         next(error);
