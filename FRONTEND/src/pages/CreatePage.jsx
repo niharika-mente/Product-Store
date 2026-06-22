@@ -276,8 +276,7 @@ const CreatePage = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  aria   accept="image/jpeg,image/png,image/webp,image/gif"
-                 -label="Original Price"
+                  aria-label="Original Price"   accept="image/jpeg,image/png,image/webp,image/gif"
                   value={newProduct.originalPrice}
                   onChange={(e) => handleChange("originalPrice", e.target.value)}
                 />
