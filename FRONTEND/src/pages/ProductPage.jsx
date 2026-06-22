@@ -140,10 +140,12 @@ const ProductPage = () => {
   };
 
   const handleAddBundleToCart = () => {
+    const isFullBundle = selectedBundleItems.length === bundleData.items.length;
+    const discount = isFullBundle ? bundleData.bundleDiscount : 0;
     const allItems = [product, ...bundleData.items
       .filter(i => selectedBundleItems.includes(i.product._id))
       .map(i => i.product)];
-    const { addedCount, skippedCount } = addBundleToCart(allItems);
+    const { addedCount, skippedCount } = addBundleToCart(allItems, discount);
 
     if (addedCount > 0) {
       toast({
@@ -278,7 +280,7 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                       _hover={{ borderColor: "blue.300" }}
                       aria-label={`View image ${idx + 1}`}
                     >
-                      <Image src={img} alt={`thumb ${idx}`} objectFit="cover" w="full" h="full" />
+                      <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} objectFit="cover" w="full" h="full" />
                     </Box>
                   ))}
                 </HStack>

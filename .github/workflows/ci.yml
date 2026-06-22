@@ -8,6 +8,11 @@ jobs:
   build-and-lint:
     name: Build & Lint
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
 
     steps:
       - name: Checkout code
@@ -21,13 +26,18 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             FRONTEND/package-lock.json
+            BACKEND/package-lock.json
 
       - name: Install root dependencies
         run: npm ci
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm install
         working-directory: FRONTEND
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: BACKEND
 
       - name: Build frontend
         run: npm run build
@@ -36,6 +46,14 @@ jobs:
       - name: Lint frontend
         run: npm run lint
         working-directory: FRONTEND
+
+      - name: Run backend tests
+        run: npm test
+        working-directory: BACKEND
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/test_db
+          JWT_SECRET: testsecret12345678901234567890123
 
   e2e-tests:
     name: Playwright E2E Tests
@@ -61,11 +79,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            FRONTEND/package-lock.json
+            BACKEND/package-lock.json
 
       - name: Install dependencies
         run: |
           npm ci
-          cd FRONTEND && npm ci
+          cd FRONTEND && npm install
           cd ../BACKEND && npm ci
 
       - name: Install Playwright Browsers

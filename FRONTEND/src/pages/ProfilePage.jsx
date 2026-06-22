@@ -132,7 +132,12 @@ const ProfilePage = () => {
 
   return (
     <Container maxW="container.md" py={10}>
-      <Heading mb={6} size="xl">My Profile</Heading>
+      <Flex justify="space-between" align="center" mb={6}>
+        <Heading size="xl">My Profile</Heading>
+        <Button colorScheme="cyan" onClick={() => navigate('/referrals')}>
+          Referral Dashboard
+        </Button>
+      </Flex>
 
       <Tabs colorScheme="blue" variant="enclosed">
         <TabList>
