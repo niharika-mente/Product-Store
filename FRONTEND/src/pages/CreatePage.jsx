@@ -276,10 +276,22 @@ const CreatePage = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  aria   accept="image/jpeg,image/png,image/webp,image/gif"
-                 -label="Original Price"
+                  aria-label="Original Price"
                   value={newProduct.originalPrice}
                   onChange={(e) => handleChange("originalPrice", e.target.value)}
+                />
+                <Input
+                  placeholder="Tags (comma separated, e.g. wireless, premium)"
+                  name="tags"
+                  aria-label="Product Tags"
+                  value={newProduct.tags ? newProduct.tags.join(', ') : ''}
+                  onChange={(e) => {
+                    const tagsArray = e.target.value
+                      .split(',')
+                      .map(tag => tag.trim())
+                      .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
+                    handleChange("tags", tagsArray.slice(0, 5));
+                  }}
                 />
                 <Input
                   placeholder="Discount Percentage (0-100)"
