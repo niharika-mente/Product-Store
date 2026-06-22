@@ -207,53 +207,55 @@ const ProductCard = ({ product }) => {
       }}
       bg={bg}
     >
-      <Box position="relative">
-        <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-          <Image
-            src={product.image}
-            alt={product.name}
-            h={48}
-            w="full"
-            objectFit="cover"
-            transition="transform 0.4s"
-            _groupHover={{ transform: "scale(1.05)" }}
-            cursor="pointer"
-          />
-        </Link>
-        {isLowStock && (
-          <Badge
-            position="absolute"
-            top={2}
-            left={2}
-            colorScheme="orange"
-            fontSize="xs"
-            px={2}
-            py={1}
-            borderRadius="md"
-            zIndex={1}
-            boxShadow="sm"
-          >
-            Low Stock
-          </Badge>
-        )}
-        {isOutOfStock && (
-          <Badge
-            position="absolute"
-            top={2}
-            left={2}
-            colorScheme="red"
-            fontSize="xs"
-            px={2}
-            py={1}
-            borderRadius="md"
-            zIndex={1}
-            boxShadow="sm"
-          >
-            Out of Stock
-          </Badge>
-        )}
-      </Box>
+<Box position="relative">
+  <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+    <Image
+      src={product.image}
+      alt={product.name}
+      h={48}
+      w="full"
+      objectFit="cover"
+      fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
+      transition="transform 0.4s"
+      _groupHover={{ transform: "scale(1.05)" }}
+      cursor="pointer"
+    />
+  </Link>
 
+  {isLowStock && (
+    <Badge
+      position="absolute"
+      top={2}
+      left={2}
+      colorScheme="orange"
+      fontSize="xs"
+      px={2}
+      py={1}
+      borderRadius="md"
+      zIndex={1}
+      boxShadow="sm"
+    >
+      Low Stock
+    </Badge>
+  )}
+
+  {isOutOfStock && (
+    <Badge
+      position="absolute"
+      top={2}
+      left={2}
+      colorScheme="red"
+      fontSize="xs"
+      px={2}
+      py={1}
+      borderRadius="md"
+      zIndex={1}
+      boxShadow="sm"
+    >
+      Out of Stock
+    </Badge>
+  )}
+</Box>
       <Box p={4}>
         {/* Product Name with Link */}
         <Heading as="h3" size="md" mb={2} noOfLines={1}>
