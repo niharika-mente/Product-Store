@@ -19,6 +19,9 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  useEffect(() => {
+  setQuantity(1);
+}, [id]);
   const [bundleData, setBundleData] = useState(null);
   const [selectedBundleItems, setSelectedBundleItems] = useState([]);
   const [activeImg, setActiveImg] = useState(0);
