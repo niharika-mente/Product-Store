@@ -7,7 +7,7 @@ import {
 } from '@chakra-ui/react';
 import { useProductStore } from '../../store/product';
 
-const FilterPanel = ({ filters, setFilters }) => {
+const FilterPanel = ({ filters, setFilters, isDisabled = false }) => {
   const [localFilters, setLocalFilters] = useState(filters);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -78,7 +78,7 @@ const FilterPanel = ({ filters, setFilters }) => {
       borderColor={borderColor}
       borderRadius="xl"
       shadow="sm"
-      w="full"
+      w="280px"
     >
       <HStack justify="space-between" mb={4}>
         <Text fontSize="xl" fontWeight="bold">Filters</Text>
@@ -101,6 +101,7 @@ const FilterPanel = ({ filters, setFilters }) => {
                 <Checkbox
                   key={cat}
                   colorScheme="blue"
+                  isDisabled={isDisabled}
                   isChecked={(localFilters.categories || []).includes(cat)}
                   onChange={() => handleCategoryChange(cat)}
                 >
@@ -122,6 +123,7 @@ const FilterPanel = ({ filters, setFilters }) => {
                 <Checkbox
                   key={brand}
                   colorScheme="blue"
+                  isDisabled={isDisabled}
                   isChecked={localFilters.brand === brand}
                   onChange={() => handleBrandChange(brand)}
                 >
@@ -143,6 +145,7 @@ const FilterPanel = ({ filters, setFilters }) => {
             </Text>
           </HStack>
           <RangeSlider
+            isDisabled={isDisabled}
             min={0} max={5000} step={10}
             value={[localFilters.minPrice, localFilters.maxPrice]}
             onChange={(val) =>
@@ -166,6 +169,7 @@ const FilterPanel = ({ filters, setFilters }) => {
             onChange={(e) =>
               setLocalFilters({ ...localFilters, minRating: Number(e.target.value) })
             }
+            isDisabled={isDisabled}
           >
             <option value={0}>Any Rating</option>
             <option value={1}>1+ Stars</option>
@@ -184,6 +188,7 @@ const FilterPanel = ({ filters, setFilters }) => {
             onChange={(e) =>
               setLocalFilters({ ...localFilters, inStock: e.target.checked })
             }
+            isDisabled={isDisabled}
           >
             <Text fontSize="sm">In Stock Only</Text>
           </Checkbox>
@@ -192,10 +197,11 @@ const FilterPanel = ({ filters, setFilters }) => {
         <Divider />
 
         <VStack spacing={3}>
-          <Button colorScheme="blue" w="full" onClick={handleApply}>
+          <Button colorScheme="blue" w="full" onClick={handleApply}
+          isDisabled={isDisabled}>
             Apply Filters
           </Button>
-          <Button variant="outline" w="full" onClick={handleReset}>
+          <Button variant="outline" w="full" onClick={handleReset} isDisabled={isDisabled}>
             Clear Filters
           </Button>
         </VStack>
