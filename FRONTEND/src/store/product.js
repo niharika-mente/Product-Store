@@ -140,8 +140,16 @@ export const useProductStore = create((set) =>({
         try {
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "DELETE",
-            });
-            const data = await res.json();
+        });
+
+        if (!res.ok) {
+            set({ isDeleting: false });
+            return {
+                success: false,
+                message: `Request failed with status ${res.status}`,
+            };
+        }
+        const data = await res.json();
             if (!data.success) {
                 set({ isDeleting: false });
                 return { success: false, message: data.message };
@@ -178,8 +186,16 @@ export const useProductStore = create((set) =>({
 
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "PUT",
-                body: formData,
+                 body: formData,
             });
+
+            if (!res.ok) {
+                set({ isSubmitting: false });
+                return {
+                    success: false,
+                    message: `Request failed with status ${res.status}`,
+                };
+            }
 
             const data = await res.json();
             if (!data.success) {
