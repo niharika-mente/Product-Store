@@ -114,10 +114,11 @@ app.use(cors({
     credentials: true
 }));
 app.use(passport.initialize());
-app.use("/api", limiter);
 
 // Stripe webhook needs raw body — must be registered before express.json()
 app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
+
+app.use("/api", limiter);
 
 app.use(express.json());
 
