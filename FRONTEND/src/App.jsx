@@ -14,13 +14,14 @@ import { AuthProvider } from './context/AuthContext';
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ComparePage from "./pages/ComparePage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ReferralDashboardPage from "./pages/ReferralDashboardPage";
 import MyReturnsPage from "./pages/MyReturnsPage";
 import ReturnsAdminPage from "./pages/admin/ReturnsAdminPage";
@@ -57,7 +58,7 @@ function App() {
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            <Route path="/admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
