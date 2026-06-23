@@ -288,8 +288,8 @@ const CreatePage = () => {
                   onChange={(e) => {
                     const tagsArray = e.target.value
                       .split(',')
-                      .map(tag => tag.trim())
-                      .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
+                      .map(tag => tag.trim().toLowerCase())
+                      .filter(tag => /^[a-z0-9-]{1,30}$/.test(tag));
                     handleChange("tags", tagsArray.slice(0, 5));
                   }}
                 />

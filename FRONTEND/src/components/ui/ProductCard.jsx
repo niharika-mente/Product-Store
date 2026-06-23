@@ -612,8 +612,8 @@ const ProductCard = ({ product }) => {
                 onChange={(e) => {
                   const tagsArray = e.target.value
                     .split(",")
-                    .map((tag) => tag.trim())
-                    .filter((tag) => tag && tag.length >= 2 && tag.length <= 30);
+                    .map((tag) => tag.trim().toLowerCase())
+                    .filter((tag) => /^[a-z0-9-]{1,30}$/.test(tag));
                   setUpdatedProduct({ ...updatedProduct, tags: tagsArray });
                 }}
               />

@@ -14,6 +14,23 @@ const productSchema = new mongoose.Schema({
   basePrice: { type: Number },
   baseStock: { type: Number },
   hasVariants: { type: Boolean, default: false },
+  tags: {
+    type: [{
+      type: String,
+      trim: true,
+      lowercase: true,
+      minlength: 1,
+      maxlength: 30,
+      match: /^[a-z0-9-]+$/
+    }],
+    default: [],
+    validate: [{
+      validator: function (value) {
+        return Array.isArray(value) ? value.length <= 5 : true;
+      },
+      message: 'A product may have at most 5 tags.'
+    }]
+  },
   variants: [variantSchema]
 }, { timestamps: true });
 
