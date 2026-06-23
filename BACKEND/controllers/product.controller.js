@@ -392,18 +392,40 @@ export const getProductBundle = async (req, res) => {
 
 // @desc    Search products
 export const searchProducts = async (req, res, next) => {
-    const { q } = req.query;
+  const { q, page = 1, limit = 8, sort = "createdAt", order = "desc" } = req.query;
 
-    if (!q || !q.trim()) {
-        return res.status(400).json({ success: false, message: "Search query is required" });
-    }
+  if (!q || !q.trim()) {
+    return res.status(400).json({ success: false, message: "Search query is required" });
+  }
 
-    try {
+  try {
     const safeQuery = escapeRegex(q);
     const regex = new RegExp(safeQuery, 'i');
-    const products = await Product.find({ name: regex, isDeleted: { $ne: true } });
-    res.status(200).json({ success: true, data: products });
-} catch (error) {
-        next(error);
-    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+    const sortOrder = order === "asc" ? 1 : -1;
+
+    const filter = { name: regex, isDeleted: { $ne: true } };
+
+    const total = await Product.countDocuments(filter);
+    const products = await Product.find(filter)
+      .sort({ [sort]: sortOrder })
+      .skip(skip)
+      .limit(limitNum);
+
+    res.status(200).json({
+      success: true,
+      data: products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 };
