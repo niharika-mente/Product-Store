@@ -35,6 +35,7 @@ import { useCurrencyStore } from "../../store/currency";
 import { useProductStore } from "../../store/product";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { formatPrice } from "../../utils/currency";
+import QuickViewModal from "./QuickViewModal";
 import {
   showErrorToast,
   showInfoToast,
@@ -75,6 +76,7 @@ const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
+  const { currency, rates } = useCurrencyStore();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -82,9 +84,14 @@ const ProductCard = ({ product }) => {
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
+  const {
+    isOpen: isQuickViewOpen,
+    onOpen: onQuickViewOpen,
+    onClose: onQuickViewClose,
+  } = useDisclosure();
 
   const LOW_STOCK_THRESHOLD = 5;
-  const isOutOfStock = product.stock != null && product.stock === 0;
+  const isOutOfStock = !product.stock || product.stock <= 0;
   const isLowStock = product.stock != null && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   // Sync updatedProduct when product prop changes
@@ -264,7 +271,7 @@ const ProductCard = ({ product }) => {
 
         {/* Price */}
         <Text fontWeight="bold" fontSize="xl" color={textColor} mb={4}>
-          ${product.price}
+          {formatPrice(product.price, currency, rates)}
         </Text>
 
         {/* Tags */}
@@ -290,6 +297,11 @@ const ProductCard = ({ product }) => {
         {/* Action Buttons */}
         <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
           <HStack spacing={2}>
+            {/* Quick View */}
+            <Button size="sm" colorScheme="purple" onClick={onQuickViewOpen}>
+              Quick View
+            </Button>
+
             {/* Wishlist */}
             <IconButton
               icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
@@ -624,8 +636,15 @@ const ProductCard = ({ product }) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <QuickViewModal
+        isOpen={isQuickViewOpen}
+        onClose={onQuickViewClose}
+        product={product}
+      />
     </Box>
   );
 };
 
 export default ProductCard;
+
