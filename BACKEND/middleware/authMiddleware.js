@@ -14,7 +14,6 @@ const authMiddleware = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // JWT specific errors alag handle honge
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -32,7 +31,6 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Validate decoded payload before DB lookup
     if (!decoded?.id) {
       return res.status(401).json({
         success: false,
@@ -40,7 +38,6 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // User existence verify karo DB se
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -59,7 +56,7 @@ const authMiddleware = async (req, res, next) => {
     };
 
     next();
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({
       success: false,
       message: "Internal server error during authentication.",
@@ -68,4 +65,3 @@ const authMiddleware = async (req, res, next) => {
 };
 
 export default authMiddleware;
-

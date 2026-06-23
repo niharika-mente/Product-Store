@@ -15,7 +15,7 @@ export const getSavedItems = async (req, res, next) => {
       savedList.products = savedList.products.filter(p => p != null);
     }
 
-    res.status(200).json(savedList);
+    res.status(200).json({ success: true, data: savedList });
   } catch (error) {
     next(error);
   }
@@ -48,7 +48,7 @@ export const addToSavedForLater = async (req, res, next) => {
       match: { isDeleted: { $ne: true } }
     });
     savedList.products = savedList.products.filter(p => p != null);
-    res.status(200).json(savedList);
+    res.status(200).json({ success: true, data: savedList });
   } catch (error) {
     next(error);
   }
@@ -58,6 +58,9 @@ export const addToSavedForLater = async (req, res, next) => {
 export const removeFromSavedForLater = async (req, res, next) => {
   try {
     const { productId } = req.params;
+    if (!productId) {
+      return next(new AppError("Product ID is required", 400));
+    }
     let savedList = await SavedForLater.findOne({ user: req.user._id });
 
     if (!savedList) {
@@ -75,7 +78,7 @@ export const removeFromSavedForLater = async (req, res, next) => {
     });
     savedList.products = savedList.products.filter(p => p != null);
 
-    res.status(200).json(savedList);
+    res.status(200).json({ success: true, data: savedList });
   } catch (error) {
     next(error);
   }
@@ -114,7 +117,7 @@ export const syncSavedItems = async (req, res, next) => {
       match: { isDeleted: { $ne: true } }
     });
     savedList.products = savedList.products.filter(p => p != null);
-    res.status(200).json(savedList);
+    res.status(200).json({ success: true, data: savedList });
   } catch (error) {
     next(error);
   }

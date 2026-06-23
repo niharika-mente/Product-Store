@@ -24,9 +24,8 @@ export const useSavedForLaterStore = create(
           });
 
           if (res.ok) {
-            const data = await res.json();
-            // Data returns populated products
-            set({ savedItems: data.products || [] });
+            const json = await res.json();
+            set({ savedItems: json.data?.products || [] });
           }
         } catch (error) {
           console.error("Failed to sync saved items:", error);
@@ -42,8 +41,8 @@ export const useSavedForLaterStore = create(
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
-            const data = await res.json();
-            set({ savedItems: data.products || [] });
+            const json = await res.json();
+            set({ savedItems: json.data?.products || [] });
           }
         } catch (error) {
           console.error("Failed to fetch saved items:", error);

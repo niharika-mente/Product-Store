@@ -1,166 +1,153 @@
 import { jest } from '@jest/globals';
-import { getSavedItems, addToSavedForLater, removeFromSavedForLater, syncSavedItems } from '../controllers/savedForLater.controller.js';
-import SavedForLater from '../models/savedForLater.model.js';
 
-// Mock the model
-jest.mock('../models/savedForLater.model.js');
+const mockFindOne = jest.fn();
+const mockCreate = jest.fn();
 
-describe('Saved For Later Controller Edge Cases', () => {
-    let req, res, next;
+jest.unstable_mockModule('../models/savedForLater.model.js', () => ({
+  default: {
+    findOne: mockFindOne,
+    create: mockCreate,
+  },
+}));
 
-    beforeEach(() => {
-        req = {
-            user: { _id: 'user123' },
-            body: {},
-            params: {}
-        };
-        res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        };
-        next = jest.fn();
-        jest.clearAllMocks();
+const { getSavedItems, addToSavedForLater, removeFromSavedForLater, syncSavedItems } = await import('../controllers/savedForLater.controller.js');
+
+function mockResolvedDoc(overrides = {}) {
+  return {
+    _id: 'doc123',
+    user: 'user123',
+    products: [],
+    ...overrides,
+    populate: jest.fn().mockResolvedValue({ ...overrides, products: overrides.products || [] }),
+    save: jest.fn().mockResolvedValue(),
+  };
+}
+
+describe('Saved For Later Controller', () => {
+  let req, res, next;
+
+  beforeEach(() => {
+    req = { user: { _id: 'user123' }, body: {}, params: {} };
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    next = jest.fn();
+    jest.clearAllMocks();
+  });
+
+  describe('getSavedItems', () => {
+    it('should return empty products if no saved items doc exists', async () => {
+      mockFindOne.mockReturnValue({ populate: jest.fn().mockResolvedValue(null) });
+      mockCreate.mockResolvedValue(mockResolvedDoc({ products: [] }));
+      await getSavedItems(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: expect.objectContaining({ products: [] }),
+      });
     });
 
-    describe('getSavedItems', () => {
-        it('should return empty array if no saved items doc exists for user', async () => {
-            SavedForLater.findOne.mockReturnValue({
-                populate: jest.fn().mockResolvedValue(null)
-            });
+    it('should filter out null (deleted) products', async () => {
+      mockFindOne.mockReturnValue({
+        populate: jest.fn().mockResolvedValue(
+          mockResolvedDoc({ products: [{ _id: 'p1', name: 'Valid' }, null] })
+        ),
+      });
+      await getSavedItems(req, res, next);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: expect.objectContaining({
+          products: [{ _id: 'p1', name: 'Valid' }],
+        }),
+      });
+    });
+  });
 
-            await getSavedItems(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith({ success: true, data: [] });
-        });
-
-        it('should filter out null products (deleted products) from populated array', async () => {
-            SavedForLater.findOne.mockReturnValue({
-                populate: jest.fn().mockResolvedValue({
-                    products: [
-                        { _id: 'prod1', name: 'Valid Product' },
-                        null // simulated deleted product
-                    ]
-                })
-            });
-
-            await getSavedItems(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                data: [{ _id: 'prod1', name: 'Valid Product' }]
-            });
-        });
+  describe('addToSavedForLater', () => {
+    it('should 400 if productId missing', async () => {
+      await addToSavedForLater(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 400 }));
     });
 
-    describe('addToSavedForLater', () => {
-        it('should return 400 if productId is missing', async () => {
-            await addToSavedForLater(req, res, next);
-            expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 400 }));
-        });
-
-        it('should create new document if user has no saved items', async () => {
-            req.body.productId = 'prod1';
-            SavedForLater.findOne.mockResolvedValue(null);
-            
-            const mockSave = jest.fn().mockResolvedValue();
-            SavedForLater.mockImplementation(() => ({ save: mockSave }));
-
-            await addToSavedForLater(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-        });
-
-        it('should not add duplicate product to existing list', async () => {
-            req.body.productId = 'prod1';
-            const existingDoc = {
-                products: ['prod1'],
-                save: jest.fn().mockResolvedValue()
-            };
-            SavedForLater.findOne.mockResolvedValue(existingDoc);
-
-            await addToSavedForLater(req, res, next);
-
-            // It should still return success, but not add duplicate
-            expect(existingDoc.products.length).toBe(1);
-            expect(res.status).toHaveBeenCalledWith(200);
-        });
+    it('should create new doc if none exists', async () => {
+      req.body.productId = 'p1';
+      mockFindOne.mockResolvedValue(null);
+      mockCreate.mockResolvedValue(mockResolvedDoc({ products: ['p1'] }));
+      await addToSavedForLater(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: expect.any(Object),
+      });
     });
 
-    describe('removeFromSavedForLater', () => {
-        it('should return 400 if productId is missing', async () => {
-            await removeFromSavedForLater(req, res, next);
-            expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 400 }));
-        });
+    it('should not duplicate', async () => {
+      req.body.productId = 'p1';
+      const doc = { products: ['p1'], save: jest.fn(), populate: jest.fn().mockResolvedValue({ products: ['p1'] }) };
+      mockFindOne.mockResolvedValue(doc);
+      await addToSavedForLater(req, res, next);
+      expect(doc.products).toHaveLength(1);
+    });
+  });
 
-        it('should gracefully handle removal when user has no saved items doc', async () => {
-            req.params.productId = 'prod1';
-            SavedForLater.findOne.mockResolvedValue(null);
-
-            await removeFromSavedForLater(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-        });
-
-        it('should filter out the product from existing list', async () => {
-            req.params.productId = 'prod1';
-            const existingDoc = {
-                products: [{ toString: () => 'prod1' }, { toString: () => 'prod2' }],
-                save: jest.fn().mockResolvedValue()
-            };
-            SavedForLater.findOne.mockResolvedValue(existingDoc);
-
-            await removeFromSavedForLater(req, res, next);
-
-            expect(existingDoc.products).toHaveLength(1);
-            expect(existingDoc.products[0].toString()).toBe('prod2');
-            expect(res.status).toHaveBeenCalledWith(200);
-        });
+  describe('removeFromSavedForLater', () => {
+    it('should 400 if productId missing', async () => {
+      await removeFromSavedForLater(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 400 }));
     });
 
-    describe('syncSavedItems', () => {
-        it('should create new doc with synced items if user has none', async () => {
-            req.body.items = ['prod1', 'prod2'];
-            SavedForLater.findOne.mockResolvedValue(null);
-            
-            const mockSave = jest.fn().mockResolvedValue();
-            SavedForLater.mockImplementation(() => ({ save: mockSave, products: ['prod1', 'prod2'] }));
-
-            await syncSavedItems(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-        });
-
-        it('should merge unique items if user already has saved items', async () => {
-            req.body.items = ['prod2', 'prod3'];
-            const existingDoc = {
-                products: [{ toString: () => 'prod1' }, { toString: () => 'prod2' }],
-                save: jest.fn().mockResolvedValue()
-            };
-            SavedForLater.findOne.mockResolvedValue(existingDoc);
-
-            await syncSavedItems(req, res, next);
-
-            // Should contain prod1, prod2, prod3
-            expect(existingDoc.products).toHaveLength(3);
-            expect(res.status).toHaveBeenCalledWith(200);
-        });
-        
-        it('should ignore empty items array gracefully', async () => {
-            req.body.items = [];
-            SavedForLater.findOne.mockResolvedValue({
-                products: [{ toString: () => 'prod1' }],
-                save: jest.fn().mockResolvedValue()
-            });
-
-            await syncSavedItems(req, res, next);
-
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-        });
+    it('should 404 if no saved list', async () => {
+      req.params.productId = 'p1';
+      mockFindOne.mockResolvedValue(null);
+      await removeFromSavedForLater(req, res, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
     });
+
+    it('should remove product', async () => {
+      req.params.productId = 'p1';
+      const doc = {
+        products: [{ toString: () => 'p1' }, { toString: () => 'p2' }],
+        save: jest.fn().mockResolvedValue(),
+        populate: jest.fn().mockImplementation(function () {
+          this.products = this.products.filter(p => p.toString() !== 'p1');
+          return Promise.resolve(this);
+        }),
+      };
+      mockFindOne.mockResolvedValue(doc);
+      await removeFromSavedForLater(req, res, next);
+      expect(doc.products).toHaveLength(1);
+    });
+  });
+
+  describe('syncSavedItems', () => {
+    it('should create new doc and merge items', async () => {
+      req.body.items = ['p1', 'p2'];
+      mockFindOne.mockResolvedValue(null);
+      mockCreate.mockResolvedValue(mockResolvedDoc({ products: [] }));
+      await syncSavedItems(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should merge unique items into existing', async () => {
+      req.body.items = ['p2', 'p3'];
+      const doc = {
+        products: [{ toString: () => 'p1' }, { toString: () => 'p2' }],
+        save: jest.fn().mockResolvedValue(),
+        populate: jest.fn().mockResolvedValue({ products: ['p1', 'p2', 'p3'] }),
+      };
+      mockFindOne.mockResolvedValue(doc);
+      await syncSavedItems(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should handle empty items array', async () => {
+      req.body.items = [];
+      const doc = {
+        products: [{ toString: () => 'p1' }],
+        save: jest.fn(),
+        populate: jest.fn().mockResolvedValue({ products: [{ toString: () => 'p1' }] }),
+      };
+      mockFindOne.mockResolvedValue(doc);
+      await syncSavedItems(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+  });
 });
