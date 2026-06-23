@@ -140,8 +140,16 @@ export const useProductStore = create((set) =>({
         try {
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "DELETE",
-            });
-            const data = await res.json();
+        });
+
+        if (!res.ok) {
+            set({ isDeleting: false });
+            return {
+                success: false,
+                message: `Request failed with status ${res.status}`,
+            };
+        }
+        const data = await res.json();
             if (!data.success) {
                 set({ isDeleting: false });
                 return { success: false, message: data.message };
@@ -178,8 +186,16 @@ export const useProductStore = create((set) =>({
 
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "PUT",
-                body: formData,
+                 body: formData,
             });
+
+            if (!res.ok) {
+                set({ isSubmitting: false });
+                return {
+                    success: false,
+                    message: `Request failed with status ${res.status}`,
+                };
+            }
 
             const data = await res.json();
             if (!data.success) {
@@ -198,10 +214,36 @@ export const useProductStore = create((set) =>({
             return { success: false, message: "Network error - could not reach API" };
         }
     },
+
+    restockProduct: async (pid, amount) => {
+        set({ isSubmitting: true, error: null });
+        try {
+            const res = await fetch(`${API}/api/products/${pid}/restock`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+                set({ isSubmitting: false, error: data.message });
+                return { success: false, message: data.message };
+            }
+            set((state) => ({
+                products: state.products.map((p) => p._id === pid ? data.data : p),
+                isSubmitting: false,
+            }));
+            return { success: true, data: data.data };
+        } catch (error) {
+            console.error("Network error restocking product:", error);
+            set({ isSubmitting: false, error: "Network error - could not reach API" });
+            return { success: false, message: "Network error - could not reach API" };
+        }
+    },
+
 compareList: [],
     addToCompare: (product) => set((state) => {
       if (state.compareList.find((p) => p._id === product._id)) return state;
-      if (state.compareList.length >= 2) return state;
+      if (state.compareList.length >= 4) return state;
       return { compareList: [...state.compareList, product] };
     }),
     removeFromCompare: (pid) => set((state) => ({
