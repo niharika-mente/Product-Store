@@ -275,7 +275,7 @@ const CreatePage = () => {
                   name="originalPrice"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="0.01"               
                   aria-label="Original Price"
                   value={newProduct.originalPrice}
                   onChange={(e) => handleChange("originalPrice", e.target.value)}
