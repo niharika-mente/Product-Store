@@ -6,6 +6,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CreatePage = () => {
   const { t } = useTranslation();
@@ -97,7 +98,7 @@ const CreatePage = () => {
     setIsDirty(true);
   };
 
-  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const cardBg = useColorModeValue("white", "gray.800");
   const toggleBg = useColorModeValue("blue.50", "blue.900");
   const infoColor = useColorModeValue("gray.700", "gray.300");
 
