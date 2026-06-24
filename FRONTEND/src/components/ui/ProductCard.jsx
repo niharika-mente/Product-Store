@@ -30,7 +30,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { FaBalanceScale, FaEdit, FaHeart, FaRegHeart, FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { useCart } from "../../store/cart";
+import { useCartStore } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
 import { useProductStore } from "../../store/product";
 import { useWishlist } from "../../context/WishlistContext.jsx";
@@ -73,7 +73,7 @@ const ProductCard = ({ product }) => {
   } = useProductStore();
 
   const isInCompare = compareList.some((p) => p._id === product._id);
-  const { addToCart } = useCart();
+  const { addToCart } = useCartStore();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
   const { currency, rates } = useCurrencyStore();
