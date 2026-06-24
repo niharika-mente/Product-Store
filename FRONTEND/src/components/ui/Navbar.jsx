@@ -50,10 +50,9 @@ const Navbar = () => {
   const searchBorder = useColorModeValue("gray.200", "gray.600");
 
   // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
-  const handleCartOpen = useCallback(async () => {
-    await fetchProducts();
+  const handleCartOpen = useCallback(() => {
     onOpen();
-  }, [fetchProducts, onOpen]);
+  }, [onOpen]);
 
   // ✅ handleCartOpen is now stable — no missing-deps warning
   useEffect(() => {
