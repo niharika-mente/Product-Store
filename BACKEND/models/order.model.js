@@ -66,6 +66,7 @@ const orderSchema = new mongoose.Schema({
 
 // Indexes for faster lookups
 orderSchema.index({ user: 1 });
+orderSchema.index({ createdAt: -1 });
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;

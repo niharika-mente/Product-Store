@@ -1,5 +1,5 @@
 import { notify } from '../../utils/toastService';
- useState } from 'react';
+import { useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -98,7 +98,7 @@ const CreateReturnModal = ({ isOpen, onClose, order, onReturnSuccess }) => {
       } else {
         notify.error('Error', 'An error occurred');
       }
-    } catch (error) {
+    } catch {
       notify.error('Error', 'An error occurred');
     } finally {
       setLoading(false);

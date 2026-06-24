@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-export const useCartStore = create((set, get) => ({
+export const useCartStore = create((set) => ({
   cart: null,
   loading: false,
 

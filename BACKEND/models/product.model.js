@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const variantSchema = new mongoose.Schema({
   size: { type: String, required: true },
@@ -34,5 +34,10 @@ const productSchema = new mongoose.Schema({
   variants: [variantSchema]
 }, { timestamps: true });
 
+// Indexes for common query patterns and performance optimization
+productSchema.index({ isDeleted: 1, category: 1, price: 1 });
+productSchema.index({ isDeleted: 1, createdAt: -1 });
+productSchema.index({ name: 'text' });
+
 const Product = mongoose.model('Product', productSchema);
-module.exports = Product;
+export default Product;

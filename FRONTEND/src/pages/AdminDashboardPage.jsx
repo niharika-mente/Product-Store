@@ -20,6 +20,7 @@ export default function AdminDashboardPage() {
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const theadBg = useColorModeValue('gray.50', 'gray.700');
+  const trHoverBg = useColorModeValue('gray.50', 'gray.700');
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -89,7 +90,7 @@ export default function AdminDashboardPage() {
                 <Tr><Td colSpan={6} textAlign="center" py={10} color="gray.400">No products found.</Td></Tr>
               )}
               {products.map((p) => (
-                <Tr key={p._id} _hover={{ bg: useColorModeValue('gray.50', 'gray.700') }}>
+                <Tr key={p._id} _hover={{ bg: trHoverBg }}>
                   <Td>
                     {p.image
                       ? <Image src={p.image} alt={p.name} boxSize="40px" objectFit="cover" borderRadius="md" />

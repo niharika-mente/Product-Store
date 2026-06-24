@@ -26,7 +26,7 @@ vi.mock('../../../context/WishlistContext.jsx', () => ({
 }));
 
 vi.mock('../../../store/cart', () => ({
-  useCart: () => ({
+  useCartStore: () => ({
     addToCart: vi.fn(),
   }),
 }));

@@ -64,7 +64,7 @@ const ProductPage = () => {
       }
       await axios.post('/api/cart', { productId: product._id, variantId: selectedVariantId, quantity: 1 });
       toast({ title: 'Added to cart!', status: 'success' });
-    } catch (err) {
+    } catch {
       toast({ title: 'Error adding to cart', status: 'error' });
     }
   };
