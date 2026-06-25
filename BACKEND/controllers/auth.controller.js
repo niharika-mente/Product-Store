@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendPasswordResetEmail } from "../services/email.service.js";
 import { processReferralOnRegister } from "../services/referral.service.js";
+import { verifyTOTP } from "../services/totp.service.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -60,7 +61,7 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, token: twoFactorToken } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -69,7 +70,8 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    // twoFactorSecret is select:false, so it must be requested explicitly.
+    const user = await User.findOne({ email }).select("+twoFactorSecret");
 
     if (!user) {
       return res.status(401).json({
@@ -101,6 +103,25 @@ export const loginUser = async (req, res) => {
         success: false,
         message: "Invalid credentials",
       });
+    }
+
+    // When 2FA is enabled, a valid authenticator code is required in addition
+    // to the password. If no code was supplied, signal the client to prompt for
+    // one rather than issuing a session token.
+    if (user.twoFactorEnabled) {
+      if (!twoFactorToken) {
+        return res.status(200).json({
+          success: true,
+          twoFactorRequired: true,
+          message: "Two-factor authentication code required",
+        });
+      }
+      if (!verifyTOTP(twoFactorToken, user.twoFactorSecret)) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid two-factor authentication code",
+        });
+      }
     }
 
     const token = jwt.sign(
