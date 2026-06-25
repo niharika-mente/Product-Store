@@ -11,12 +11,21 @@ import productRoutes from "./routes/product.route.js";
 import authRoutes from "./routes/auth.routes.js";
 import checkoutRoutes from "./routes/checkout.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
-import reviewRoutes from "./routes/review.route.js";
+import newsletterRoutes from "./routes/newsletter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
+import userRoutes from "./routes/user.route.js";
+import couponRoutes from "./routes/coupon.route.js";
+import analyticsRoutes from "./routes/analytics.route.js";
+import referralRoutes from "./routes/referral.route.js";
+import returnRoutes from "./routes/return.route.js";
+import savedForLaterRoutes from "./routes/savedForLater.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import { stripeWebhook } from "./controllers/checkout.controller.js";
+import { expressMiddleware } from "@as-integrations/express4";
+import { apolloServer } from "./graphql/server.js";
+import { optionalProtect } from "./middleware/auth.js";
 
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
@@ -35,7 +44,7 @@ const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUD
 if (missingCloudinary.length > 0) {
     console.warn(`Cloudinary credentials not configured (${missingCloudinary.join(', ')}). File uploads will be unavailable; URL-based images still work.`);
 }
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' || process.env.MONGO_URI) {
     connectDB();
 }
 
@@ -54,6 +63,18 @@ if (process.env.VITE_API_URL) {
 }
 
 const app = express();
+await apolloServer.start();
+
+app.use(
+  "/graphql",
+  express.json(),
+  optionalProtect,
+  expressMiddleware(apolloServer, {
+    context: async ({ req }) => ({
+      user: req.user || null,
+    }),
+  })
+);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -62,7 +83,7 @@ app.use(
         scriptSrc,
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "blob:", "https:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://via.placeholder.com"],
         connectSrc,
         workerSrc: ["'self'", "blob:"],
       },
@@ -75,7 +96,7 @@ app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: "Too many requests from this IP, please try again later.",
 });
 const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
@@ -94,10 +115,11 @@ app.use(cors({
     credentials: true
 }));
 app.use(passport.initialize());
-app.use("/api", limiter);
 
 // Stripe webhook needs raw body — must be registered before express.json()
 app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
+
+app.use("/api", limiter);
 
 app.use(express.json());
 
@@ -108,14 +130,25 @@ app.use("/api/auth", authRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/newsletter", newsletterRoutes);
+app.use("/api/coupons", couponRoutes);
+app.use("/api/admin/analytics", analyticsRoutes);
+app.use("/api/referrals", referralRoutes);
+app.use("/api/returns", returnRoutes);
+app.use("/api/saved-for-later", savedForLaterRoutes);
 
+
+// ============= ERROR HANDLERS =============
+// Must come before the production catch-all so unmatched /api/* routes
+// get a JSON 404 instead of index.html
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // ============= PRODUCTION STATIC FILES & REACT APP =============
+// notFoundHandler calls next() for non-API paths, which falls through here
 if (process.env.NODE_ENV === "production") {
-  // Serve static files from FRONTEND/dist
   app.use(express.static(path.join(__dirname, "..", "FRONTEND", "dist")));
-
-  // Catch-all route for React app (client-side routing)
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "FRONTEND", "dist", "index.html"));
   });
@@ -128,3 +161,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;
+
+
+
+

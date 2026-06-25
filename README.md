@@ -48,11 +48,14 @@ cd Product-Store
 
 ### 2. Install Dependencies
 
-Install dependencies for the **backend** (root) and **frontend** separately:
+Install dependencies for the root project, backend, and frontend:
 
 ```bash
-# Install backend dependencies
+# Install root dependencies
 npm install
+
+# Install backend dependencies
+cd BACKEND && npm install && cd ..
 
 # Install frontend dependencies
 cd FRONTEND && npm install && cd ..
@@ -60,13 +63,19 @@ cd FRONTEND && npm install && cd ..
 
 ### 3. Environment Variables
 
-Copy the example environment file and update it with your values:
+Create environment files for both the root project and the backend:
 
 ```bash
+# Root environment
 cp .env.example .env
+
+# Backend environment
+cp BACKEND/.env.example BACKEND/.env
 ```
 
-Edit the `.env` file:
+Edit the files with your own values.
+
+#### Root `.env`
 
 ```env
 MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/<dbname>?retryWrites=true&w=majority
@@ -75,7 +84,21 @@ NODE_ENV=development
 VITE_API_URL=http://localhost:5000
 ```
 
-> **Note:** `MONGO_URI` is required. You can get one from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or use `mongodb://localhost:27017/productstore` for a local MongoDB instance.
+#### Backend `.env`
+
+The backend requires additional environment variables such as:
+
+```env
+JWT_SECRET=your-jwt-secret-change-in-production
+```
+
+Additional variables for Stripe, Cloudinary, OAuth providers, rate limiting, and Elasticsearch are documented in:
+
+```text
+BACKEND/.env.example
+```
+
+> **Note:** The backend requires additional environment variables (including `JWT_SECRET`) that are defined in `BACKEND/.env.example`. Refer to that file for the complete backend configuration. `MONGO_URI` can be obtained from MongoDB Atlas or a local MongoDB instance.
 
 ### 4. Start the Application
 
