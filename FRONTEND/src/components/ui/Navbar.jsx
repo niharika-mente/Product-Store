@@ -10,7 +10,7 @@ import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
-import { useCart } from "../../store/cart";
+import { useCartStore } from "../../store/cart";
 import { useSavedForLater } from "../../store/savedForLater";
 import { Divider } from "@chakra-ui/react";
 import { useWishlist } from "../../context/WishlistContext.jsx";
@@ -26,7 +26,7 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, totalPrice, emptyCart, addToCart } = useCart();
+const { cartItems, removeFromCart, totalPrice, emptyCart, addToCart } = useCartStore();
   const { savedItems, saveForLater, removeFromSaved, fetchSavedItems, clearLocalSavedItems } = useSavedForLater();
   const { currency, rates, setCurrency } = useCurrencyStore();
   const { wishlistCount, clearWishlist } = useWishlist();
@@ -86,10 +86,9 @@ useEffect(() => {
   }, [location, fetchSavedItems]);
 
   // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
-  const handleCartOpen = useCallback(async () => {
-    await fetchProducts();
+  const handleCartOpen = useCallback(() => {
     onOpen();
-  }, [fetchProducts, onOpen]);
+  }, [onOpen]);
 
   // ✅ handleCartOpen is now stable — no missing-deps warning
   useEffect(() => {

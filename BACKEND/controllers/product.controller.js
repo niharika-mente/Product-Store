@@ -1,6 +1,6 @@
-const Product = require('../models/product.model');
+import Product from '../models/product.model.js';
 
-exports.createProduct = async (req, res) => {
+export const createProduct = async (req, res) => {
   try {
     const { name, description, basePrice, baseStock, hasVariants, variants } = req.body;
     const newProduct = new Product({
@@ -18,7 +18,7 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-exports.getProducts = async (req, res) => {
+export const getProducts = async (req, res) => {
   try {
     const products = await Product.find();
     res.status(200).json(products);
@@ -27,7 +27,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-exports.getProductById = async (req, res) => {
+export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
@@ -36,3 +36,11 @@ exports.getProductById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const deleteProduct = async (req, res) => res.status(501).json({ message: "Not implemented" });
+export const getProductCategories = async (req, res) => res.status(501).json({ message: "Not implemented" });
+export const updateProduct = async (req, res) => res.status(501).json({ message: "Not implemented" });
+export const getRelatedProducts = async (req, res) => res.status(501).json({ message: "Not implemented" });
+export const searchProducts = async (req, res) => res.status(501).json({ message: "Not implemented" });
+export const getProductBundle = async (req, res) => res.status(501).json({ message: "Not implemented" });
+export const restockProduct = async (req, res) => res.status(501).json({ message: "Not implemented" });

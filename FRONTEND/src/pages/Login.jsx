@@ -25,6 +25,9 @@ import {
 } from "../utils/toastHelpers";
 import { useSavedForLaterStore } from "../store/savedForLater";
 import { useAuth } from '../context/AuthContext';
+import { FcGoogle } from "react-icons/fc";
+import { FaGithub } from "react-icons/fa";
+import { HStack } from "@chakra-ui/react";
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -155,24 +158,40 @@ function Login() {
                     Forgot password?
                   </Link>
                 </Text>
-
                 <Stack spacing={3} mt={4}>
                   <Button
                     variant="outline"
-                    colorScheme="red"
                     width="100%"
+                    size="lg"
+                    borderRadius="xl"
+                    borderColor="red.200"
+                    _hover={{
+                      bg: "red.50",
+                      transform: "translateY(-2px)",
+                      boxShadow: "lg",
+                    }}
+                    leftIcon={<FcGoogle size={22} />}
                     onClick={() => {
-                      window.location.href = '/api/auth/google';
+                      window.location.href = "/api/auth/google";
                     }}
                   >
                     Continue with Google
                   </Button>
+
                   <Button
                     variant="outline"
-                    colorScheme="gray"
                     width="100%"
+                    size="lg"
+                    borderRadius="xl"
+                    borderColor="gray.300"
+                    _hover={{
+                      bg: useColorModeValue("gray.50", "gray.700"),
+                      transform: "translateY(-2px)",
+                      boxShadow: "lg",
+                    }}
+                    leftIcon={<FaGithub size={20} />}
                     onClick={() => {
-                      window.location.href = '/api/auth/github';
+                      window.location.href = "/api/auth/github";
                     }}
                   >
                     Continue with GitHub

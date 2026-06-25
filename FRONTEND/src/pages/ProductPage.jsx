@@ -5,6 +5,19 @@ import axios from 'axios';
 
 const ProductPage = () => {
   const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  useEffect(() => {
+  setQuantity(1);
+}, [id]);
+  const [bundleData, setBundleData] = useState(null);
+  const [selectedBundleItems, setSelectedBundleItems] = useState([]);
+  const [activeImg, setActiveImg] = useState(0);
+
+  const { addToCart, addBundleToCart } = useCart();
+  const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
@@ -51,7 +64,7 @@ const ProductPage = () => {
       }
       await axios.post('/api/cart', { productId: product._id, variantId: selectedVariantId, quantity: 1 });
       toast({ title: 'Added to cart!', status: 'success' });
-    } catch (err) {
+    } catch {
       toast({ title: 'Error adding to cart', status: 'error' });
     }
   };
