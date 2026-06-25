@@ -69,3 +69,25 @@ describe('Helmet security HTTP headers', () => {
         expect(res.headers['x-powered-by']).toBeUndefined();
     });
 });
+
+// helmet must be registered before the /graphql route, otherwise GraphQL
+// responses bypass the security headers entirely.
+describe('Helmet security headers on the /graphql route', () => {
+    let res;
+
+    beforeAll(async () => {
+        res = await request(app).post('/graphql').send({ query: '{ __typename }' });
+    });
+
+    it('resolves the GraphQL request', () => {
+        expect(res.status).toBe(200);
+        expect(res.body.data.__typename).toBe('Query');
+    });
+
+    it('applies the security headers to GraphQL responses', () => {
+        expect(res.headers['content-security-policy']).toBeDefined();
+        expect(res.headers['x-content-type-options']).toBe('nosniff');
+        expect(res.headers['strict-transport-security']).toContain('max-age=');
+        expect(res.headers['x-powered-by']).toBeUndefined();
+    });
+});
