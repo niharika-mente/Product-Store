@@ -548,7 +548,7 @@ const allImages = [product?.image, ...(product?.images || [])].filter(Boolean);
                 <Box>
                   <Text fontSize="sm" color={textColor}>
                     Bundle Total:{' '}
-                    <Text as="span" textDecoration="line-through" color="gray.400">
+                    <Text as="span" textDecoration={isFullBundle ? "line-through" : "none"} color="gray.400">
                       ${bundleData.bundleTotal}
                     </Text>
                   </Text>
