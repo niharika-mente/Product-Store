@@ -5,19 +5,7 @@ import {
   indexProduct,
   deleteProductFromIndex,
 } from "../services/elasticsearch.service.js";
-import redis from "../config/redis.js";
-
-async function invalidateProductCache() {
-  if (!redis) return;
-  try {
-    const keys = await redis.keys("products:*");
-    if (keys.length) {
-      await redis.del(...keys);
-    }
-  } catch (error) {
-    console.warn("[Redis] Cache invalidation error:", error.message);
-  }
-}
+import { invalidateProductCache } from "../services/productCache.js";
 
 export const resolvers = {
   Query: {

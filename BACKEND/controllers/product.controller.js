@@ -1,4 +1,10 @@
 import Product from '../models/product.model.js';
+import {
+  buildListCacheKey,
+  getCachedList,
+  setCachedList,
+  invalidateProductCache,
+} from '../services/productCache.js';
 
 // Escapes user-supplied text before it is used inside a RegExp, so values like
 // "a+b" are matched literally instead of being interpreted as regex syntax.
@@ -17,6 +23,8 @@ export const createProduct = async (req, res) => {
       variants: hasVariants ? variants : []
     });
     await newProduct.save();
+    // A new product invalidates every cached catalog page.
+    await invalidateProductCache();
     res.status(201).json(newProduct);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -25,8 +33,52 @@ export const createProduct = async (req, res) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
-    res.status(200).json(products);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
+    const { sort, minPrice, maxPrice } = req.query;
+
+    // Serve from the Redis cache when a matching entry exists. The key is
+    // derived from the exact pagination/filter combination so each variant is
+    // cached separately. A miss (or disabled/unreachable cache) falls through
+    // to MongoDB below.
+    const cacheKey = buildListCacheKey({ page, limit, sort, minPrice, maxPrice });
+    const cached = await getCachedList(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
+    const filter = {};
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.basePrice = {};
+      if (minPrice !== undefined) filter.basePrice.$gte = Number(minPrice);
+      if (maxPrice !== undefined) filter.basePrice.$lte = Number(maxPrice);
+    }
+
+    const sortMap = {
+      price_asc: { basePrice: 1 },
+      price_desc: { basePrice: -1 },
+      newest: { createdAt: -1 },
+    };
+    const sortBy = sortMap[sort] || { createdAt: -1 };
+
+    const totalProducts = await Product.countDocuments(filter);
+    const data = await Product.find(filter)
+      .sort(sortBy)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const response = {
+      data,
+      currentPage: page,
+      totalPages: Math.ceil(totalProducts / limit),
+      totalProducts,
+      limit,
+    };
+
+    // Populate the cache so subsequent identical requests skip MongoDB.
+    await setCachedList(cacheKey, response);
+
+    res.status(200).json(response);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
