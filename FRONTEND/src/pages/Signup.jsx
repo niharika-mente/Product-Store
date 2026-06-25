@@ -17,38 +17,44 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom'
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "../utils/toastHelpers";
 
 function Signup() {
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const initialRef = queryParams.get('ref') || localStorage.getItem('referralCode') || ''
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [referralCode, setReferralCode] = useState(initialRef)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
 
+  React.useEffect(() => {
+    if (initialRef) {
+      localStorage.setItem('referralCode', initialRef);
+    }
+  }, [initialRef])
+
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!name || !email || !password || !confirmPassword) {
-      toast({
-        title: 'Please complete all fields.',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true,
-      })
+      showWarningToast(toast, 'Please complete all fields.')
       return
     }
 
     if (password !== confirmPassword) {
-      toast({
-        title: 'Passwords do not match.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      })
+      showErrorToast(toast, 'Passwords do not match.')
       return
     }
 
@@ -60,7 +66,7 @@ function Signup() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, referralCode }),
       })
 
       const data = await response.json()
@@ -69,30 +75,24 @@ function Signup() {
         throw new Error(data.message || 'Unable to register. Please try again.')
       }
 
-      toast({
-        title: 'Account created successfully!',
-        description: 'You can now login and start adding premium products.',
-        status: 'success',
-        duration: 4000,
-        isClosable: true,
-      })
+      showSuccessToast(
+        toast,
+        'Account created successfully!',
+        'You can now login and start adding premium products.'
+      )
 
       setName('')
       setEmail('')
       setPassword('')
       setConfirmPassword('')
+      setReferralCode('')
+      localStorage.removeItem('referralCode')
 
       setTimeout(() => {
         navigate('/login')
       }, 1000)
     } catch (error) {
-      toast({
-        title: 'Registration failed.',
-        description: error.message,
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-      })
+      showErrorToast(toast, 'Registration failed.', error.message)
     } finally {
       setLoading(false)
     }
@@ -187,6 +187,16 @@ function Signup() {
                       </Button>
                     </InputRightElement>
                   </InputGroup>
+                </FormControl>
+
+                <FormControl id="referralCode">
+                  <FormLabel>Referral Code (Optional)</FormLabel>
+                  <Input
+                    placeholder="If you have a referral code"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    focusBorderColor="cyan.400"
+                  />
                 </FormControl>
 
                 <Button

@@ -18,7 +18,15 @@ import {
 } from '@chakra-ui/react'
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
-
+import {
+  showSuccessToast,
+  showErrorToast,
+  showWarningToast,
+} from "../utils/toastHelpers";
+import { useAuth } from '../context/AuthContext';
+import { FcGoogle } from "react-icons/fc";
+import { FaGithub } from "react-icons/fa";
+import { HStack } from "@chakra-ui/react";
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,17 +34,13 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!email || !password) {
-      toast({
-        title: 'Email and password are required.',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true,
-      })
+      showWarningToast(toast, 'Email and password are required.')
       return
     }
 
@@ -57,28 +61,19 @@ function Login() {
         throw new Error(data.message || 'Login failed. Please check your credentials.')
       }
 
-      localStorage.setItem('authToken', data.token)
-      localStorage.setItem('authUser', JSON.stringify(data.user))
+      login(data.token, data.user)
 
-      toast({
-        title: 'Login successful!',
-        description: 'Welcome back. Redirecting to your dashboard.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      })
+      showSuccessToast(
+        toast,
+        'Login successful!',
+        'Welcome back. Redirecting to your dashboard.'
+      )
 
       setTimeout(() => {
         navigate('/')
       }, 800)
     } catch (error) {
-      toast({
-        title: 'Login failed.',
-        description: error.message,
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-      })
+      showErrorToast(toast, 'Login failed.', error.message)
     } finally {
       setLoading(false)
     }
@@ -154,23 +149,45 @@ function Login() {
                   Login to your account
                 </Button>
 
+                <Text textAlign="right" fontSize="sm">
+                  <Link as={RouterLink} to="/forgot-password" color="cyan.500">
+                    Forgot password?
+                  </Link>
+                </Text>
                 <Stack spacing={3} mt={4}>
                   <Button
                     variant="outline"
-                    colorScheme="red"
                     width="100%"
+                    size="lg"
+                    borderRadius="xl"
+                    borderColor="red.200"
+                    _hover={{
+                      bg: "red.50",
+                      transform: "translateY(-2px)",
+                      boxShadow: "lg",
+                    }}
+                    leftIcon={<FcGoogle size={22} />}
                     onClick={() => {
-                      window.location.href = '/api/auth/google';
+                      window.location.href = "/api/auth/google";
                     }}
                   >
                     Continue with Google
                   </Button>
+
                   <Button
                     variant="outline"
-                    colorScheme="gray"
                     width="100%"
+                    size="lg"
+                    borderRadius="xl"
+                    borderColor="gray.300"
+                    _hover={{
+                      bg: useColorModeValue("gray.50", "gray.700"),
+                      transform: "translateY(-2px)",
+                      boxShadow: "lg",
+                    }}
+                    leftIcon={<FaGithub size={20} />}
                     onClick={() => {
-                      window.location.href = '/api/auth/github';
+                      window.location.href = "/api/auth/github";
                     }}
                   >
                     Continue with GitHub

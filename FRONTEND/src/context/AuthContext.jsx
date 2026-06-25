@@ -1,30 +1,51 @@
-import { createContext, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useCallback } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({
-  children,
-}) => {
-  const [user, setUser] =
-    useState(null);
+function readStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('authUser') || 'null');
+  } catch {
+    return null;
+  }
+}
 
-  const login = async () => { };
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(readStoredUser);
 
-  const signup = async () => { };
+  const login = useCallback((token, userData) => {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('authUser', JSON.stringify(userData));
+    setUser(userData);
+  }, []);
 
-  const logout = () => { };
+  const logout = useCallback(async () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+      } catch (err) {
+        console.error('[Auth] Logout API call failed:', err.message);
+      }
+    }
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authUser');
+    setUser(null);
+  }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        login,
-        signup,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, isLoggedIn: !!user }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
 };

@@ -51,12 +51,22 @@ const orderSchema = new mongoose.Schema({
   paymentStatus: {
     type: String,
     enum: ["pending", "completed", "failed", "refunded"],
-    default: "pending",  // changed from "completed" to "pending"
+    default: "pending",
+  },
+  deliveryStatus: {
+    type: String,
+    enum: ["pending", "shipped", "delivered"],
+    default: "pending",
+  },
+  deliveryDate: {
+    type: Date,
+    default: null,
   },
 }, { timestamps: true });
 
 // Indexes for faster lookups
 orderSchema.index({ user: 1 });
+orderSchema.index({ createdAt: -1 });
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;
