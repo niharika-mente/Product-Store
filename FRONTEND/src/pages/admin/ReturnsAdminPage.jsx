@@ -81,7 +81,7 @@ const ReturnsAdminPage = () => {
       } else {
         notify.error('Error', 'An error occurred');
       }
-    } catch (err) {
+    } catch {
       notify.error('Error', 'An error occurred');
     }
   };

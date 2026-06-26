@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const variantSchema = new mongoose.Schema({
   size: { type: String, required: true },
@@ -11,11 +11,39 @@ const variantSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
+  brand: { type: String, trim: true, default: '' },
   basePrice: { type: Number },
   baseStock: { type: Number },
   hasVariants: { type: Boolean, default: false },
-  variants: [variantSchema]
+  tags: {
+    type: [{
+      type: String,
+      trim: true,
+      lowercase: true,
+      minlength: 1,
+      maxlength: 30,
+      match: /^[a-z0-9-]+$/
+    }],
+    default: [],
+    validate: [{
+      validator: function (value) {
+        return Array.isArray(value) ? value.length <= 5 : true;
+      },
+      message: 'A product may have at most 5 tags.'
+    }]
+  },
+  variants: [variantSchema],
+  // Soft-delete flag: queries exclude deleted products instead of removing rows.
+  // Referenced by the checkout flow and the {isDeleted, ...} indexes below.
+  isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
+// Indexes for common query patterns and performance optimization
+productSchema.index({ isDeleted: 1, category: 1, price: 1 });
+productSchema.index({ isDeleted: 1, createdAt: -1 });
+productSchema.index({ name: 'text' });
+// Supports filtering the search endpoint by brand.
+productSchema.index({ brand: 1 });
+
 const Product = mongoose.model('Product', productSchema);
-module.exports = Product;
+export default Product;

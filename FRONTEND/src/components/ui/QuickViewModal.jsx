@@ -14,12 +14,12 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { useCart } from "../../store/cart";
+import { useCartStore } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
 import { formatPrice } from "../../utils/currency";
 
 const QuickViewModal = ({ isOpen, onClose, product }) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartStore();
   const { currency, rates } = useCurrencyStore();
 
   if (!product) return null;
