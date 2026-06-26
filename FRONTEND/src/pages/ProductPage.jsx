@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { Box, Heading, Text, Select, Button, VStack, HStack, useToast } from '@chakra-ui/react';
 import axios from 'axios';
 import { getSocket } from '../socket';
+import { useCartStore } from '../store/cart.js';
+import { useRecentlyViewed } from '../store/product.js';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -17,7 +19,7 @@ const ProductPage = () => {
   const [selectedBundleItems, setSelectedBundleItems] = useState([]);
   const [activeImg, setActiveImg] = useState(0);
 
-  const { addToCart, addBundleToCart } = useCart();
+  const { addToCart } = useCartStore();
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
   const [product, setProduct] = useState(null);
