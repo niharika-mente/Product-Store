@@ -10,6 +10,7 @@ vi.mock('../../../store/product', () => ({
   useProductStore: () => ({
     deleteProduct: vi.fn(),
     updateProduct: vi.fn(),
+    restockProduct: vi.fn(),
     addToCompare: vi.fn(),
     compareList: [],
     isSubmitting: false,
@@ -19,16 +20,38 @@ vi.mock('../../../store/product', () => ({
 
 vi.mock('../../../context/WishlistContext.jsx', () => ({
   useWishlist: () => ({
-    addToWishlist: vi.fn(),
-    removeFromWishlist: vi.fn(),
-    checkInWishlist: vi.fn().mockResolvedValue(false),
+    addToWishlist: vi.fn().mockResolvedValue({ success: true }),
+    removeFromWishlist: vi.fn().mockResolvedValue({ success: true }),
+    checkInWishlist: vi.fn().mockReturnValue(false),
   }),
 }));
 
 vi.mock('../../../store/cart', () => ({
   useCartStore: () => ({
-    addToCart: vi.fn(),
+    addToCart: vi.fn(() => ({ status: 'success' })),
   }),
+}));
+
+vi.mock('../../../store/currency', () => ({
+  useCurrencyStore: () => ({
+    currency: 'USD',
+    rates: {},
+  }),
+}));
+
+vi.mock('../../../utils/currency', () => ({
+  formatPrice: vi.fn(() => '$99'),
+}));
+
+vi.mock('../QuickViewModal', () => ({
+  default: () => null,
+}));
+
+vi.mock('../../../utils/toastHelpers', () => ({
+  showSuccessToast: vi.fn(),
+  showErrorToast: vi.fn(),
+  showInfoToast: vi.fn(),
+  showWarningToast: vi.fn(),
 }));
 
 vi.mock('@chakra-ui/react', async () => {
@@ -44,6 +67,7 @@ const mockProduct = {
   name: 'Test Product',
   price: 99,
   image: 'test.jpg',
+  stock: 10,
 };
 
 describe('ProductCard', () => {

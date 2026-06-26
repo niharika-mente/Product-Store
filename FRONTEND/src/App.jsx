@@ -56,6 +56,7 @@ function App() {
             <Route path="/returns" element={<ProtectedRoute><MyReturnsPage /></ProtectedRoute>} />
             <Route path="/admin/returns" element={<ProtectedRoute><ReturnsAdminPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/profile/settings" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
