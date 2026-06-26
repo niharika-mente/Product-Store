@@ -204,7 +204,8 @@ export const stripeWebhook = async (req, res) => {
               isDeleted: { $ne: true },
               baseStock: { $gte: item.quantity },
             },
-            { $inc: { baseStock: -item.quantity } }
+            { $inc: { baseStock: -item.quantity } },
+            { new: true }
           );
 
           if (!updated) {
@@ -216,7 +217,7 @@ export const stripeWebhook = async (req, res) => {
           // Emit real-time stock update
           io.emit("stockUpdate", {
             productId: item._id,
-            newStock: updated.stock - item.quantity
+            newStock: updated.baseStock
           });
 
           deductions.push({ productId: item._id, quantity: item.quantity });
