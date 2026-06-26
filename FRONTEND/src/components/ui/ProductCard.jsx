@@ -1,3 +1,4 @@
+import QuickAddModal from "./QuickAddModal";
 import {
   AlertDialog,
   AlertDialogBody,
@@ -31,10 +32,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { FaBalanceScale, FaEdit, FaHeart, FaRegHeart, FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useCart } from "../../store/cart";
-import { useCurrencyStore } from "../../store/currency";
 import { useProductStore } from "../../store/product";
 import { useWishlist } from "../../context/WishlistContext.jsx";
-import { formatPrice } from "../../utils/currency";
 import {
   showErrorToast,
   showInfoToast,
@@ -82,6 +81,12 @@ const ProductCard = ({ product }) => {
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
+
+  const {
+  isOpen: isQuickAddOpen,
+  onOpen: onQuickAddOpen,
+  onClose: onQuickAddClose,
+} = useDisclosure();
 
   const LOW_STOCK_THRESHOLD = 5;
   const isOutOfStock = product.stock != null && product.stock === 0;
@@ -358,6 +363,19 @@ const ProductCard = ({ product }) => {
           >
             {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </Button>
+          <Button
+            colorScheme="blue"
+            variant="outline"
+            onClick={onQuickAddOpen}
+            size="sm"
+            flex={1}
+            w={{ base: "full", sm: "auto" }}
+            isDisabled={isOutOfStock}
+            aria-label={`Quick add ${product.name} to cart`}
+          >
+            Quick Add
+          </Button>
+          
         </Stack>
       </Box>
 
@@ -624,6 +642,12 @@ const ProductCard = ({ product }) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <QuickAddModal
+        product={product}
+        isOpen={isQuickAddOpen}
+        onClose={onQuickAddClose}
+      />
     </Box>
   );
 };
