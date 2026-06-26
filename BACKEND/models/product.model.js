@@ -11,6 +11,7 @@ const variantSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
+  brand: { type: String, trim: true, default: '' },
   basePrice: { type: Number },
   baseStock: { type: Number },
   hasVariants: { type: Boolean, default: false },
@@ -31,13 +32,18 @@ const productSchema = new mongoose.Schema({
       message: 'A product may have at most 5 tags.'
     }]
   },
-  variants: [variantSchema]
+  variants: [variantSchema],
+  // Soft-delete flag: queries exclude deleted products instead of removing rows.
+  // Referenced by the checkout flow and the {isDeleted, ...} indexes below.
+  isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Indexes for common query patterns and performance optimization
 productSchema.index({ isDeleted: 1, category: 1, price: 1 });
 productSchema.index({ isDeleted: 1, createdAt: -1 });
 productSchema.index({ name: 'text' });
+// Supports filtering the search endpoint by brand.
+productSchema.index({ brand: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;

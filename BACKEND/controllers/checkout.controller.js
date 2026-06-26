@@ -22,9 +22,15 @@ if (process.env.NODE_ENV === 'test') {
 }
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// First variant image, if any — non-variant products carry no image of their own.
+function productImage(product) {
+  const img = product.variants?.[0]?.images?.[0];
+  return img ? [img] : [];
+}
+
 async function restoreStock(deductions) {
   for (const { productId, quantity } of deductions) {
-    await Product.findByIdAndUpdate(productId, { $inc: { stock: quantity } });
+    await Product.findByIdAndUpdate(productId, { $inc: { baseStock: quantity } });
   }
 }
 
@@ -59,10 +65,10 @@ export const createCheckoutSession = async (req, res) => {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
-            if (item.quantity > product.stock) {
+            if (item.quantity > product.baseStock) {
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient stock for ${product.name}. Available: ${product.stock}, requested: ${item.quantity}`
+                    message: `Insufficient stock for ${product.name}. Available: ${product.baseStock}, requested: ${item.quantity}`
                 });
             }
 
@@ -71,9 +77,9 @@ export const createCheckoutSession = async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: product.name,
-                        images: product.image ? [product.image] : [],
+                        images: productImage(product),
                     },
-                    unit_amount: Math.round(product.price * 100),
+                    unit_amount: Math.round(product.basePrice * 100),
                 },
                 quantity: item.quantity,
             });
@@ -175,7 +181,7 @@ export const stripeWebhook = async (req, res) => {
             console.error(`Checkout webhook: product not found or deleted: ${item._id}`);
             return res.json({ received: true });
           }
-          if (item.quantity > product.stock) {
+          if (item.quantity > product.baseStock) {
             console.error(`Checkout webhook: insufficient stock for ${product.name}`);
             return res.json({ received: true });
           }
@@ -183,9 +189,9 @@ export const stripeWebhook = async (req, res) => {
           orderItems.push({
             product: product._id,
             name: product.name,
-            price: product.price,
+            price: product.basePrice,
             quantity: item.quantity,
-            image: product.image || "",
+            image: productImage(product)[0] || "",
           });
         }
 
@@ -195,9 +201,9 @@ export const stripeWebhook = async (req, res) => {
             {
               _id: item._id,
               isDeleted: { $ne: true },
-              stock: { $gte: item.quantity },
+              baseStock: { $gte: item.quantity },
             },
-            { $inc: { stock: -item.quantity } }
+            { $inc: { baseStock: -item.quantity } }
           );
 
           if (!updated) {
