@@ -19,7 +19,6 @@ const ProductPage = () => {
   const { addToCart, addBundleToCart } = useCart();
   const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
-  const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [displayPrice, setDisplayPrice] = useState(0);
