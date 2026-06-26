@@ -81,6 +81,29 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Two-factor authentication (TOTP / authenticator app).
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+
+    // The confirmed TOTP secret. select:false so it is never returned by
+    // default queries and can't leak through endpoints that echo the user.
+    twoFactorSecret: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    // Holds the secret between "setup" and the first successful "verify". Kept
+    // separate from twoFactorSecret so an unconfirmed re-setup can't disable an
+    // already-active second factor.
+    twoFactorTempSecret: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
     referralCode: {
       type: String,
       unique: true,
