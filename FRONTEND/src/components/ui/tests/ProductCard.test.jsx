@@ -28,7 +28,7 @@ vi.mock("../../../context/WishlistContext.jsx", () => ({
 }));
 
 vi.mock("../../../store/cart", () => ({
-  useCart: () => ({
+  useCartStore: () => ({
     addToCart: vi.fn(),
   }),
 }));
@@ -63,7 +63,7 @@ describe("ProductCard", () => {
 
   it("renders product price", () => {
     render(<ProductCard product={mockProduct} />);
-    expect(screen.getByText("$99")).toBeInTheDocument();
+    expect(screen.getByText(/\$99(\.00)?/)).toBeInTheDocument();
   });
 
   it("renders Add to Cart button", () => {

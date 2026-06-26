@@ -1,163 +1,157 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Container, Grid, GridItem, Heading, Stat, StatLabel,
-  StatNumber, StatHelpText, Text, useColorModeValue, Spinner, Center,
+  Box, Button, Container, Flex, Heading, HStack, Image, Input,
+  Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter,
+  ModalHeader, ModalOverlay, Table, Tbody, Td, Text, Th, Thead,
+  Tr, useColorModeValue, useDisclosure, useToast, VStack, Badge,
 } from '@chakra-ui/react';
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend,
-} from 'recharts';
+import { useProductStore } from '../store/product';
 
-const API = import.meta.env.VITE_API_URL ?? '';
+const EMPTY_FORM = { name: '', price: '', image: '', description: '', category: '', stock: '' };
 
-function authHeader() {
-  const token = localStorage.getItem('authToken');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+export default function AdminDashboardPage() {
+  const { products, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const theadBg = useColorModeValue('gray.50', 'gray.700');
+  const trHoverBg = useColorModeValue('gray.50', 'gray.700');
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  const openAdd = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    onOpen();
+  };
+
+  const openEdit = (product) => {
+    setForm({
+      name: product.name || '',
+      price: product.price ?? '',
+      image: product.image || '',
+      description: product.description || '',
+      category: product.category || '',
+      stock: product.stock ?? '',
+    });
+    setEditingId(product._id);
+    onOpen();
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim() || form.price === '') {
+      toast({ title: 'Name and price are required', status: 'warning', duration: 2500, isClosable: true });
+      return;
+    }
+    setLoading(true);
+    const payload = { ...form, price: Number(form.price), stock: form.stock !== '' ? Number(form.stock) : undefined };
+    const { success, message } = editingId
+      ? await updateProduct(editingId, payload)
+      : await createProduct(payload);
+    setLoading(false);
+    toast({ title: message, status: success ? 'success' : 'error', duration: 3000, isClosable: true });
+    if (success) { onClose(); fetchProducts(); }
+  };
+
+  const handleDelete = async (pid, name) => {
+    if (!window.confirm(`Delete "${name}"?`)) return;
+    const { success, message } = await deleteProduct(pid);
+    toast({ title: message, status: success ? 'success' : 'error', duration: 3000, isClosable: true });
+    if (success) fetchProducts();
+  };
+
+  return (
+    <Container maxW="1200px" py={8}>
+      <Flex justify="space-between" align="center" mb={6}>
+        <Heading size="lg">Admin Dashboard</Heading>
+        <Button colorScheme="blue" onClick={openAdd}>+ Add Product</Button>
+      </Flex>
+
+      <Box bg={cardBg} borderRadius="xl" border="1px solid" borderColor={borderColor} overflow="hidden" shadow="sm">
+        <Box overflowX="auto">
+          <Table variant="simple" size="sm">
+            <Thead bg={theadBg}>
+              <Tr>
+                <Th>Image</Th>
+                <Th>Name</Th>
+                <Th>Category</Th>
+                <Th isNumeric>Price</Th>
+                <Th isNumeric>Stock</Th>
+                <Th>Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {products.length === 0 && (
+                <Tr><Td colSpan={6} textAlign="center" py={10} color="gray.400">No products found.</Td></Tr>
+              )}
+              {products.map((p) => (
+                <Tr key={p._id} _hover={{ bg: trHoverBg }}>
+                  <Td>
+                    {p.image
+                      ? <Image src={p.image} alt={p.name} boxSize="40px" objectFit="cover" borderRadius="md" />
+                      : <Box boxSize="40px" bg="gray.200" borderRadius="md" />}
+                  </Td>
+                  <Td fontWeight="medium" maxW="200px">
+                    <Text noOfLines={1}>{p.name}</Text>
+                  </Td>
+                  <Td>
+                    {p.category && <Badge colorScheme="purple" fontSize="11px">{p.category}</Badge>}
+                  </Td>
+                  <Td isNumeric>${Number(p.price).toFixed(2)}</Td>
+                  <Td isNumeric>
+                    <Badge colorScheme={p.stock > 0 ? 'green' : 'red'}>{p.stock ?? '—'}</Badge>
+                  </Td>
+                  <Td>
+                    <HStack spacing={2}>
+                      <Button size="xs" colorScheme="teal" onClick={() => openEdit(p)}>Edit</Button>
+                      <Button size="xs" colorScheme="red" variant="outline" onClick={() => handleDelete(p._id, p.name)}>Delete</Button>
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </Box>
+      </Box>
+
+      <Modal isOpen={isOpen} onClose={onClose} size="md">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{editingId ? 'Edit Product' : 'Add Product'}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={3}>
+              {[
+                { field: 'name', placeholder: 'Product name *', type: 'text' },
+                { field: 'price', placeholder: 'Price *', type: 'number' },
+                { field: 'image', placeholder: 'Image URL', type: 'text' },
+                { field: 'category', placeholder: 'Category', type: 'text' },
+                { field: 'stock', placeholder: 'Stock quantity', type: 'number' },
+                { field: 'description', placeholder: 'Description', type: 'text' },
+              ].map(({ field, placeholder, type }) => (
+                <Input
+                  key={field}
+                  type={type}
+                  placeholder={placeholder}
+                  value={form[field]}
+                  onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                />
+              ))}
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button mr={3} onClick={onClose} variant="ghost">Cancel</Button>
+            <Button colorScheme="blue" onClick={handleSave} isLoading={loading}>
+              {editingId ? 'Save Changes' : 'Create'}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Container>
+  );
 }
-
-async function fetchJSON(path) {
-  const res = await fetch(`${API}${path}`, { headers: authHeader() });
-  const data = await res.json();
-  if (!data.success) throw new Error(data.message);
-  return data.data;
-}
-
-const StatCard = ({ label, value, help }) => {
-  const bg = useColorModeValue('white', 'gray.800');
-  return (
-    <Box bg={bg} borderRadius="2xl" boxShadow="md" p={6}>
-      <Stat>
-        <StatLabel fontSize="sm" color="gray.500">{label}</StatLabel>
-        <StatNumber fontSize="3xl">{value}</StatNumber>
-        {help && <StatHelpText>{help}</StatHelpText>}
-      </Stat>
-    </Box>
-  );
-};
-
-const ChartCard = ({ title, children }) => {
-  const bg = useColorModeValue('white', 'gray.800');
-  return (
-    <Box bg={bg} borderRadius="2xl" boxShadow="md" p={6}>
-      <Text fontWeight="semibold" mb={4} fontSize="md">{title}</Text>
-      {children}
-    </Box>
-  );
-};
-
-const AdminDashboardPage = () => {
-  const [summary, setSummary] = useState(null);
-  const [revenue, setRevenue] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
-  const [userGrowth, setUserGrowth] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const pageBg = useColorModeValue('gray.50', 'gray.900');
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const [s, r, tp, ug] = await Promise.all([
-          fetchJSON('/api/admin/analytics/summary'),
-          fetchJSON('/api/admin/analytics/revenue'),
-          fetchJSON('/api/admin/analytics/top-products'),
-          fetchJSON('/api/admin/analytics/user-growth'),
-        ]);
-        setSummary(s);
-        setRevenue(r);
-        setTopProducts(tp);
-        setUserGrowth(ug);
-      } catch (err) {
-        setError(err.message || 'Failed to load analytics');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  if (loading) return <Center minH="60vh"><Spinner size="xl" color="cyan.400" /></Center>;
-  if (error) return <Center minH="60vh"><Text color="red.400">{error}</Text></Center>;
-
-  return (
-    <Box bg={pageBg} minH="100vh" py={8}>
-      <Container maxW="container.xl">
-        <Heading size="lg" mb={8} bgGradient="linear(to-r, cyan.400, blue.500)" bgClip="text">
-          Admin Dashboard
-        </Heading>
-
-        {/* Summary cards */}
-        <Grid templateColumns={{ base: '1fr', sm: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }} gap={5} mb={8}>
-          <GridItem>
-            <StatCard
-              label="Total Revenue"
-              value={`$${summary.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              help="Completed orders only"
-            />
-          </GridItem>
-          <GridItem>
-            <StatCard label="Total Orders" value={summary.totalOrders.toLocaleString()} />
-          </GridItem>
-          <GridItem>
-            <StatCard label="Registered Users" value={summary.totalUsers.toLocaleString()} />
-          </GridItem>
-          <GridItem>
-            <StatCard label="Active Products" value={summary.totalProducts.toLocaleString()} />
-          </GridItem>
-        </Grid>
-
-        {/* Charts row 1 */}
-        <Grid templateColumns={{ base: '1fr', lg: 'repeat(2,1fr)' }} gap={5} mb={5}>
-          <GridItem>
-            <ChartCard title="Monthly Revenue (last 6 months)">
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={revenue}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}`} />
-                  <Tooltip formatter={v => [`$${v.toFixed(2)}`, 'Revenue']} />
-                  <Line type="monotone" dataKey="revenue" stroke="#0bc5ea" strokeWidth={2} dot={{ r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </GridItem>
-
-          <GridItem>
-            <ChartCard title="New Users (last 6 months)">
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="newUsers" stroke="#68d391" strokeWidth={2} dot={{ r: 3 }} name="New Users" />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </GridItem>
-        </Grid>
-
-        {/* Top products */}
-        <ChartCard title="Top 5 Products by Units Sold">
-          {topProducts.length === 0 ? (
-            <Text color="gray.400" fontSize="sm">No completed orders yet.</Text>
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={topProducts} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={130} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="unitsSold" fill="#0bc5ea" name="Units Sold" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="revenue" fill="#9f7aea" name="Revenue ($)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </ChartCard>
-      </Container>
-    </Box>
-  );
-};
-
-export default AdminDashboardPage;

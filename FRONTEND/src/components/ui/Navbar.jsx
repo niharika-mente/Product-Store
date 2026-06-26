@@ -10,7 +10,7 @@ import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons"
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
-import { useCart } from "../../store/cart";
+import { useCartStore } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
 import { FaBalanceScale } from "react-icons/fa";
@@ -24,7 +24,7 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCart();
+  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCartStore();
   const { currency, rates, setCurrency } = useCurrencyStore();
   const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts, compareList } = useProductStore();

@@ -18,6 +18,7 @@ import couponRoutes from "./routes/coupon.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import referralRoutes from "./routes/referral.route.js";
 import returnRoutes from "./routes/return.route.js";
+import savedForLaterRoutes from "./routes/savedForLater.route.js";
 import passport from "./config/passport.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -43,7 +44,7 @@ const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUD
 if (missingCloudinary.length > 0) {
     console.warn(`Cloudinary credentials not configured (${missingCloudinary.join(', ')}). File uploads will be unavailable; URL-based images still work.`);
 }
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' || process.env.MONGO_URI) {
     connectDB();
 }
 
@@ -114,10 +115,11 @@ app.use(cors({
     credentials: true
 }));
 app.use(passport.initialize());
-app.use("/api", limiter);
 
 // Stripe webhook needs raw body — must be registered before express.json()
 app.post("/api/checkout/webhook", express.raw({ type: 'application/json' }), stripeWebhook);
+
+app.use("/api", limiter);
 
 app.use(express.json());
 
@@ -134,6 +136,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/referrals", referralRoutes);
 app.use("/api/returns", returnRoutes);
+app.use("/api/saved-for-later", savedForLaterRoutes);
 
 
 // ============= ERROR HANDLERS =============

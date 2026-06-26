@@ -6,6 +6,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaInfoCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CreatePage = () => {
   const { t } = useTranslation();
@@ -97,7 +98,7 @@ const CreatePage = () => {
     setIsDirty(true);
   };
 
-  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const cardBg = useColorModeValue("white", "gray.800");
   const toggleBg = useColorModeValue("blue.50", "blue.900");
   const infoColor = useColorModeValue("gray.700", "gray.300");
 
@@ -275,7 +276,7 @@ const CreatePage = () => {
                   name="originalPrice"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="0.01"               
                   aria-label="Original Price"
                   value={newProduct.originalPrice}
                   onChange={(e) => handleChange("originalPrice", e.target.value)}
@@ -288,8 +289,8 @@ const CreatePage = () => {
                   onChange={(e) => {
                     const tagsArray = e.target.value
                       .split(',')
-                      .map(tag => tag.trim())
-                      .filter(tag => tag && tag.length >= 2 && tag.length <= 30);
+                      .map(tag => tag.trim().toLowerCase())
+                      .filter(tag => /^[a-z0-9-]{1,30}$/.test(tag));
                     handleChange("tags", tagsArray.slice(0, 5));
                   }}
                 />
