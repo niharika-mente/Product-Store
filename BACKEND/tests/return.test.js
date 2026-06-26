@@ -43,14 +43,14 @@ describe('Return API Routes', () => {
     adminToken = generateToken(admin);
 
     // Create product
-    product = await Product.create({ name: 'Test Product', price: 50, image: 'img.jpg' });
+    product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 50, baseStock: 10 });
   });
 
   describe('POST /api/returns', () => {
     it('should create a return request for an eligible order', async () => {
       const order = await Order.create({
         user: user._id,
-        items: [{ product: product._id, name: product.name, price: product.price, quantity: 2 }],
+        items: [{ product: product._id, name: product.name, price: product.basePrice, quantity: 2 }],
         totalAmount: 100,
         stripeSessionId: 'sess_1',
         paymentStatus: 'completed',
@@ -63,7 +63,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 1, reason: 'Defective' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 1, reason: 'Defective' }]
         });
 
       expect(response.status).toBe(201);
@@ -74,7 +74,7 @@ describe('Return API Routes', () => {
     it('should fail if order is not delivered', async () => {
       const order = await Order.create({
         user: user._id,
-        items: [{ product: product._id, name: product.name, price: product.price, quantity: 1 }],
+        items: [{ product: product._id, name: product.name, price: product.basePrice, quantity: 1 }],
         totalAmount: 50,
         stripeSessionId: 'sess_2',
         paymentStatus: 'completed',
@@ -86,7 +86,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 1, reason: 'Defective' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 1, reason: 'Defective' }]
         });
 
       expect(response.status).toBe(400);
@@ -99,7 +99,7 @@ describe('Return API Routes', () => {
 
       const order = await Order.create({
         user: user._id,
-        items: [{ product: product._id, name: product.name, price: product.price, quantity: 1 }],
+        items: [{ product: product._id, name: product.name, price: product.basePrice, quantity: 1 }],
         totalAmount: 50,
         stripeSessionId: 'sess_3',
         paymentStatus: 'completed',
@@ -112,7 +112,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 1, reason: 'Defective' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 1, reason: 'Defective' }]
         });
 
       expect(response.status).toBe(400);
@@ -122,7 +122,7 @@ describe('Return API Routes', () => {
     it('should fail if trying to return more quantity than ordered', async () => {
       const order = await Order.create({
         user: user._id,
-        items: [{ product: product._id, name: product.name, price: product.price, quantity: 1 }],
+        items: [{ product: product._id, name: product.name, price: product.basePrice, quantity: 1 }],
         totalAmount: 50,
         stripeSessionId: 'sess_4',
         paymentStatus: 'completed',
@@ -135,7 +135,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 2, reason: 'Defective' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 2, reason: 'Defective' }]
         });
 
       expect(response.status).toBe(400);
@@ -145,7 +145,7 @@ describe('Return API Routes', () => {
     it('should fail if item was already returned', async () => {
       const order = await Order.create({
         user: user._id,
-        items: [{ product: product._id, name: product.name, price: product.price, quantity: 2 }],
+        items: [{ product: product._id, name: product.name, price: product.basePrice, quantity: 2 }],
         totalAmount: 100,
         stripeSessionId: 'sess_5',
         paymentStatus: 'completed',
@@ -159,7 +159,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 1, reason: 'Defective' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 1, reason: 'Defective' }]
         });
 
       // Second return of same item
@@ -168,7 +168,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 1, reason: 'Changed Mind' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 1, reason: 'Changed Mind' }]
         });
 
       expect(response.status).toBe(400);
@@ -198,7 +198,7 @@ describe('Return API Routes', () => {
     it('should allow admin to update return status', async () => {
       const order = await Order.create({
         user: user._id,
-        items: [{ product: product._id, name: product.name, price: product.price, quantity: 1 }],
+        items: [{ product: product._id, name: product.name, price: product.basePrice, quantity: 1 }],
         totalAmount: 50,
         stripeSessionId: 'sess_6',
         paymentStatus: 'completed',
@@ -211,7 +211,7 @@ describe('Return API Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: order._id,
-          items: [{ productId: product._id.toString(), name: product.name, price: product.price, quantity: 1, reason: 'Defective' }]
+          items: [{ productId: product._id.toString(), name: product.name, price: product.basePrice, quantity: 1, reason: 'Defective' }]
         });
 
       const returnId = retRes.body.returnRequest._id;

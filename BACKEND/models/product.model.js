@@ -32,7 +32,10 @@ const productSchema = new mongoose.Schema({
       message: 'A product may have at most 5 tags.'
     }]
   },
-  variants: [variantSchema]
+  variants: [variantSchema],
+  // Soft-delete flag: queries exclude deleted products instead of removing rows.
+  // Referenced by the checkout flow and the {isDeleted, ...} indexes below.
+  isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Indexes for common query patterns and performance optimization
