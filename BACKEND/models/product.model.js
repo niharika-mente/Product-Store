@@ -11,6 +11,7 @@ const variantSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
+  brand: { type: String, trim: true, default: '' },
   basePrice: { type: Number },
   baseStock: { type: Number },
   hasVariants: { type: Boolean, default: false },
@@ -38,6 +39,8 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ isDeleted: 1, category: 1, price: 1 });
 productSchema.index({ isDeleted: 1, createdAt: -1 });
 productSchema.index({ name: 'text' });
+// Supports filtering the search endpoint by brand.
+productSchema.index({ brand: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;
