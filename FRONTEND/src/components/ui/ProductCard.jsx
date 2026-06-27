@@ -73,7 +73,9 @@ const ProductCard = ({ product }) => {
   } = useProductStore();
 
   const isInCompare = compareList.some((p) => p._id === product._id);
-  const { addToCart } = useCartStore();
+  const addToCart = useCartStore(
+    (state) => state.addToCart
+  );
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
   const { currency, rates } = useCurrencyStore();
