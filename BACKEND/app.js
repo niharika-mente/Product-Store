@@ -26,7 +26,7 @@ import { stripeWebhook } from "./controllers/checkout.controller.js";
 import { expressMiddleware } from "@as-integrations/express4";
 import { apolloServer } from "./graphql/server.js";
 import { optionalProtect } from "./middleware/auth.js";
-
+import corsMiddleware from "./config/cors.js";
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
 import { validateEnv } from "./config/env.js";
@@ -115,27 +115,14 @@ app.use(
 );
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("trust proxy", 1);
-
+app.use(corsMiddleware);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 1000,
   message: "Too many requests from this IP, please try again later.",
 });
-const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
 
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
-            return callback(null, true);
-        }
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        callback(new Error("CORS Policy Error: Origin not allowed"));
-    },
-    credentials: true
-}));
+
 app.use(passport.initialize());
 
 // Stripe webhook needs raw body — must be registered before express.json()
