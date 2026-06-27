@@ -1,3 +1,4 @@
+import QuickAddModal from "./QuickAddModal";
 import {
   AlertDialog,
   AlertDialogBody,
@@ -108,6 +109,12 @@ const ProductCard = ({ product }) => {
     onOpen: onQuickViewOpen,
     onClose: onQuickViewClose,
   } = useDisclosure();
+
+  const {
+  isOpen: isQuickAddOpen,
+  onOpen: onQuickAddOpen,
+  onClose: onQuickAddClose,
+} = useDisclosure();
 
   const LOW_STOCK_THRESHOLD = 5;
   const isOutOfStock = liveStock != null && liveStock <= 0;
@@ -389,6 +396,19 @@ const ProductCard = ({ product }) => {
           >
             {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </Button>
+          <Button
+            colorScheme="blue"
+            variant="outline"
+            onClick={onQuickAddOpen}
+            size="sm"
+            flex={1}
+            w={{ base: "full", sm: "auto" }}
+            isDisabled={isOutOfStock}
+            aria-label={`Quick add ${product.name} to cart`}
+          >
+            Quick Add
+          </Button>
+          
         </Stack>
       </Box>
 
@@ -656,11 +676,17 @@ const ProductCard = ({ product }) => {
         </ModalContent>
       </Modal>
 
-      <QuickViewModal
-        isOpen={isQuickViewOpen}
-        onClose={onQuickViewClose}
-        product={product}
-      />
+<QuickViewModal
+  isOpen={isQuickViewOpen}
+  onClose={onQuickViewClose}
+  product={product}
+/>
+
+<QuickAddModal
+  product={product}
+  isOpen={isQuickAddOpen}
+  onClose={onQuickAddClose}
+/>
     </Box>
   );
 };
