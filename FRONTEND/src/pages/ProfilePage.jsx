@@ -19,7 +19,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: "", phone: "", avatar: "", shippingAddress: "" });
+  const [profileForm, setProfileForm] = useState({ name: "", phone: "", avatar: "" });
   const [addresses, setAddresses] = useState([]);
   const [addrForm, setAddrForm] = useState(EMPTY_ADDRESS);
   const [editingAddrId, setEditingAddrId] = useState(null);
@@ -39,7 +39,7 @@ const ProfilePage = () => {
     try {
       const { data } = await api.get("/user/profile");
       setProfile(data.data);
-      setProfileForm({ name: data.data.name || "", phone: data.data.phone || "", avatar: data.data.avatar || "", shippingAddress: data.data.shippingAddress || "" });
+      setProfileForm({ name: data.data.name || "", phone: data.data.phone || "", avatar: data.data.avatar || "" });
       setAddresses(data.data.addresses || []);
     } catch {
       toast({ title: "Failed to load profile", status: "error", isClosable: true });
@@ -162,57 +162,24 @@ const ProfilePage = () => {
 
               <VStack spacing={4}>
                 <FormControl>
-                  <FormLabel fontSize="sm">Display Name</FormLabel>
+                  <FormLabel fontSize="sm">Full Name</FormLabel>
                   <Input value={profileForm.name} onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))} />
                 </FormControl>
 
                 <FormControl>
-        <FormLabel fontSize="sm">Email <Text as="span" color={labelColor}>(read-only)</Text></FormLabel>
-        <Input value={profile?.email || ""} isReadOnly bg={readOnlyBg} />
-      </FormControl>
+                  <FormLabel fontSize="sm">Email <Text as="span" color={labelColor}>(read-only)</Text></FormLabel>
+                  <Input value={profile?.email || ""} isReadOnly bg={readOnlyBg} />
+                </FormControl>
 
-      <FormControl>
-        <FormLabel fontSize="sm">Phone Number</FormLabel>
-        <Input
-          value={profileForm.phone}
-          onChange={e => setProfileForm(p => ({ ...p, phone: e.target.value }))}
-          placeholder="+1 555 000 0000"
-        />
-      </FormControl>
+                <FormControl>
+                  <FormLabel fontSize="sm">Phone Number</FormLabel>
+                  <Input value={profileForm.phone} onChange={e => setProfileForm(p => ({ ...p, phone: e.target.value }))} placeholder="+1 555 000 0000" />
+                </FormControl>
 
-      <FormControl>
-        <FormLabel fontSize="sm">Profile Picture</FormLabel>
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={e => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-
-            const preview = URL.createObjectURL(file);
-
-            setProfileForm(prev => ({
-              ...prev,
-              avatar: preview,
-            }));
-          }}
-        />
-      </FormControl>
-
-      <FormControl>
-        <FormLabel fontSize="sm">Shipping Address</FormLabel>
-        <Input
-          value={profileForm.shippingAddress}
-          onChange={e =>
-            setProfileForm(prev => ({
-              ...prev,
-              shippingAddress: e.target.value,
-            }))
-          }
-          placeholder="Enter your shipping address"
-        />
-      </FormControl>
-
+                <FormControl>
+                  <FormLabel fontSize="sm">Avatar URL</FormLabel>
+                  <Input value={profileForm.avatar} onChange={e => setProfileForm(p => ({ ...p, avatar: e.target.value }))} placeholder="https://..." />
+                </FormControl>
 
                 <Button colorScheme="blue" w="full" onClick={handleProfileSave} isLoading={saving} loadingText="Saving...">
                   Save Changes

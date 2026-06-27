@@ -24,11 +24,8 @@ const Navbar = () => {
   const { t } = useTranslation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { cart, removeFromCart } = useCartStore();
-
-  const cartItems = cart?.items || [];
-  const totalPrice = cart?.totalPrice || 0;
-  const emptyCart = () => {};  const { currency, rates, setCurrency } = useCurrencyStore();
+  const { cartItems, removeFromCart, totalPrice, emptyCart } = useCartStore();
+  const { currency, rates, setCurrency } = useCurrencyStore();
   const { wishlistCount, clearWishlist } = useWishlist();
   const { searchQuery, setSearchQuery, products, fetchProducts, compareList } = useProductStore();
   const navigate = useNavigate();
