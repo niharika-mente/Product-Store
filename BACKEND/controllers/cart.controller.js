@@ -1,7 +1,7 @@
-const Cart = require('../models/cart.model');
-const Product = require('../models/product.model');
+import Cart from '../models/cart.model.js';
+import Product from '../models/product.model.js';
 
-exports.addToCart = async (req, res) => {
+export const addToCart = async (req, res) => {
   try {
     const { productId, variantId, quantity } = req.body;
     const userId = req.user._id;
