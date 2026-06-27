@@ -10,8 +10,6 @@ import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
 import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
 import { LuSun, LuShoppingCart, LuHeart, LuSearch } from "react-icons/lu";
-import { useCart } from "../../store/cart";
-import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
 import { useCartStore } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
@@ -564,104 +562,8 @@ const Navbar = () => {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
-          </VStack>
-        )}
+          </Box>
+        );
+      };
 
-        <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="md">
-          <DrawerOverlay />
-          <DrawerContent bg={colorMode === "light" ? "white" : "gray.800"} color={colorMode === "light" ? "black" : "white"}>
-            <DrawerCloseButton />
-            <DrawerHeader borderBottomWidth="1px">{t('cart.title')}</DrawerHeader>
-
-            <DrawerBody>
-              {cartItems.length === 0 ? (
-                <Text textAlign="center" mt={10} color={labelColor}>{t('cart.empty')}</Text>
-              ) : (
-                <VStack align="stretch" spacing={4} mt={4}>
-                  {cartItems.map((item) => {
-                    const latestProduct = products.find((p) => p._id === item._id);
-                    const currentPrice = latestProduct?.price ?? item.price;
-
-                    return (
-                      <HStack
-                        key={item._id}
-                        justify="space-between"
-                        p={3}
-                        borderWidth="1px"
-                        borderRadius="lg"
-                        borderColor={colorMode === "light" ? "gray.200" : "gray.600"}
-                      >
-                        <Box>
-                          <Text fontWeight="bold">{item.name}</Text>
-                          <Text fontSize="sm" color={labelColor}>
-                            {t('cart.quantity')}: {item.quantity} × {formatPrice(currentPrice, currency, rates)}
-                          </Text>
-                        </Box>
-                        <Button
-                          size="sm"
-                          colorScheme="red"
-                          variant="ghost"
-                          onClick={() => removeFromCart(item._id)}
-                        >
-                          Remove
-                        </Button>
-                      </HStack>
-                    );
-                  })}
-                </VStack>
-              )}
-            </DrawerBody>
-
-            <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch" gap={3}>
-              {/* Promo code input */}
-              {cartItems.length > 0 && (
-                appliedCoupon ? (
-                  <HStack justify="space-between">
-                    <Tag colorScheme="green" size="md" borderRadius="full">
-                      <TagLabel>{appliedCoupon.code} — save ${appliedCoupon.discount.toFixed(2)}</TagLabel>
-                      <TagCloseButton onClick={() => setAppliedCoupon(null)} />
-                    </Tag>
-                  </HStack>
-                ) : (
-                  <InputGroup size="sm">
-                    <Input
-                      placeholder="Promo code"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
-                      textTransform="uppercase"
-                    />
-                    <InputRightElement width="4.5rem">
-                      <Button h="1.5rem" size="xs" colorScheme="cyan" onClick={handleApplyPromo} isLoading={promoLoading}>
-                        Apply
-                      </Button>
-                    </InputRightElement>
-                  </InputGroup>
-                )
-              )}
-
-              <HStack justify="space-between">
-                <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <VStack align="flex-end" spacing={0}>
-                  {appliedCoupon && (
-                    <Text fontSize="sm" color="gray.400" textDecoration="line-through">
-                      {formatPrice(totalPrice ?? 0, currency, rates)}
-                    </Text>
-                  )}
-                  <Text fontWeight="bold" fontSize="lg" color="cyan.500">
-                    {formatPrice(appliedCoupon ? appliedCoupon.finalTotal : (totalPrice ?? 0), currency, rates)}
-                  </Text>
-                </VStack>
-              </HStack>
-              <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
-                Proceed to Checkout
-              </Button>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      </Container>
-    </Box>
-  );
-};
-
-export default Navbar;
+      export default Navbar;
