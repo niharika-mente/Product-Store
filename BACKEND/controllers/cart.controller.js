@@ -1,3 +1,36 @@
+import Coupon from "../models/coupon.model.js";
+
+export const applyPromo = async (req, res) => {
+  try {
+    const { code, cartTotal } = req.body;
+
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon code is required",
+      });
+    }
+
+    const coupon = await Coupon.findOne({
+      code: code.trim().toUpperCase(),
+      isActive: true,
+    });
+
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid or expired coupon code",
+      });
+    }
+
+    // reuse existing validation logic
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to apply promo code",
+    });
+  }
+};
 const Cart = require('../models/cart.model');
 const Product = require('../models/product.model');
 
