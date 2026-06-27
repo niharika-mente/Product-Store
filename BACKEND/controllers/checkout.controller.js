@@ -1,8 +1,10 @@
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
+import User from '../models/user.model.js';
 import Coupon from '../models/coupon.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
+import { sendOrderConfirmationEmail } from '../services/email.service.js';
 import { processReferralOnPurchase } from '../services/referral.service.js';
 import { io } from '../server.js';
 
@@ -229,6 +231,22 @@ export const stripeWebhook = async (req, res) => {
           stripeSessionId: session.id,
           paymentStatus: "completed",
         });
+
+        // Send confirmation email — non-blocking; failures never break fulfillment
+        const customerEmail = session.customer_details?.email;
+        if (customerEmail) {
+          sendOrderConfirmationEmail(customerEmail, order).catch((err) =>
+            console.error('[Email] Order confirmation failed:', err.message)
+          );
+        } else if (session.metadata?.userId) {
+          User.findById(session.metadata.userId).select('email').lean().then((u) => {
+            if (u?.email) {
+              sendOrderConfirmationEmail(u.email, order).catch((err) =>
+                console.error('[Email] Order confirmation failed:', err.message)
+              );
+            }
+          }).catch(() => {});
+        }
 
         // Increment coupon usage after successful fulfillment
         if (session.metadata?.couponCode) {
