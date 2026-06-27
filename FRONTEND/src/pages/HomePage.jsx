@@ -72,7 +72,7 @@ const HomePage = () => {
   const compareBg = useColorModeValue("white", "gray.800");
   const compareTagBg = useColorModeValue("gray.100", "gray.700");
 
-  const debouncedSearch = useDebounce(searchQuery, 500);
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
     const urlSearch = searchParams.get('search');
