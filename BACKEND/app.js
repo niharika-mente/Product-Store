@@ -26,7 +26,7 @@ import { stripeWebhook } from "./controllers/checkout.controller.js";
 import { expressMiddleware } from "@as-integrations/express4";
 import { apolloServer } from "./graphql/server.js";
 import { optionalProtect } from "./middleware/auth.js";
-
+import limiter from "./middleware/apiLimiter.js";
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
 import { validateEnv } from "./config/env.js";
@@ -115,12 +115,6 @@ app.use(
 );
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("trust proxy", 1);
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000,
-  message: "Too many requests from this IP, please try again later.",
-});
 const allowedOrigins = [process.env.FRONTEND_URL].filter(Boolean);
 
 app.use(cors({
