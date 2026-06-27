@@ -62,8 +62,46 @@ if (process.env.VITE_API_URL) {
   connectSrc.push(process.env.VITE_API_URL);
 }
 
+// In development Apollo serves its embedded sandbox at GET /graphql from these
+// CDNs. Allow them so the sandbox keeps working now that helmet also covers the
+// /graphql route; production keeps the strict default-src 'self' policy.
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: isDev
+    ? [...scriptSrc, "https://embeddable-sandbox.cdn.apollographql.com"]
+    : scriptSrc,
+  styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+  fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+  imgSrc: [
+    "'self'", "data:", "blob:",
+    "https://res.cloudinary.com", "https://via.placeholder.com",
+    ...(isDev ? ["https://apollo-server-landing-page.cdn.apollographql.com"] : []),
+  ],
+  connectSrc: isDev
+    ? [...connectSrc, "https://sandbox.embed.apollographql.com"]
+    : connectSrc,
+  workerSrc: ["'self'", "blob:"],
+  ...(isDev
+    ? {
+        frameSrc: ["'self'", "https://sandbox.embed.apollographql.com"],
+        manifestSrc: ["'self'", "https://apollo-server-landing-page.cdn.apollographql.com"],
+      }
+    : {}),
+};
+
 const app = express();
 await apolloServer.start();
+
+// Register helmet BEFORE the routes (including /graphql) so every response —
+// API and GraphQL alike — carries the hardened security headers.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: cspDirectives,
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 app.use(
   "/graphql",
@@ -73,22 +111,6 @@ app.use(
     context: async ({ req }) => ({
       user: req.user || null,
     }),
-  })
-);
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc,
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://via.placeholder.com"],
-        connectSrc,
-        workerSrc: ["'self'", "blob:"],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
   })
 );
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
