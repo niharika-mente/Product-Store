@@ -7,9 +7,9 @@ import {
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher.jsx';
-import { PlusSquareIcon } from "@chakra-ui/icons"
+import { PlusSquareIcon } from "@chakra-ui/icons";
 import { IoMoon } from "react-icons/io5";
-import { LuSun, LuShoppingCart, LuHeart } from "react-icons/lu";
+import { LuSun, LuShoppingCart, LuHeart, LuSearch } from "react-icons/lu";
 import { useCartStore } from "../../store/cart";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { useProductStore } from "../../store/product";
@@ -35,30 +35,49 @@ const Navbar = () => {
   const isAdmin = user?.role === 'admin';
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discount, finalTotal }
 
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-  const navBg = useColorModeValue("white", "gray.800");
-  const border = useColorModeValue("gray.200", "gray.700");
-  const labelColor = useColorModeValue("gray.600", "gray.300");
-  const mobileInputBg = useColorModeValue("gray.50", "gray.700");
-  const mobileInputBorder = useColorModeValue("gray.200", "gray.600");
-  const searchBg = useColorModeValue("gray.50", "gray.700");
-  const searchBorder = useColorModeValue("gray.200", "gray.600");
+  // --- Colour tokens matched to the site's cyan/blue palette ---
+  const navBg         = useColorModeValue("rgba(255,255,255,0.97)", "rgba(17,24,39,0.97)");
+  const border        = useColorModeValue("blue.100",  "blue.900");
+  const labelColor    = useColorModeValue("gray.500",  "gray.400");
+  const iconColor     = useColorModeValue("gray.600",  "gray.300");
+  const iconHoverBg   = useColorModeValue("cyan.50",   "blue.900");
+  const iconHoverColor= useColorModeValue("blue.600",  "cyan.300");
+  const searchBg      = useColorModeValue("gray.50",   "gray.800");
+  const searchBorder  = useColorModeValue("blue.100",  "blue.800");
+  const dividerColor  = useColorModeValue("blue.100",  "blue.800");
+  const cartItemBorder= useColorModeValue("blue.50",   "blue.900");
+  const drawerBg      = useColorModeValue("white",     "gray.900");
+  const drawerText    = useColorModeValue("gray.900",  "white");
+  // Announcement bar uses the site's blue.500 → cyan.400 gradient direction
+  const currencyBg    = useColorModeValue("white",     "gray.800");
+  const currencyColor = useColorModeValue("blue.700",  "cyan.300");
+  const currencyBorder= useColorModeValue("blue.200",  "blue.700");
+  const totalColor    = useColorModeValue("cyan.500",  "cyan.300");
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("authToken"));
+  }, [location]);
+
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 8);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // ✅ Wrapped in useCallback so it's stable and safe to use in useEffect deps
   const handleCartOpen = useCallback(() => {
     onOpen();
   }, [onOpen]);
 
-  // ✅ handleCartOpen is now stable — no missing-deps warning
   useEffect(() => {
-    const handleOpenCart = () => {
-      handleCartOpen();
-    };
+    const handleOpenCart = () => handleCartOpen();
     window.addEventListener('open-cart', handleOpenCart);
     return () => window.removeEventListener('open-cart', handleOpenCart);
   }, [handleCartOpen]);
@@ -90,139 +109,163 @@ const Navbar = () => {
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setIsCheckoutLoading(true);
-
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cartItems, couponCode: appliedCoupon?.code || null }),
       });
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status} ${res.statusText}`);
-      }
+      if (!res.ok) throw new Error(`Server error: ${res.status} ${res.statusText}`);
       const data = await res.json();
-
       if (!data.success) {
-        toast({
-          title: "Checkout Error",
-          description: data.message,
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
+        toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
         return;
       }
       setAppliedCoupon(null);
       onClose();
       window.location.href = data.url;
     } catch (err) {
-      console.error("Checkout failed:", err);
-
-      let message;
-      if (err instanceof TypeError) {
-        message = "Network error — please check your connection";
-      } else if (err.message && err.message.startsWith("Server error:")) {
-        message = "Something went wrong on our end. Please try again later.";
-      } else {
-        message = "Failed to process checkout";
-      }
-
-      toast({
-        title: "Error",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
+      let message = err instanceof TypeError
+        ? "Network error — please check your connection"
+        : err.message?.startsWith("Server error:")
+          ? "Something went wrong on our end. Please try again later."
+          : "Failed to process checkout";
+      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
     } finally {
       setIsCheckoutLoading(false);
     }
   };
 
   const handleLogout = async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        });
+      } catch (err) {
+        console.error("Failed to call logout API:", err);
+      }
+    }
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
     await logout();
     emptyCart();
     clearWishlist();
     navigate("/login");
   };
 
-  return (
-    <Box
-      bg={navBg}
-      borderBottom="1px solid"
-      borderColor={border}
-      mb={{ base: 6, sm: 4 }}
-      position="sticky"
-      top="0"
-      zIndex="1000"
-    >
-      <Container maxW={"1140px"} px={4}>
-        <Flex
-          minH={16}
-          py={{ base: 3, sm: 0 }}
-          alignItems="center"
-          justifyContent="space-between"
-          flexDir={{ base: "row" }}
-        >
-          {/* LEFT SIDE - LOGO */}
-          <Text
-            fontSize={{ base: "20px", sm: "24px" }}
-            fontWeight={"bold"}
-            textTransform={"uppercase"}
-            bgGradient={"linear(to-r, cyan.400, blue.500)"}
-            bgClip={"text"}
-            transition="all 0.3s"
-            display="inline-block"
-            _hover={{ transform: "scale(1.03)" }}
-          >
-            <Link to={"/"}>Product Store 🛒</Link>
-          </Text>
+  // Shared icon button — cyan/blue hover to match site palette
+  const iconBtnStyle = {
+    size: "sm",
+    variant: "ghost",
+    color: iconColor,
+    borderRadius: "lg",
+    _hover: { bg: iconHoverBg, color: iconHoverColor },
+    _active: { bg: iconHoverBg },
+    transition: "all 0.15s ease",
+  };
 
-          {/* RIGHT SIDE - ICONS + HAMBURGER */}
-          <HStack spacing={3} alignItems={"center"}>
-            {/* Search Box - Desktop only */}
-            <Box display={{ base: "none", md: "block" }} w="200px">
-              <Input
-                id="navbar-search-input"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    if (location.pathname !== '/') {
-                      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
-                    } else {
-                      fetchProducts();
+  return (
+    <Box position="sticky" top="0" zIndex="1000">
+
+      {/* Main header */}
+      <Box
+        bg={navBg}
+        backdropFilter="blur(12px)"
+        borderBottom="1px solid"
+        borderColor={isScrolled ? border : "transparent"}
+        boxShadow={isScrolled ? "0 1px 16px rgba(56,178,172,0.08)" : "none"}
+        transition="border-color 0.2s ease, box-shadow 0.2s ease"
+      >
+        <Container maxW="1200px" px={5}>
+          <Flex h="64px" alignItems="center" justifyContent="space-between" gap={4}>
+
+            {/* ── LOGO — identical to original ── */}
+            <Text
+              as={Link}
+              to="/"
+              fontSize={{ base: "18px", sm: "22px" }}
+              fontWeight="extrabold"
+              letterSpacing="tight"
+              textTransform="uppercase"
+              bgGradient="linear(to-r, cyan.400, blue.500)"
+              bgClip="text"
+              textDecoration="none"
+              flexShrink={0}
+              display="inline-block"
+              _hover={{ transform: "scale(1.03)" }}
+              transition="all 0.3s"
+            >
+              Product Store 🛒
+            </Text>
+
+            {/* SEARCH — desktop */}
+            <Box display={{ base: "none", md: "flex" }} flex="1" maxW="320px" mx={4}>
+              <Box position="relative" w="full">
+                <Box
+                  position="absolute"
+                  left="10px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                  color={labelColor}
+                  pointerEvents="none"
+                  zIndex={1}
+                >
+                  <LuSearch size={14} />
+                </Box>
+                <Input
+                  id="navbar-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      if (location.pathname !== '/') {
+                        navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+                      } else {
+                        fetchProducts();
+                      }
                     }
-                  }
-                }}
-                placeholder={t('common.search')}
-                aria-label={t('common.search')}
-                size="sm"
-                bg={searchBg}
-                borderColor={searchBorder}
-              />
+                  }}
+                  placeholder={t('common.search')}
+                  aria-label={t('common.search')}
+                  size="sm"
+                  pl="32px"
+                  bg={searchBg}
+                  borderColor={searchBorder}
+                  borderRadius="lg"
+                  fontSize="13px"
+                  _placeholder={{ color: labelColor }}
+                  _hover={{ borderColor: "cyan.300" }}
+                  _focus={{ borderColor: "cyan.400", boxShadow: "0 0 0 1px var(--chakra-colors-cyan-400)" }}
+                  transition="all 0.15s"
+                />
+              </Box>
             </Box>
 
-            {/* Desktop Icons */}
-            <HStack spacing={1} display={{ base: "none", sm: "flex" }}>
-              <Link to={"/create"}>
-                <Button size="sm" aria-label={t('nav.addProduct')}>
-                  <PlusSquareIcon fontSize={18} />
+            {/* RIGHT ACTIONS — desktop */}
+            <HStack spacing={1} display={{ base: "none", sm: "flex" }} alignItems="center">
+
+              {/* Add product */}
+              <Link to="/create">
+                <Button {...iconBtnStyle} aria-label={t('nav.addProduct')}>
+                  <PlusSquareIcon fontSize={17} />
                 </Button>
               </Link>
 
-              <Link to={"/wishlist"}>
-                <Button size="sm" position="relative" aria-label="Open wishlist">
-                  <LuHeart size="18" />
+              {/* Wishlist */}
+              <Link to="/wishlist">
+                <Button {...iconBtnStyle} position="relative" aria-label="Open wishlist">
+                  <LuHeart size={17} />
                   {wishlistCount > 0 && (
                     <Badge
                       colorScheme="pink"
                       borderRadius="full"
                       position="absolute"
-                      top="-5px"
-                      right="-5px"
-                      px={1.5}
-                      fontSize="10px"
+                      top="-4px" right="-4px"
+                      px="5px" fontSize="9px"
+                      lineHeight="16px" h="16px" minW="16px"
                     >
                       {wishlistCount}
                     </Badge>
@@ -230,18 +273,18 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              <Link to={"/compare"}>
-                <Button size="sm" position="relative" aria-label="Compare products">
-                  <FaBalanceScale size="18" />
+              {/* Compare */}
+              <Link to="/compare">
+                <Button {...iconBtnStyle} position="relative" aria-label="Compare products">
+                  <FaBalanceScale size={16} />
                   {compareList.length > 0 && (
                     <Badge
                       colorScheme="purple"
                       borderRadius="full"
                       position="absolute"
-                      top="-5px"
-                      right="-5px"
-                      px={1.5}
-                      fontSize="10px"
+                      top="-4px" right="-4px"
+                      px="5px" fontSize="9px"
+                      lineHeight="16px" h="16px" minW="16px"
                     >
                       {compareList.length}
                     </Badge>
@@ -249,46 +292,63 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              <Button size="sm" onClick={handleCartOpen} position="relative" aria-label={t('cart.openCart')}>
-                <LuShoppingCart size="18" />
+              {/* Cart */}
+              <Button
+                {...iconBtnStyle}
+                onClick={handleCartOpen}
+                position="relative"
+                aria-label={t('cart.openCart')}
+              >
+                <LuShoppingCart size={17} />
                 {totalItemsCount > 0 && (
                   <Badge
-                    colorScheme="teal"
+                    colorScheme="cyan"
                     borderRadius="full"
                     position="absolute"
-                    top="-5px"
-                    right="-5px"
-                    px={1.5}
-                    fontSize="10px"
+                    top="-4px" right="-4px"
+                    px="5px" fontSize="9px"
+                    lineHeight="16px" h="16px" minW="16px"
                   >
                     {totalItemsCount}
                   </Badge>
                 )}
               </Button>
 
-              <select
+              {/* Divider */}
+              <Box h="20px" w="1px" bg={dividerColor} mx={1} />
+
+              {/* Currency */}
+              <Box
+                as="select"
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
                 aria-label="Select currency"
-                style={{
-                  padding: '6px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  backgroundColor: colorMode === 'dark' ? '#2D3748' : '#ffffff',
-                  color: colorMode === 'dark' ? '#ffffff' : '#1A202C',
-                }}
+                fontSize="12px"
+                fontWeight="700"
+                px="8px"
+                py="5px"
+                borderRadius="lg"
+                border="1px solid"
+                borderColor={currencyBorder}
+                bg={currencyBg}
+                color={currencyColor}
+                cursor="pointer"
+                letterSpacing="0.02em"
+                _hover={{ borderColor: "cyan.400" }}
+                transition="border-color 0.15s"
+                outline="none"
               >
                 <option value="USD">$ USD</option>
                 <option value="EUR">€ EUR</option>
                 <option value="INR">₹ INR</option>
-              </select>
+              </Box>
 
-              <Button size="sm" onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
-                {colorMode === "light" ? <IoMoon /> : <LuSun size='18' />}
+              {/* Theme toggle */}
+              <Button {...iconBtnStyle} onClick={toggleColorMode} aria-label={t('common.toggleTheme')}>
+                {colorMode === "light" ? <IoMoon size={16} /> : <LuSun size={16} />}
               </Button>
+
+              {isLoggedIn && <Box h="20px" w="1px" bg={dividerColor} mx={1} />}
 
               {isLoggedIn && (
                 <>
@@ -298,230 +358,212 @@ const Navbar = () => {
                     </Link>
                   )}
                   <Link to="/profile">
-                    <Button variant="ghost" size="sm">My Profile</Button>
+                    <Button
+                      size="sm" variant="ghost"
+                      color={iconColor} fontSize="13px" fontWeight="500"
+                      borderRadius="lg"
+                      _hover={{ bg: iconHoverBg, color: iconHoverColor }}
+                    >
+                      Profile
+                    </Button>
                   </Link>
-                  <Button onClick={handleLogout} colorScheme="red" variant="outline" size="sm">
+                  <Button
+                    size="sm" variant="outline" colorScheme="red"
+                    fontSize="13px" fontWeight="500" borderRadius="lg"
+                    onClick={handleLogout}
+                  >
                     Logout
                   </Button>
                 </>
               )}
             </HStack>
 
-            {/* Hamburger Button - Mobile only */}
-            <Button
-              display={{ base: "flex", sm: "none" }}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Open menu"
-              variant="ghost"
-              fontSize="22px"
-            >
-              ☰
-            </Button>
-          </HStack>
-        </Flex>
+            {/* HAMBURGER — mobile */}
+            <HStack display={{ base: "flex", sm: "none" }} spacing={2}>
+              <Button
+                {...iconBtnStyle}
+                onClick={handleCartOpen}
+                position="relative"
+                aria-label={t('cart.openCart')}
+              >
+                <LuShoppingCart size={18} />
+                {totalItemsCount > 0 && (
+                  <Badge colorScheme="cyan" borderRadius="full" position="absolute" top="-4px" right="-4px" px="5px" fontSize="9px">
+                    {totalItemsCount}
+                  </Badge>
+                )}
+              </Button>
+              <Button
+                size="sm" variant="ghost"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Open menu"
+                color={iconColor}
+                borderRadius="lg"
+                _hover={{ bg: iconHoverBg }}
+                fontSize="20px" px={2}
+              >
+                {isMobileMenuOpen ? "✕" : "☰"}
+              </Button>
+            </HStack>
+          </Flex>
 
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <VStack
-            display={{ base: "flex", sm: "none" }}
-            spacing={3}
-            p={4}
-            borderTop="1px solid"
-            borderColor={border}
-            bg={navBg}
-            w="full"
-          >
-            <Box w="full">
+          {/* MOBILE MENU */}
+          {isMobileMenuOpen && (
+            <VStack
+              display={{ base: "flex", sm: "none" }}
+              spacing={2} pb={4} pt={2}
+              borderTop="1px solid"
+              borderColor={border}
+              w="full" align="stretch"
+            >
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('common.search')}
                 aria-label={t('common.search')}
-                bg={mobileInputBg}
-                borderColor={mobileInputBorder}
+                size="sm"
+                bg={searchBg}
+                borderColor={searchBorder}
+                borderRadius="lg"
+                _focus={{ borderColor: "cyan.400", boxShadow: "0 0 0 1px var(--chakra-colors-cyan-400)" }}
               />
-            </Box>
 
-            <Link to="/create" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
-              <Button w="full" leftIcon={<PlusSquareIcon />}>
-                {t('nav.addProduct')}
-              </Button>
-            </Link>
-
-            <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
-              <Button w="full" leftIcon={<LuHeart />} position="relative">
-                Wishlist
-                {wishlistCount > 0 && (
-                  <Badge
-                    colorScheme="pink"
-                    borderRadius="full"
-                    position="absolute"
-                    right="12px"
-                    top="50%"
-                    transform="translateY(-50%)"
+              {[
+                { to: "/create",   label: t('nav.addProduct'), icon: <PlusSquareIcon />, badge: 0,                  scheme: "cyan"   },
+                { to: "/wishlist", label: "Wishlist",          icon: <LuHeart />,        badge: wishlistCount,      scheme: "pink"   },
+                { to: "/compare",  label: "Compare",           icon: <FaBalanceScale />, badge: compareList.length, scheme: "purple" },
+              ].map(({ to, label, icon, badge, scheme }) => (
+                <Link key={to} to={to} onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+                  <Button
+                    w="full" size="sm" variant="ghost"
+                    leftIcon={icon} justifyContent="flex-start"
+                    borderRadius="lg" color={iconColor}
+                    _hover={{ bg: iconHoverBg, color: iconHoverColor }}
+                    position="relative"
                   >
-                    {wishlistCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
+                    {label}
+                    {badge > 0 && (
+                      <Badge colorScheme={scheme} borderRadius="full" position="absolute" right="12px">
+                        {badge}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              ))}
 
-            {isLoggedIn && (
-              <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
-                <Button w="full">My Profile</Button>
-              </Link>
+              {isLoggedIn && (
+                <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
+                  <Button w="full" size="sm" variant="ghost" justifyContent="flex-start" borderRadius="lg" color={iconColor}
+                    _hover={{ bg: iconHoverBg, color: iconHoverColor }}>
+                    My Profile
+                  </Button>
+                </Link>
+              )}
+
+              <Button
+                w="full" size="sm" variant="ghost"
+                leftIcon={colorMode === "light" ? <IoMoon /> : <LuSun />}
+                justifyContent="flex-start" borderRadius="lg"
+                color={iconColor}
+                _hover={{ bg: iconHoverBg, color: iconHoverColor }}
+                onClick={() => { toggleColorMode(); setIsMobileMenuOpen(false); }}
+              >
+                {colorMode === "light" ? "Dark mode" : "Light mode"}
+              </Button>
+            </VStack>
+          )}
+        </Container>
+      </Box>
+
+      {/* CART DRAWER */}
+      <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="md">
+        <DrawerOverlay backdropFilter="blur(4px)" />
+        <DrawerContent bg={drawerBg} color={drawerText}>
+          <DrawerCloseButton />
+          <DrawerHeader
+            borderBottomWidth="1px"
+            borderColor={cartItemBorder}
+            fontSize="15px" fontWeight="600" letterSpacing="-0.01em"
+          >
+            {t('cart.title')}
+            {totalItemsCount > 0 && (
+              <Badge ml={2} colorScheme="cyan" borderRadius="full" fontSize="11px">{totalItemsCount}</Badge>
             )}
+          </DrawerHeader>
 
-            <Link to="/compare" onClick={() => setIsMobileMenuOpen(false)} style={{ width: '100%' }}>
-              <Button w="full" leftIcon={<FaBalanceScale />} position="relative">
-                Compare
-                {compareList.length > 0 && (
-                  <Badge
-                    colorScheme="purple"
-                    borderRadius="full"
-                    position="absolute"
-                    right="12px"
-                    top="50%"
-                    transform="translateY(-50%)"
-                  >
-                    {compareList.length}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
-
-            <Button
-              w="full"
-              leftIcon={<LuShoppingCart />}
-              position="relative"
-              onClick={() => {
-                handleCartOpen();
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              Cart
-              {totalItemsCount > 0 && (
-                <Badge
-                  colorScheme="teal"
-                  borderRadius="full"
-                  position="absolute"
-                  right="12px"
-                  top="50%"
-                  transform="translateY(-50%)"
-                >
-                  {totalItemsCount}
-                </Badge>
-              )}
-            </Button>
-
-            <Button
-              w="full"
-              leftIcon={colorMode === "light" ? <IoMoon /> : <LuSun />}
-              onClick={() => {
-                toggleColorMode();
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              {colorMode === "light" ? "Dark Mode" : "Light Mode"}
-            </Button>
-          </VStack>
-        )}
-
-        <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="md">
-          <DrawerOverlay />
-          <DrawerContent bg={colorMode === "light" ? "white" : "gray.800"} color={colorMode === "light" ? "black" : "white"}>
-            <DrawerCloseButton />
-            <DrawerHeader borderBottomWidth="1px">{t('cart.title')}</DrawerHeader>
-
-            <DrawerBody>
-              {cartItems.length === 0 ? (
-                <Text textAlign="center" mt={10} color={labelColor}>{t('cart.empty')}</Text>
-              ) : (
-                <VStack align="stretch" spacing={4} mt={4}>
-                  {cartItems.map((item) => {
-                    const latestProduct = products.find((p) => p._id === item._id);
-                    const currentPrice = latestProduct?.price ?? item.price;
-
-                    return (
-                      <HStack
-                        key={item._id}
-                        justify="space-between"
-                        p={3}
-                        borderWidth="1px"
+          <DrawerBody px={4}>
+            {cartItems.length === 0 ? (
+              <VStack mt={16} spacing={3} opacity={0.4}>
+                <LuShoppingCart size={40} />
+                <Text fontSize="14px">{t('cart.empty')}</Text>
+              </VStack>
+            ) : (
+              <VStack align="stretch" spacing={3} mt={4}>
+                {cartItems.map((item) => {
+                  const latestProduct = products.find((p) => p._id === item._id);
+                  const currentPrice = latestProduct?.price ?? item.price;
+                  return (
+                    <HStack
+                      key={item._id}
+                      justify="space-between"
+                      p={3}
+                      borderWidth="1px"
+                      borderRadius="xl"
+                      borderColor={cartItemBorder}
+                    >
+                      <Box flex={1} minW={0}>
+                        <Text fontWeight="600" fontSize="13px" noOfLines={1}>{item.name}</Text>
+                        <Text fontSize="12px" color={labelColor} mt={0.5}>
+                          {item.quantity} × {formatPrice(currentPrice, currency, rates)}
+                        </Text>
+                      </Box>
+                      <Button
+                        size="xs" variant="ghost" colorScheme="red"
                         borderRadius="lg"
-                        borderColor={colorMode === "light" ? "gray.200" : "gray.600"}
+                        onClick={() => removeFromCart(item._id)}
+                        flexShrink={0}
                       >
-                        <Box>
-                          <Text fontWeight="bold">{item.name}</Text>
-                          <Text fontSize="sm" color={labelColor}>
-                            {t('cart.quantity')}: {item.quantity} × {formatPrice(currentPrice, currency, rates)}
-                          </Text>
-                        </Box>
-                        <Button
-                          size="sm"
-                          colorScheme="red"
-                          variant="ghost"
-                          onClick={() => removeFromCart(item._id)}
-                        >
-                          Remove
-                        </Button>
-                      </HStack>
-                    );
-                  })}
-                </VStack>
-              )}
-            </DrawerBody>
-
-            <DrawerFooter borderTopWidth="1px" display="flex" flexDirection="column" alignItems="stretch" gap={3}>
-              {/* Promo code input */}
-              {cartItems.length > 0 && (
-                appliedCoupon ? (
-                  <HStack justify="space-between">
-                    <Tag colorScheme="green" size="md" borderRadius="full">
-                      <TagLabel>{appliedCoupon.code} — save ${appliedCoupon.discount.toFixed(2)}</TagLabel>
-                      <TagCloseButton onClick={() => setAppliedCoupon(null)} />
-                    </Tag>
-                  </HStack>
-                ) : (
-                  <InputGroup size="sm">
-                    <Input
-                      placeholder="Promo code"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
-                      textTransform="uppercase"
-                    />
-                    <InputRightElement width="4.5rem">
-                      <Button h="1.5rem" size="xs" colorScheme="cyan" onClick={handleApplyPromo} isLoading={promoLoading}>
-                        Apply
+                        Remove
                       </Button>
-                    </InputRightElement>
-                  </InputGroup>
-                )
-              )}
+                    </HStack>
+                  );
+                })}
+              </VStack>
+            )}
+          </DrawerBody>
 
-              <HStack justify="space-between">
-                <Text fontWeight="bold" fontSize="lg">{t('cart.total')}:</Text>
-                <VStack align="flex-end" spacing={0}>
-                  {appliedCoupon && (
-                    <Text fontSize="sm" color="gray.400" textDecoration="line-through">
-                      {formatPrice(totalPrice ?? 0, currency, rates)}
-                    </Text>
-                  )}
-                  <Text fontWeight="bold" fontSize="lg" color="cyan.500">
-                    {formatPrice(appliedCoupon ? appliedCoupon.finalTotal : (totalPrice ?? 0), currency, rates)}
-                  </Text>
-                </VStack>
-              </HStack>
-              <Button colorScheme="blue" size="lg" width="100%" onClick={handleCheckout} isLoading={isCheckoutLoading} isDisabled={cartItems.length === 0}>
-                Proceed to Checkout
-              </Button>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      </Container>
-    </Box>
-  );
-};
+          <DrawerFooter
+            borderTopWidth="1px"
+            borderColor={cartItemBorder}
+            flexDirection="column"
+            alignItems="stretch"
+            gap={3} px={4}
+          >
+            <HStack justify="space-between">
+              <Text fontWeight="600" fontSize="14px" color={labelColor}>{t('cart.total')}</Text>
+              <Text fontWeight="700" fontSize="18px" letterSpacing="-0.02em" color={totalColor}>
+                {formatPrice(totalPrice ?? 0, currency, rates)}
+              </Text>
+            </HStack>
+            <Button
+              size="lg" w="full" borderRadius="xl"
+              bgGradient="linear(to-r, cyan.400, blue.500)"
+              color="white"
+              _hover={{ bgGradient: "linear(to-r, cyan.500, blue.600)", opacity: 0.92 }}
+              _active={{ opacity: 0.8 }}
+              fontWeight="600" fontSize="14px" letterSpacing="0.01em"
+              onClick={handleCheckout}
+              isLoading={isCheckoutLoading}
+              isDisabled={cartItems.length === 0}
+              transition="opacity 0.15s"
+            >
+              Proceed to Checkout
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+          </Box>
+        );
+      };
 
-export default Navbar;
+      export default Navbar;
