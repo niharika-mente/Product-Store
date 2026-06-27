@@ -17,8 +17,8 @@ afterAll(async () => {
     }
 });
 
-// helmet is registered as global middleware in app.js, so every response —
-// regardless of route — should carry the hardened security headers.
+// helmet is registered as global middleware in app.js, so every response -
+// regardless of route - should carry the hardened security headers.
 describe('Helmet security HTTP headers', () => {
     let res;
 
