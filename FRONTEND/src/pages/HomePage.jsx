@@ -157,6 +157,7 @@ const HomePage = () => {
             }}
             maxW="250px"
             aria-label="Sort products"
+            isDisabled={isSearching}
           >
             <option value="">Default</option>
             <option value="price_asc">Price: Low to High</option>
@@ -195,7 +196,7 @@ const HomePage = () => {
             </Box>
           </VStack>
 
-          <Box
+          <Box 
             w="full"
             display={hasNoProducts ? "block" : "grid"}
             gridTemplateColumns={hasNoProducts ? "1fr" : "300px 1fr"}
@@ -205,9 +206,14 @@ const HomePage = () => {
             {/* Sidebar with Filters — hidden when store has no products */}
             {!hasNoProducts && (
               <Box position="sticky" top="100px">
-                <FilterPanel filters={filters} setFilters={setFilters} />
+                <FilterPanel
+                  filters={filters}
+                  setFilters={setFilters}
+                  isDisabled={isSearching}
+                />
               </Box>
             )}
+
 
             {/* Product grid — skeletons while loading, real cards when ready */}
             <Box>

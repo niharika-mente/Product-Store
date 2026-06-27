@@ -14,14 +14,18 @@ import { AuthProvider } from './context/AuthContext';
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ComparePage from "./pages/ComparePage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ReferralDashboardPage from "./pages/ReferralDashboardPage";
+import MyReturnsPage from "./pages/MyReturnsPage";
+import ReturnsAdminPage from "./pages/admin/ReturnsAdminPage";
+import { ToastContainer } from "./utils/toastService";
 import KeyboardShortcutsModal from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
@@ -49,14 +53,17 @@ function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
             <Route path="/referrals" element={<ProtectedRoute><ReferralDashboardPage /></ProtectedRoute>} />
+            <Route path="/returns" element={<ProtectedRoute><MyReturnsPage /></ProtectedRoute>} />
+            <Route path="/admin/returns" element={<ProtectedRoute><ReturnsAdminPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            <Route path="/admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
         <KeyboardShortcutsModal isOpen={isOpen} onClose={onClose} />
+        <ToastContainer />
       </Box>
     </WishlistProvider>
     </AuthProvider>

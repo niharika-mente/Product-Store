@@ -1,76 +1,49 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const productSchema = new mongoose.Schema({
-    // Required Fields
-    name:{
-      type: String,
-      required: [true, "Product name is required"], // Custom error message
-      trim: true,
-      minlength: [3, "Product name must be at least 3 characters long"],
-      maxlength: [100, "Product name cannot exceed 100 characters"],
-    },
-
-    price: {
-      type: Number,
-      required: [true, "Price is required"],
-      min: [0, "Price cannot be negative"],
-      max: [1000000, "Price cannot exceed 1,000,000"],
-      validate: {
-        validator: function (value) {
-          return value !== null && value !== undefined && !isNaN(value);
-        },
-        message: "Price must be a valid number",
-      },
-    },
-
-    image: {
-      type: String,
-      required: [true, "Image URL is required"],
-      trim: true,
-    },
-    images: {
-      type: [String],
-      default: [],
-    },
-    
-    // Optional Fields - Extra Product Details
-    description: {
-        type: String,
-        trim: true,
-        default: ''
-    },
-    category: {
-        type: String,
-        trim: true,
-        default: ''
-    },
-    brand: {
-        type: String,
-        trim: true,
-        default: ''
-    },
-    tags: {
-        type: [String],
-        default: []
-    },
-    stock: {
-        type: Number,
-        min: [0, 'Stock cannot be negative'],
-        default: 0
-    },
-    tags:{
-        type: [String],
-        default: [],
-        validate: {
-            validator: function (tags){
-              return tags.length <= 5 && tags.every(tag => tag.length >= 2 && tag.length <= 30);
-            },
-            message: "Maximum 5 tags, each 2-30 characters"
-        }
-    }
-},{
-   timestamps: true
+const variantSchema = new mongoose.Schema({
+  size: { type: String, required: true },
+  color: { type: String, required: true },
+  price: { type: Number, required: true },
+  stock: { type: Number, required: true, default: 0 },
+  images: [{ type: String }]
 });
 
-const Product = mongoose.model("Product", productSchema);
+const productSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  brand: { type: String, trim: true, default: '' },
+  basePrice: { type: Number },
+  baseStock: { type: Number },
+  hasVariants: { type: Boolean, default: false },
+  tags: {
+    type: [{
+      type: String,
+      trim: true,
+      lowercase: true,
+      minlength: 1,
+      maxlength: 30,
+      match: /^[a-z0-9-]+$/
+    }],
+    default: [],
+    validate: [{
+      validator: function (value) {
+        return Array.isArray(value) ? value.length <= 5 : true;
+      },
+      message: 'A product may have at most 5 tags.'
+    }]
+  },
+  variants: [variantSchema],
+  // Soft-delete flag: queries exclude deleted products instead of removing rows.
+  // Referenced by the checkout flow and the {isDeleted, ...} indexes below.
+  isDeleted: { type: Boolean, default: false }
+}, { timestamps: true });
+
+// Indexes for common query patterns and performance optimization
+productSchema.index({ isDeleted: 1, category: 1, price: 1 });
+productSchema.index({ isDeleted: 1, createdAt: -1 });
+productSchema.index({ name: 'text' });
+// Supports filtering the search endpoint by brand.
+productSchema.index({ brand: 1 });
+
+const Product = mongoose.model('Product', productSchema);
 export default Product;

@@ -30,11 +30,12 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { FaBalanceScale, FaEdit, FaHeart, FaRegHeart, FaTrash } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { useCart } from "../../store/cart";
+import { useCartStore } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
 import { useProductStore } from "../../store/product";
 import { useWishlist } from "../../context/WishlistContext.jsx";
 import { formatPrice } from "../../utils/currency";
+import QuickViewModal from "./QuickViewModal";
 import {
   showErrorToast,
   showInfoToast,
@@ -48,9 +49,9 @@ const ProductCard = ({ product }) => {
   const [isInWishlist, setIsInWishlist] = useState(false);
 
   const handleClose = () => {
-  setUpdatedProduct(product);
-  setImagePreview(product.image);
-  onClose();
+    setUpdatedProduct(product);
+    setImagePreview(product.image);
+    onClose();
   };
 
   const fileInputRef = useRef(null);
@@ -72,10 +73,10 @@ const ProductCard = ({ product }) => {
   } = useProductStore();
 
   const isInCompare = compareList.some((p) => p._id === product._id);
-  const { addToCart } = useCart();
-  const { currency, rates } = useCurrencyStore();
+  const { addToCart } = useCartStore();
   const { addToWishlist, removeFromWishlist, checkInWishlist } = useWishlist();
   const toast = useToast();
+  const { currency, rates } = useCurrencyStore();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -83,9 +84,14 @@ const ProductCard = ({ product }) => {
     onOpen: onDeleteOpen,
     onClose: onDeleteClose,
   } = useDisclosure();
+  const {
+    isOpen: isQuickViewOpen,
+    onOpen: onQuickViewOpen,
+    onClose: onQuickViewClose,
+  } = useDisclosure();
 
   const LOW_STOCK_THRESHOLD = 5;
-  const isOutOfStock = product.stock != null && product.stock === 0;
+  const isOutOfStock = !product.stock || product.stock <= 0;
   const isLowStock = product.stock != null && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   // Sync updatedProduct when product prop changes
@@ -96,11 +102,8 @@ const ProductCard = ({ product }) => {
 
   // Check wishlist status on mount
   useEffect(() => {
-    const checkWishlist = async () => {
-      const inWishlist = await checkInWishlist(product._id);
-      setIsInWishlist(inWishlist);
-    };
-    checkWishlist();
+    const inWishlist = checkInWishlist(product._id);
+    setIsInWishlist(inWishlist);
   }, [product._id, checkInWishlist]);
 
   // Revoke blob URLs to avoid memory leaks
@@ -207,53 +210,55 @@ const ProductCard = ({ product }) => {
       }}
       bg={bg}
     >
-      <Box position="relative">
-        <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
-          <Image
-            src={product.image}
-            alt={product.name}
-            h={48}
-            w="full"
-            objectFit="cover"
-            transition="transform 0.4s"
-            _groupHover={{ transform: "scale(1.05)" }}
-            cursor="pointer"
-          />
-        </Link>
-        {isLowStock && (
-          <Badge
-            position="absolute"
-            top={2}
-            left={2}
-            colorScheme="orange"
-            fontSize="xs"
-            px={2}
-            py={1}
-            borderRadius="md"
-            zIndex={1}
-            boxShadow="sm"
-          >
-            Low Stock
-          </Badge>
-        )}
-        {isOutOfStock && (
-          <Badge
-            position="absolute"
-            top={2}
-            left={2}
-            colorScheme="red"
-            fontSize="xs"
-            px={2}
-            py={1}
-            borderRadius="md"
-            zIndex={1}
-            boxShadow="sm"
-          >
-            Out of Stock
-          </Badge>
-        )}
-      </Box>
+<Box position="relative">
+  <Link to={`/product/${product._id}`} tabIndex="-1" aria-hidden="true">
+    <Image
+      src={product.image}
+      alt={product.name}
+      h={48}
+      w="full"
+      objectFit="cover"
+      fallbackSrc="https://via.placeholder.com/600x600?text=Product+Image"
+      transition="transform 0.4s"
+      _groupHover={{ transform: "scale(1.05)" }}
+      cursor="pointer"
+    />
+  </Link>
 
+  {isLowStock && (
+    <Badge
+      position="absolute"
+      top={2}
+      left={2}
+      colorScheme="orange"
+      fontSize="xs"
+      px={2}
+      py={1}
+      borderRadius="md"
+      zIndex={1}
+      boxShadow="sm"
+    >
+      Low Stock
+    </Badge>
+  )}
+
+  {isOutOfStock && (
+    <Badge
+      position="absolute"
+      top={2}
+      left={2}
+      colorScheme="red"
+      fontSize="xs"
+      px={2}
+      py={1}
+      borderRadius="md"
+      zIndex={1}
+      boxShadow="sm"
+    >
+      Out of Stock
+    </Badge>
+  )}
+</Box>
       <Box p={4}>
         {/* Product Name with Link */}
         <Heading as="h3" size="md" mb={2} noOfLines={1}>
@@ -292,6 +297,11 @@ const ProductCard = ({ product }) => {
         {/* Action Buttons */}
         <Stack direction={{ base: "column", sm: "row" }} spacing={2}>
           <HStack spacing={2}>
+            {/* Quick View */}
+            <Button size="sm" colorScheme="purple" onClick={onQuickViewOpen}>
+              Quick View
+            </Button>
+
             {/* Wishlist */}
             <IconButton
               icon={isInWishlist ? <FaHeart color="red" /> : <FaRegHeart />}
@@ -363,7 +373,7 @@ const ProductCard = ({ product }) => {
         </Stack>
       </Box>
 
-      {/* ── Delete Confirmation Dialog ── */}
+      {/*  Delete Confirmation Dialog  */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -397,7 +407,7 @@ const ProductCard = ({ product }) => {
         </AlertDialogOverlay>
       </AlertDialog>
 
-      {/* ── Edit / Update Modal ── */}
+      {/*Edit / Update Modal*/}
       <Modal isOpen={isOpen} onClose={handleClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent maxH="90vh">
@@ -602,8 +612,8 @@ const ProductCard = ({ product }) => {
                 onChange={(e) => {
                   const tagsArray = e.target.value
                     .split(",")
-                    .map((tag) => tag.trim())
-                    .filter((tag) => tag && tag.length >= 2 && tag.length <= 30);
+                    .map((tag) => tag.trim().toLowerCase())
+                    .filter((tag) => /^[a-z0-9-]{1,30}$/.test(tag));
                   setUpdatedProduct({ ...updatedProduct, tags: tagsArray });
                 }}
               />
@@ -620,17 +630,21 @@ const ProductCard = ({ product }) => {
             >
               Update
             </Button>
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-            >
+            <Button variant="ghost" onClick={handleClose}>
               Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <QuickViewModal
+        isOpen={isQuickViewOpen}
+        onClose={onQuickViewClose}
+        product={product}
+      />
     </Box>
   );
 };
 
 export default ProductCard;
+

@@ -19,6 +19,7 @@ export const useRecentlyViewed = create(
 
 export const useProductStore = create((set) =>({
     products: [],
+    productCache: {},
     isLoading: false,
     isSubmitting: false,
     isDeleting: false,
@@ -88,7 +89,29 @@ export const useProductStore = create((set) =>({
             minRating,
             inStock
         } = options;
+        const cacheKey = JSON.stringify({
+            page,
+            limit,
+            sort,
+            category,
+            minPrice,
+            maxPrice,
+            brand,
+            minRating,
+            inStock,
+        });
 
+        const cached = useProductStore.getState().productCache[cacheKey];
+
+        if (cached && Date.now() - cached.timestamp < 30000) {
+            set({
+                products: cached.products,
+                isLoading: false,
+                error: null,
+            });
+
+            return cached.response;
+        }
         set({ isLoading: true, error: null });
         try {
             let url = `${API}/api/products?page=${page}&limit=${limit}`;
@@ -108,7 +131,24 @@ export const useProductStore = create((set) =>({
                 return { success: false, message: errorData.message || "Failed to fetch products" };
             }
             const data = await res.json();
-            set({ products: data.data, isLoading: false });
+            set((state) => ({
+                products: data.data,
+                isLoading: false,
+                productCache: {
+                    ...state.productCache,
+                    [cacheKey]: {
+                        timestamp: Date.now(),
+                        products: data.data,
+                        response: {
+                            success: true,
+                            currentPage: data.currentPage,
+                            totalPages: data.totalPages,
+                            totalProducts: data.totalProducts,
+                            limit: data.limit,
+                        },
+                    },
+                },
+            }));
             return {
                 success: true,
                 currentPage: data.currentPage,
@@ -140,14 +180,22 @@ export const useProductStore = create((set) =>({
         try {
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "DELETE",
-            });
-            const data = await res.json();
+        });
+
+        if (!res.ok) {
+            set({ isDeleting: false });
+            return {
+                success: false,
+                message: `Request failed with status ${res.status}`,
+            };
+        }
+        const data = await res.json();
             if (!data.success) {
                 set({ isDeleting: false });
                 return { success: false, message: data.message };
             }
 
-            set(state => ({ products: state.products.filter(product => product._id !== pid), isDeleting: false }));
+            set(state => ({ products: state.products.filter(product => product._id !== pid), productCache: {}, isDeleting: false }));
             return { success: true, message: data.message };
         } catch (error) {
             console.error("Network error deleting product:", error);
@@ -178,8 +226,16 @@ export const useProductStore = create((set) =>({
 
             const res = await fetch(`${API}/api/products/${pid}`, {
                 method: "PUT",
-                body: formData,
+                 body: formData,
             });
+
+            if (!res.ok) {
+                set({ isSubmitting: false });
+                return {
+                    success: false,
+                    message: `Request failed with status ${res.status}`,
+                };
+            }
 
             const data = await res.json();
             if (!data.success) {
@@ -189,6 +245,7 @@ export const useProductStore = create((set) =>({
 
             set(state => ({
                 products: state.products.map(product => product._id === pid ? data.data : product),
+                productCache: {},
                 isSubmitting: false
             }));
             return { success: true, message: data.message };
@@ -214,6 +271,7 @@ export const useProductStore = create((set) =>({
             }
             set((state) => ({
                 products: state.products.map((p) => p._id === pid ? data.data : p),
+                productCache: {},
                 isSubmitting: false,
             }));
             return { success: true, data: data.data };

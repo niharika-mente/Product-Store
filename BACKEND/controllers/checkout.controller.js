@@ -1,6 +1,7 @@
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
 import User from '../models/user.model.js';
+import Coupon from '../models/coupon.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 import { sendOrderConfirmationEmail } from '../services/email.service.js';
@@ -23,15 +24,21 @@ if (process.env.NODE_ENV === 'test') {
 }
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// First variant image, if any — non-variant products carry no image of their own.
+function productImage(product) {
+  const img = product.variants?.[0]?.images?.[0];
+  return img ? [img] : [];
+}
+
 async function restoreStock(deductions) {
   for (const { productId, quantity } of deductions) {
-    await Product.findByIdAndUpdate(productId, { $inc: { stock: quantity } });
+    await Product.findByIdAndUpdate(productId, { $inc: { baseStock: quantity } });
   }
 }
 
 export const createCheckoutSession = async (req, res) => {
     try {
-        const { items } = req.body;
+        const { items, couponCode } = req.body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ success: false, message: "Cart is empty or invalid" });
@@ -60,10 +67,10 @@ export const createCheckoutSession = async (req, res) => {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
-            if (item.quantity > product.stock) {
+            if (item.quantity > product.baseStock) {
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient stock for ${product.name}. Available: ${product.stock}, requested: ${item.quantity}`
+                    message: `Insufficient stock for ${product.name}. Available: ${product.baseStock}, requested: ${item.quantity}`
                 });
             }
 
@@ -72,12 +79,43 @@ export const createCheckoutSession = async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: product.name,
-                        images: product.image ? [product.image] : [],
+                        images: productImage(product),
                     },
-                    unit_amount: Math.round(product.price * 100),
+                    unit_amount: Math.round(product.basePrice * 100),
                 },
                 quantity: item.quantity,
             });
+        }
+
+        // Validate and apply coupon discount if provided
+        let couponDoc = null;
+        let discountAmount = 0;
+        if (couponCode) {
+            const rawTotal = lineItems.reduce((sum, li) => sum + li.price_data.unit_amount * li.quantity, 0) / 100;
+            couponDoc = await Coupon.findOne({ code: couponCode.trim().toUpperCase(), isActive: true });
+
+            if (!couponDoc) {
+                return res.status(400).json({ success: false, message: 'Invalid or expired coupon code' });
+            }
+            if (couponDoc.expiresAt && new Date() > couponDoc.expiresAt) {
+                return res.status(400).json({ success: false, message: 'This coupon has expired' });
+            }
+            if (couponDoc.maxUses !== null && couponDoc.usedCount >= couponDoc.maxUses) {
+                return res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+            }
+            if (rawTotal < couponDoc.minOrderAmount) {
+                return res.status(400).json({ success: false, message: `Minimum order of $${couponDoc.minOrderAmount.toFixed(2)} required` });
+            }
+
+            discountAmount = couponDoc.type === 'percentage'
+                ? (rawTotal * couponDoc.value) / 100
+                : Math.min(couponDoc.value, rawTotal);
+
+            // Apply discount by scaling each line item's unit_amount proportionally
+            const ratio = 1 - discountAmount / rawTotal;
+            for (const li of lineItems) {
+                li.price_data.unit_amount = Math.max(1, Math.round(li.price_data.unit_amount * ratio));
+            }
         }
 
         const session = await stripe.checkout.sessions.create({
@@ -91,6 +129,8 @@ export const createCheckoutSession = async (req, res) => {
                   items.map((item) => ({ _id: item._id, quantity: item.quantity }))
                 ),
                 userId: req.user?._id?.toString() || '',
+                couponCode: couponDoc ? couponDoc.code : '',
+                discountAmount: discountAmount.toFixed(2),
             },
         });
 
@@ -143,7 +183,7 @@ export const stripeWebhook = async (req, res) => {
             console.error(`Checkout webhook: product not found or deleted: ${item._id}`);
             return res.json({ received: true });
           }
-          if (item.quantity > product.stock) {
+          if (item.quantity > product.baseStock) {
             console.error(`Checkout webhook: insufficient stock for ${product.name}`);
             return res.json({ received: true });
           }
@@ -151,9 +191,9 @@ export const stripeWebhook = async (req, res) => {
           orderItems.push({
             product: product._id,
             name: product.name,
-            price: product.price,
+            price: product.basePrice,
             quantity: item.quantity,
-            image: product.image || "",
+            image: productImage(product)[0] || "",
           });
         }
 
@@ -163,9 +203,9 @@ export const stripeWebhook = async (req, res) => {
             {
               _id: item._id,
               isDeleted: { $ne: true },
-              stock: { $gte: item.quantity },
+              baseStock: { $gte: item.quantity },
             },
-            { $inc: { stock: -item.quantity } }
+            { $inc: { baseStock: -item.quantity } }
           );
 
           if (!updated) {
@@ -199,6 +239,14 @@ export const stripeWebhook = async (req, res) => {
               );
             }
           }).catch(() => {});
+        }
+
+        // Increment coupon usage after successful fulfillment
+        if (session.metadata?.couponCode) {
+          await Coupon.findOneAndUpdate(
+            { code: session.metadata.couponCode },
+            { $inc: { usedCount: 1 } }
+          );
         }
 
         // Trigger referral reward
