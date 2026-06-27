@@ -160,9 +160,9 @@ function Login() {
                     width="100%"
                     size="lg"
                     borderRadius="xl"
-                    borderColor="red.200"
+                    borderColor="gray.300"
                     _hover={{
-                      bg: "red.50",
+                      bg: "gray.50",
                       transform: "translateY(-2px)",
                       boxShadow: "lg",
                     }}
