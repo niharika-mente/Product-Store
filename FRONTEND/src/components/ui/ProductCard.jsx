@@ -35,6 +35,7 @@ import { useCartStore } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
 import { useProductStore } from "../../store/product";
 import { useWishlist } from "../../context/WishlistContext.jsx";
+import { getSocket } from "../../socket";
 import { formatPrice } from "../../utils/currency";
 import QuickViewModal from "./QuickViewModal";
 import {
@@ -48,15 +49,33 @@ const ProductCard = ({ product }) => {
   const [updatedProduct, setUpdatedProduct] = useState(product);
   const [imagePreview, setImagePreview] = useState(product.image);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [liveStock, setLiveStock] = useState(product.stock);
 
   const handleClose = () => {
     setUpdatedProduct(product);
     setImagePreview(product.image);
     onClose();
   };
-
   const fileInputRef = useRef(null);
   const cancelRef = useRef();
+
+  useEffect(() => {
+    if (product) {
+      setUpdatedProduct(product);
+      setLiveStock(product.stock);
+    }
+  }, [product]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const handleStockUpdate = (data) => {
+      if (data.productId === product._id) {
+        setLiveStock(data.newStock);
+      }
+    };
+    socket.on("stockUpdate", handleStockUpdate);
+    return () => socket.off("stockUpdate", handleStockUpdate);
+  }, [product._id]);
 
   const textColor = useColorModeValue("gray.600", "gray.200");
   const bg = useColorModeValue("white", "gray.800");
@@ -98,8 +117,8 @@ const ProductCard = ({ product }) => {
 } = useDisclosure();
 
   const LOW_STOCK_THRESHOLD = 5;
-  const isOutOfStock = !product.stock || product.stock <= 0;
-  const isLowStock = product.stock != null && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
+  const isOutOfStock = liveStock != null && liveStock <= 0;
+  const isLowStock = liveStock != null && liveStock > 0 && liveStock <= LOW_STOCK_THRESHOLD;
 
   // Sync updatedProduct when product prop changes
   useEffect(() => {
@@ -142,7 +161,7 @@ const ProductCard = ({ product }) => {
       showWarningToast(
         toast,
         "Stock limit reached",
-        `Only ${product.stock} unit(s) of ${product.name} are available.`
+        `Only ${liveStock} unit(s) of ${product.name} are available.`
       );
       return;
     }

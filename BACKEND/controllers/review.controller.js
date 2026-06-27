@@ -36,7 +36,7 @@ export const addReview = async (req, res, next) => {
     const { rating, comment } = req.body;
 
     const userId = req.user.id;
-    const userName = req.user.name;
+    const userName = req.user.name || req.body.userName;
 
     if (!mongoose.Types.ObjectId.isValid(productId)) {
         return next(new AppError('Invalid product ID', 404));
