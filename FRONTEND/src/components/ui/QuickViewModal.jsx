@@ -19,7 +19,7 @@ import { useCurrencyStore } from "../../store/currency";
 import { formatPrice } from "../../utils/currency";
 
 const QuickViewModal = ({ isOpen, onClose, product }) => {
-  const { addToCart } = useCartStore();
+  const addToCart = useCartStore((state) => state.addToCart);
   const { currency, rates } = useCurrencyStore();
 
   if (!product) return null;
