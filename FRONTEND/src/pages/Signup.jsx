@@ -213,7 +213,7 @@ function Signup() {
                 <Stack spacing={3} mt={4}>
                   <Button
                     variant="outline"
-                    colorScheme="red"
+                    colorScheme="gray"
                     width="100%"
                     onClick={() => {
                       window.location.href = '/api/auth/google';
