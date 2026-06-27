@@ -4,19 +4,30 @@ import Product from '../models/product.model.js';
 import { AppError } from '../middleware/errorMiddleware.js';
 
 const recalcProductRating = async (productId) => {
-    const reviews = await Review.find({ product: productId });
+    const stats = await Review.aggregate([
+        {
+            $match: {
+                product: new mongoose.Types.ObjectId(productId)
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                reviewCount: { $sum: 1 },
+                averageRating: { $avg: '$rating' }
+            }
+        }
+    ]);
 
-    const count = reviews.length;
+    const reviewCount = stats[0]?.reviewCount || 0;
 
-    const avg = count > 0
-        ? Math.round(
-            (reviews.reduce((sum, r) => sum + r.rating, 0) / count) * 10
-        ) / 10
+    const averageRating = stats[0]
+        ? Math.round(stats[0].averageRating * 10) / 10
         : 0;
 
     await Product.findByIdAndUpdate(productId, {
-        averageRating: avg,
-        reviewCount: count
+        averageRating,
+        reviewCount
     });
 };
 
@@ -25,7 +36,7 @@ export const addReview = async (req, res, next) => {
     const { rating, comment } = req.body;
 
     const userId = req.user.id;
-    const userName = req.user.name;
+    const userName = req.user.name || req.body.userName;
 
     if (!mongoose.Types.ObjectId.isValid(productId)) {
         return next(new AppError('Invalid product ID', 404));

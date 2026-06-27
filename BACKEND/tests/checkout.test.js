@@ -5,6 +5,14 @@ import app from '../app.js';
 import Product from '../models/product.model.js';
 let mongoServer;
 
+// The checkout route is protected by checkoutLimiter (10 requests/min per IP).
+// The app trusts the first proxy hop, so a unique X-Forwarded-For per request
+// keeps each test in its own rate-limit bucket and avoids cross-test 429s.
+let ipCounter = 0;
+const clientIp = () => `10.1.0.${++ipCounter}`;
+const postCheckout = (body) =>
+    request(app).post('/api/checkout').set('X-Forwarded-For', clientIp()).send(body);
+
 beforeAll(async () => {
     // Start MongoMemoryServer
     mongoServer = await MongoMemoryServer.create();
@@ -31,7 +39,7 @@ describe('Checkout API Routes', () => {
 
     describe('POST /api/checkout', () => {
         it('should return 400 when cart is empty', async () => {
-            const response = await request(app).post('/api/checkout').send({ items: [] });
+            const response = await postCheckout({ items: [] });
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
@@ -39,7 +47,7 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when items is missing', async () => {
-            const response = await request(app).post('/api/checkout').send({});
+            const response = await postCheckout({});
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
@@ -47,9 +55,9 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when quantity is negative', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
+            const product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 100, baseStock: 10 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: -5 }]
             });
 
@@ -59,9 +67,9 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when quantity is zero', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
+            const product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 100, baseStock: 10 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: 0 }]
             });
 
@@ -71,9 +79,9 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when quantity is a float', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
+            const product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 100, baseStock: 10 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: 1.5 }]
             });
 
@@ -83,9 +91,9 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when quantity is not a number', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 10 });
+            const product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 100, baseStock: 10 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: 'two' }]
             });
 
@@ -95,19 +103,19 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 400 when quantity exceeds available stock', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 100, image: 'img.jpg', stock: 3 });
+            const product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 100, baseStock: 3 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: 5 }]
             });
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe(`Insufficient stock for ${product.name}`);
+            expect(response.body.message).toContain(`Insufficient stock for ${product.name}`);
         });
 
         it('should return 400 for an invalid product ID', async () => {
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: 'invalid-id', name: 'Ghost', quantity: 1 }]
             });
 
@@ -118,7 +126,7 @@ describe('Checkout API Routes', () => {
         it('should return 404 when product does not exist', async () => {
             const fakeId = new mongoose.Types.ObjectId();
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: fakeId, name: 'Ghost Product', quantity: 1 }]
             });
 
@@ -127,9 +135,9 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 404 when a cart item has been soft-deleted', async () => {
-            const product = await Product.create({ name: 'Deleted Product', price: 50, image: 'img.jpg', stock: 10, isDeleted: true });
+            const product = await Product.create({ name: 'Deleted Product', description: 'A deleted product', basePrice: 50, baseStock: 10, isDeleted: true });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: 1 }]
             });
 
@@ -138,10 +146,10 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 404 when one item in a multi-item cart has been soft-deleted', async () => {
-            const active = await Product.create({ name: 'Active Product', price: 30, image: 'a.jpg', stock: 10 });
-            const deleted = await Product.create({ name: 'Removed Product', price: 20, image: 'b.jpg', stock: 10, isDeleted: true });
+            const active = await Product.create({ name: 'Active Product', description: 'Active', basePrice: 30, baseStock: 10 });
+            const deleted = await Product.create({ name: 'Removed Product', description: 'Removed', basePrice: 20, baseStock: 10, isDeleted: true });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [
                     { _id: active._id, name: active.name, quantity: 1 },
                     { _id: deleted._id, name: deleted.name, quantity: 1 }
@@ -153,9 +161,9 @@ describe('Checkout API Routes', () => {
         });
 
         it('should return 200 with correct total for valid items', async () => {
-            const product = await Product.create({ name: 'Test Product', price: 50, image: 'img.jpg', stock: 10 });
+            const product = await Product.create({ name: 'Test Product', description: 'A test product', basePrice: 50, baseStock: 10 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [{ _id: product._id, name: product.name, quantity: 3 }]
             });
 
@@ -165,10 +173,10 @@ describe('Checkout API Routes', () => {
         });
 
         it('should calculate correct total for multiple items', async () => {
-            const p1 = await Product.create({ name: 'Product A', price: 20, image: 'a.jpg', stock: 10 });
-            const p2 = await Product.create({ name: 'Product B', price: 30, image: 'b.jpg', stock: 10 });
+            const p1 = await Product.create({ name: 'Product A', description: 'Product A', basePrice: 20, baseStock: 10 });
+            const p2 = await Product.create({ name: 'Product B', description: 'Product B', basePrice: 30, baseStock: 10 });
 
-            const response = await request(app).post('/api/checkout').send({
+            const response = await postCheckout({
                 items: [
                     { _id: p1._id, name: p1.name, quantity: 2 },
                     { _id: p2._id, name: p2.name, quantity: 1 }

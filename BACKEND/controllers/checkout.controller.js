@@ -1,9 +1,12 @@
 import Product from '../models/product.model.js';
 import Order from '../models/order.model.js';
+import User from '../models/user.model.js';
 import Coupon from '../models/coupon.model.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
+import { sendOrderConfirmationEmail } from '../services/email.service.js';
 import { processReferralOnPurchase } from '../services/referral.service.js';
+import { io } from '../server.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -22,9 +25,15 @@ if (process.env.NODE_ENV === 'test') {
 }
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// First variant image, if any — non-variant products carry no image of their own.
+function productImage(product) {
+  const img = product.variants?.[0]?.images?.[0];
+  return img ? [img] : [];
+}
+
 async function restoreStock(deductions) {
   for (const { productId, quantity } of deductions) {
-    await Product.findByIdAndUpdate(productId, { $inc: { stock: quantity } });
+    await Product.findByIdAndUpdate(productId, { $inc: { baseStock: quantity } });
   }
 }
 
@@ -59,10 +68,10 @@ export const createCheckoutSession = async (req, res) => {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
-            if (item.quantity > product.stock) {
+            if (item.quantity > product.baseStock) {
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient stock for ${product.name}. Available: ${product.stock}, requested: ${item.quantity}`
+                    message: `Insufficient stock for ${product.name}. Available: ${product.baseStock}, requested: ${item.quantity}`
                 });
             }
 
@@ -71,9 +80,9 @@ export const createCheckoutSession = async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: product.name,
-                        images: product.image ? [product.image] : [],
+                        images: productImage(product),
                     },
-                    unit_amount: Math.round(product.price * 100),
+                    unit_amount: Math.round(product.basePrice * 100),
                 },
                 quantity: item.quantity,
             });
@@ -175,7 +184,7 @@ export const stripeWebhook = async (req, res) => {
             console.error(`Checkout webhook: product not found or deleted: ${item._id}`);
             return res.json({ received: true });
           }
-          if (item.quantity > product.stock) {
+          if (item.quantity > product.baseStock) {
             console.error(`Checkout webhook: insufficient stock for ${product.name}`);
             return res.json({ received: true });
           }
@@ -183,9 +192,9 @@ export const stripeWebhook = async (req, res) => {
           orderItems.push({
             product: product._id,
             name: product.name,
-            price: product.price,
+            price: product.basePrice,
             quantity: item.quantity,
-            image: product.image || "",
+            image: productImage(product)[0] || "",
           });
         }
 
@@ -195,9 +204,9 @@ export const stripeWebhook = async (req, res) => {
             {
               _id: item._id,
               isDeleted: { $ne: true },
-              stock: { $gte: item.quantity },
+              baseStock: { $gte: item.quantity },
             },
-            { $inc: { stock: -item.quantity } }
+            { $inc: { baseStock: -item.quantity } }
           );
 
           if (!updated) {
@@ -205,6 +214,12 @@ export const stripeWebhook = async (req, res) => {
             await restoreStock(deductions);
             return res.json({ received: true });
           }
+
+          // Emit real-time stock update
+          io.emit("stockUpdate", {
+            productId: item._id,
+            newStock: updated.stock - item.quantity
+          });
 
           deductions.push({ productId: item._id, quantity: item.quantity });
         }
@@ -216,6 +231,22 @@ export const stripeWebhook = async (req, res) => {
           stripeSessionId: session.id,
           paymentStatus: "completed",
         });
+
+        // Send confirmation email — non-blocking; failures never break fulfillment
+        const customerEmail = session.customer_details?.email;
+        if (customerEmail) {
+          sendOrderConfirmationEmail(customerEmail, order).catch((err) =>
+            console.error('[Email] Order confirmation failed:', err.message)
+          );
+        } else if (session.metadata?.userId) {
+          User.findById(session.metadata.userId).select('email').lean().then((u) => {
+            if (u?.email) {
+              sendOrderConfirmationEmail(u.email, order).catch((err) =>
+                console.error('[Email] Order confirmation failed:', err.message)
+              );
+            }
+          }).catch(() => {});
+        }
 
         // Increment coupon usage after successful fulfillment
         if (session.metadata?.couponCode) {

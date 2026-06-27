@@ -9,6 +9,11 @@ import {
   forgotPassword,
   resetPassword,
 } from "../controllers/auth.controller.js";
+import {
+  setupTwoFactor,
+  verifyTwoFactorSetup,
+  disableTwoFactor,
+} from "../controllers/twoFactor.controller.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
 import { loginLimiter, logoutLimiter, registerLimiter, forgotPasswordLimiter, resetPasswordLimiter } from "../middleware/rateLimiter.js";
@@ -23,6 +28,12 @@ router.post("/logout", logoutLimiter, authMiddleware,logoutUser);
 
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
+
+// Two-factor authentication (TOTP / authenticator app). All require a logged-in
+// session; the login route itself enforces the code once 2FA is enabled.
+router.post("/2fa/setup", authMiddleware, setupTwoFactor);
+router.post("/2fa/verify", authMiddleware, verifyTwoFactorSetup);
+router.post("/2fa/disable", authMiddleware, disableTwoFactor);
 
 
 // Social OAuth Routes

@@ -2,24 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Heading, Text, Select, Button, VStack, HStack, useToast } from '@chakra-ui/react';
 import axios from 'axios';
+import { getSocket } from '../socket';
 
 const ProductPage = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  useEffect(() => {
-  setQuantity(1);
-}, [id]);
-  const [bundleData, setBundleData] = useState(null);
-  const [selectedBundleItems, setSelectedBundleItems] = useState([]);
-  const [activeImg, setActiveImg] = useState(0);
 
-  const { addToCart, addBundleToCart } = useCart();
-  const { addRecentlyViewed } = useRecentlyViewed();
   const toast = useToast();
-  const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [displayPrice, setDisplayPrice] = useState(0);
@@ -55,6 +44,26 @@ const ProductPage = () => {
       }
     }
   }, [selectedSize, selectedColor, product]);
+
+  useEffect(() => {
+    if (!product) return;
+    
+    const socket = getSocket();
+    const handleStockUpdate = (data) => {
+      if (data.productId === product._id) {
+        setProduct((prev) => ({ ...prev, baseStock: data.newStock }));
+        if (!product.hasVariants) {
+          setDisplayStock(data.newStock);
+        }
+      }
+    };
+
+    socket.on("stockUpdate", handleStockUpdate);
+
+    return () => {
+      socket.off("stockUpdate", handleStockUpdate);
+    };
+  }, [product]);
 
   const handleAddToCart = async () => {
     try {
