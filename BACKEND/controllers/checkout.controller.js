@@ -32,8 +32,15 @@ function productImage(product) {
 }
 
 async function restoreStock(deductions) {
-  for (const { productId, quantity } of deductions) {
-    await Product.findByIdAndUpdate(productId, { $inc: { baseStock: quantity } });
+  for (const { productId, variantId, quantity } of deductions) {
+    if (variantId) {
+      await Product.findOneAndUpdate(
+        { _id: productId, "variants._id": variantId },
+        { $inc: { "variants.$.stock": quantity } }
+      );
+    } else {
+      await Product.findByIdAndUpdate(productId, { $inc: { baseStock: quantity } });
+    }
   }
 }
 
@@ -68,10 +75,31 @@ export const createCheckoutSession = async (req, res) => {
                 return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
             }
 
-            if (item.quantity > product.baseStock) {
+            let price = product.basePrice;
+            let stock = product.baseStock;
+            let name = product.name;
+            let img = productImage(product);
+
+            if (product.hasVariants) {
+                if (!item.variantId) {
+                    return res.status(400).json({ success: false, message: `Variant ID required for ${product.name}` });
+                }
+                const variant = product.variants.id(item.variantId);
+                if (!variant) {
+                    return res.status(404).json({ success: false, message: `Variant not found for ${product.name}` });
+                }
+                price = variant.price;
+                stock = variant.stock;
+                name = `${product.name} - ${variant.size} ${variant.color}`;
+                if (variant.images && variant.images.length > 0) {
+                    img = [variant.images[0]];
+                }
+            }
+
+            if (item.quantity > stock) {
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient stock for ${product.name}. Available: ${product.baseStock}, requested: ${item.quantity}`
+                    message: `Insufficient stock for ${name}. Available: ${stock}, requested: ${item.quantity}`
                 });
             }
 
@@ -79,10 +107,10 @@ export const createCheckoutSession = async (req, res) => {
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: product.name,
-                        images: productImage(product),
+                        name: name,
+                        images: img,
                     },
-                    unit_amount: Math.round(product.basePrice * 100),
+                    unit_amount: Math.round(price * 100),
                 },
                 quantity: item.quantity,
             });
@@ -127,7 +155,7 @@ export const createCheckoutSession = async (req, res) => {
             cancel_url: `${FRONTEND_URL}/cancel`,
             metadata: {
                 items: JSON.stringify(
-                  items.map((item) => ({ _id: item._id, quantity: item.quantity }))
+                  items.map((item) => ({ _id: item._id, variantId: item.variantId || null, quantity: item.quantity }))
                 ),
                 userId: req.user?._id?.toString() || '',
                 couponCode: couponDoc ? couponDoc.code : '',
@@ -184,30 +212,61 @@ export const stripeWebhook = async (req, res) => {
             console.error(`Checkout webhook: product not found or deleted: ${item._id}`);
             return res.json({ received: true });
           }
-          if (item.quantity > product.baseStock) {
-            console.error(`Checkout webhook: insufficient stock for ${product.name}`);
+
+          let price = product.basePrice;
+          let stock = product.baseStock;
+          let name = product.name;
+          let img = productImage(product)[0] || "";
+
+          if (product.hasVariants && item.variantId) {
+             const variant = product.variants.id(item.variantId);
+             if (variant) {
+                price = variant.price;
+                stock = variant.stock;
+                name = `${product.name} - ${variant.size} ${variant.color}`;
+                if (variant.images && variant.images.length > 0) img = variant.images[0];
+             }
+          }
+
+          if (item.quantity > stock) {
+            console.error(`Checkout webhook: insufficient stock for ${name}`);
             return res.json({ received: true });
           }
 
           orderItems.push({
             product: product._id,
-            name: product.name,
-            price: product.basePrice,
+            name: name,
+            price: price,
             quantity: item.quantity,
-            image: productImage(product)[0] || "",
+            image: img,
           });
         }
 
         const deductions = [];
         for (const item of cartItems) {
-          const updated = await Product.findOneAndUpdate(
-            {
-              _id: item._id,
-              isDeleted: { $ne: true },
-              baseStock: { $gte: item.quantity },
-            },
-            { $inc: { baseStock: -item.quantity } }
-          );
+          let updated;
+          if (item.variantId) {
+             updated = await Product.findOneAndUpdate(
+               {
+                 _id: item._id,
+                 isDeleted: { $ne: true },
+                 "variants._id": item.variantId,
+                 "variants.stock": { $gte: item.quantity }
+               },
+               { $inc: { "variants.$.stock": -item.quantity } },
+               { new: true }
+             );
+          } else {
+             updated = await Product.findOneAndUpdate(
+               {
+                 _id: item._id,
+                 isDeleted: { $ne: true },
+                 baseStock: { $gte: item.quantity },
+               },
+               { $inc: { baseStock: -item.quantity } },
+               { new: true }
+             );
+          }
 
           if (!updated) {
             console.error(`Checkout webhook: stock changed during fulfillment for ${item._id}`);
@@ -215,13 +274,22 @@ export const stripeWebhook = async (req, res) => {
             return res.json({ received: true });
           }
 
+          let newStock = 0;
+          if (item.variantId) {
+             const variant = updated.variants.id(item.variantId);
+             newStock = variant ? variant.stock : 0;
+          } else {
+             newStock = updated.baseStock;
+          }
+
           // Emit real-time stock update
           io.emit("stockUpdate", {
             productId: item._id,
-            newStock: updated.stock - item.quantity
+            variantId: item.variantId || null,
+            newStock: newStock
           });
 
-          deductions.push({ productId: item._id, quantity: item.quantity });
+          deductions.push({ productId: item._id, variantId: item.variantId || null, quantity: item.quantity });
         }
 
         const order = await Order.create({
