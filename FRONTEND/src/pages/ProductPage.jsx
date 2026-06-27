@@ -11,6 +11,7 @@ const ProductPage = () => {
   const { getProduct } = useProductStore();
   const toast = useToast();
   const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -20,6 +21,7 @@ const ProductPage = () => {
 
   const fetchProduct = async () => {
     try {
+      setLoading(true);
       const data = await getProduct(id);
       setProduct(data);
     } catch (error) {
@@ -29,8 +31,18 @@ const ProductPage = () => {
         status: 'error',
         duration: 3000,
       });
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
+        <Spinner size="xl" />
+      </Box>
+    );
+  }
 
   if (!product) {
     return (
