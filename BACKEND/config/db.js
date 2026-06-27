@@ -18,6 +18,20 @@ export const connectDB = async () => {
             const memoryUri = mongoServer.getUri();
             await mongoose.connect(memoryUri);
             console.log(`MongoDB In-Memory Connected: Development Mode`);
+            
+            try {
+                const Product = (await import("../models/product.model.js")).default;
+                const count = await Product.countDocuments();
+                if (count === 0) {
+                    await Product.create([
+                        { name: "Gaming Laptop Pro", price: 1299, image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500", stock: 15, category: "Electronics", brand: "TechBrand" },
+                        { name: "Wireless Mouse", price: 49, image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500", stock: 50, category: "Electronics", brand: "TechBrand" }
+                    ]);
+                    console.log(`MongoDB In-Memory Seeded with mock data.`);
+                }
+            } catch (seedErr) {
+                console.error("Failed to seed in-memory DB:", seedErr.message);
+            }
         } else {
             // Connect to the provided MongoDB URI
             const conn = await mongoose.connect(mongoURI);
