@@ -3,8 +3,8 @@ import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Get __dirname in ES module
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,18 +14,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
+  server:{
+    proxy:{
+      "/api":{
+        target:"http://localhost:5000",
         changeOrigin: true,
         secure: false,
       },
     },
   },
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: './src/setupTests.js',
+    setupFiles: "./src/setupTests.js",
   },
 });
