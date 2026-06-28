@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IconButton, useColorModeValue } from "@chakra-ui/react";
 import { LuArrowUp } from "react-icons/lu";
 
