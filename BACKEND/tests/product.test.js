@@ -1,124 +1,201 @@
-import request from 'supertest';
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import app from '../app.js';
-import Product from '../models/product.model.js';
+import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import app from "../app.js";
+import Product from "../models/product.model.js";
 
 let mongoServer;
 
 beforeAll(async () => {
-    // Start MongoMemoryServer
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    
-    // Connect to the in-memory database
-    await mongoose.connect(uri);
+  // Start MongoMemoryServer
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+
+  // Connect to the in-memory database
+  await mongoose.connect(uri);
 }, 600000);
 
 afterAll(async () => {
-    // Disconnect and stop MongoMemoryServer
-    await mongoose.disconnect();
-    if (mongoServer) {
-        await mongoServer.stop();
-    }
+  // Disconnect and stop MongoMemoryServer
+  await mongoose.disconnect();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });
 
 beforeEach(async () => {
-    // Clear database before each test
-    await Product.deleteMany({});
+  // Clear database before each test
+  await Product.deleteMany({});
 });
 
-describe('Product API Routes', () => {
+describe("Product API Routes", () => {
+  describe("POST /api/products", () => {
+    it("should create a new product when provided valid data", async () => {
+      const newProduct = {
+        name: "Test Product",
+        price: 100,
+        image: "test-image.jpg",
+      };
 
-    describe('POST /api/products', () => {
-        it('should create a new product when provided valid data', async () => {
-            const newProduct = {
-                name: 'Test Product',
-                price: 100,
-                image: 'test-image.jpg'
-            };
-            
-            const response = await request(app).post('/api/products').send(newProduct);
-            
-            expect(response.status).toBe(201);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Test Product');
-        });
-        
-        it('should return 400 when missing required fields', async () => {
-            const newProduct = { name: 'Test Product' }; // Missing price and image
-            
-            const response = await request(app).post('/api/products').send(newProduct);
-            
-            expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Please provide all fields');
-        });
+      const response = await request(app)
+        .post("/api/products")
+        .send(newProduct);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe("Test Product");
     });
 
-    describe('GET /api/products', () => {
-        it('should return an empty array if no products exist', async () => {
-            const response = await request(app).get('/api/products');
-            
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(Array.isArray(response.body.data)).toBe(true);
-            expect(response.body.data.length).toBe(0);
-        });
-        
-        it('should return all products', async () => {
-            await Product.create({ name: 'Product 1', price: 10, image: 'img1.jpg' });
-            await Product.create({ name: 'Product 2', price: 20, image: 'img2.jpg' });
-            
-            const response = await request(app).get('/api/products');
-            
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.length).toBe(2);
-        });
+    it("should return 400 when missing required fields", async () => {
+      const newProduct = { name: "Test Product" }; // Missing price and image
+
+      const response = await request(app)
+        .post("/api/products")
+        .send(newProduct);
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe("Please provide all fields");
+    });
+  });
+
+  describe("GET /api/products", () => {
+    it("should return an empty array if no products exist", async () => {
+      const response = await request(app).get("/api/products");
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBe(0);
     });
 
-    describe('PUT /api/products/:id', () => {
-        it('should update an existing product', async () => {
-            const product = await Product.create({ name: 'Old Product', price: 10, image: 'old.jpg' });
-            
-            const response = await request(app).put(`/api/products/${product._id}`).send({ name: 'Updated Product' });
-            
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.data.name).toBe('Updated Product');
-        });
-        
-        it('should return 404 for an invalid ID format', async () => {
-            const response = await request(app).put('/api/products/123').send({ name: 'Updated' });
-            
-            expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Invalid Product Id format');
-        });
+    it("should return all products", async () => {
+      await Product.create({ name: "Product 1", price: 10, image: "img1.jpg" });
+      await Product.create({ name: "Product 2", price: 20, image: "img2.jpg" });
+
+      const response = await request(app).get("/api/products");
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.length).toBe(2);
+    });
+  });
+
+  describe("PUT /api/products/:id", () => {
+    it("should update an existing product", async () => {
+      const product = await Product.create({
+        name: "Old Product",
+        price: 10,
+        image: "old.jpg",
+      });
+
+      const response = await request(app)
+        .put(`/api/products/${product._id}`)
+        .send({ name: "Updated Product" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.name).toBe("Updated Product");
     });
 
-    describe('DELETE /api/products/:id', () => {
-        it('should delete an existing product', async () => {
-            const product = await Product.create({ name: 'Product to delete', price: 10, image: 'del.jpg' });
-            
-            const response = await request(app).delete(`/api/products/${product._id}`);
-            
-            expect(response.status).toBe(200);
-            expect(response.body.success).toBe(true);
-            expect(response.body.message).toBe('Product deleted successfully');
-            
-            const checkProduct = await Product.findById(product._id);
-            expect(checkProduct.isDeleted).toBe(true);
-        });
-        
-        it('should return 404 for an invalid ID format', async () => {
-            const response = await request(app).delete('/api/products/123');
-            
-            expect(response.status).toBe(404);
-            expect(response.body.success).toBe(false);
-            expect(response.body.message).toBe('Invalid Product Id format');
-        });
+    it("should return 404 for an invalid ID format", async () => {
+      const response = await request(app)
+        .put("/api/products/123")
+        .send({ name: "Updated" });
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe("Invalid Product Id format");
+    });
+  });
+
+  describe("DELETE /api/products/:id", () => {
+    it("should delete an existing product", async () => {
+      const product = await Product.create({
+        name: "Product to delete",
+        price: 10,
+        image: "del.jpg",
+      });
+
+      const response = await request(app).delete(
+        `/api/products/${product._id}`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe("Product deleted successfully");
+
+      const checkProduct = await Product.findById(product._id);
+      expect(checkProduct.isDeleted).toBe(true);
     });
 
+    it("should return 404 for an invalid ID format", async () => {
+      const response = await request(app).delete("/api/products/123");
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe("Invalid Product Id format");
+    });
+  });
+
+  describe("GET /api/products/:id/related", () => {
+    it("should return related products based on matching tags and category", async () => {
+      const baseProduct = await Product.create({
+        name: "Nike Running Shoe",
+        price: 100,
+        image: "shoe.jpg",
+        category: "Shoes",
+        brand: "Nike",
+        tags: ["running"],
+      });
+
+      await Product.create({
+        name: "Nike Sports Shoe",
+        price: 120,
+        image: "sport.jpg",
+        category: "Shoes",
+        brand: "Nike",
+        tags: ["running"],
+      });
+
+      const response = await request(app).get(
+        `/api/products/${baseProduct._id}/related`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThan(0);
+    });
+
+    it("should return an empty array when no related products exist", async () => {
+      const baseProduct = await Product.create({
+        name: "Unique Product",
+        price: 100,
+        image: "unique.jpg",
+        category: "Unique",
+        brand: "BrandA",
+        tags: ["exclusive"],
+      });
+
+      const response = await request(app).get(
+        `/api/products/${baseProduct._id}/related`
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toEqual([]);
+    });
+
+    it("should return 404 when product does not exist", async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+
+      const response = await request(app).get(
+        `/api/products/${fakeId}/related`
+      );
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+  });
 });
