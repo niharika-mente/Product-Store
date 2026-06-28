@@ -4,6 +4,7 @@ import { createProduct, deleteProduct, getProducts, getProductCategories, update
 import reviewRoutes from './review.route.js';
 import authMiddleware from "../middleware/authMiddleware.js";
 import adminMiddleware from "../middleware/adminMiddleware.js";
+import { productCreateLimiter, productUpdateLimiter, productDeleteLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -13,10 +14,10 @@ router.get("/related/:id", getRelatedProducts);
 router.get("/search", searchProducts);
 router.get("/:id/bundle", getProductBundle);
 router.get("/:id", getProductById);
-router.post("/", authMiddleware, adminMiddleware, upload.single("image"), handleUploadError, createProduct);
-router.put("/:id", authMiddleware, adminMiddleware, upload.single("image"), handleUploadError, updateProduct);
-router.patch("/:id/restock", authMiddleware, adminMiddleware, restockProduct);
-router.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
+router.post("/", productCreateLimiter, authMiddleware, adminMiddleware, upload.single("image"), handleUploadError, createProduct);
+router.put("/:id", productUpdateLimiter, authMiddleware, adminMiddleware, upload.single("image"), handleUploadError, updateProduct);
+router.patch("/:id/restock", productUpdateLimiter, authMiddleware, adminMiddleware, restockProduct);
+router.delete("/:id", productDeleteLimiter, authMiddleware, adminMiddleware, deleteProduct);
 
 router.use('/:productId/reviews', reviewRoutes);
 
