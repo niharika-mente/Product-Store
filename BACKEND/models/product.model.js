@@ -38,12 +38,32 @@ const productSchema = new mongoose.Schema({
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
-// Indexes for common query patterns and performance optimization
-productSchema.index({ isDeleted: 1, category: 1, price: 1 });
+// Compound indexes ordered: equality fields first, then range/sort fields.
+// Every catalog query starts with { isDeleted: { $ne: true } }, so isDeleted
+// leads every compound index so MongoDB can skip deleted documents early.
+
+// Default listing — sort by newest or price without any filter
 productSchema.index({ isDeleted: 1, createdAt: -1 });
+productSchema.index({ isDeleted: 1, price: 1 });
+
+// Category + price-range filter (most common filter combination)
+productSchema.index({ isDeleted: 1, category: 1, price: 1 });
+
+// Brand filter — uses a case-insensitive collation so the index is
+// used even when the controller queries with $regex: /brand/i.
+productSchema.index(
+  { isDeleted: 1, brand: 1 },
+  { collation: { locale: 'en', strength: 2 } }
+);
+
+// In-stock filter (inStock=true → stock > 0)
+productSchema.index({ isDeleted: 1, stock: 1 });
+
+// Rating filter (minRating → averageRating >= N)
+productSchema.index({ isDeleted: 1, averageRating: -1 });
+
+// Text index for the search-by-name fallback in searchProducts
 productSchema.index({ name: 'text' });
-// Supports filtering the search endpoint by brand.
-productSchema.index({ brand: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;
