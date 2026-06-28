@@ -149,21 +149,25 @@ const HomePage = () => {
           >
             Current Products🚀
           </Text>
-          <Select
-            value={sort}
-            onChange={(e) => {
-              setSort(e.target.value);
-              setPage(1);
-            }}
-            maxW="250px"
-            aria-label="Sort products"
-            isDisabled={isSearching}
-          >
-            <option value="">Default</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="newest">Newest First</option>
-          </Select>
+          {!hasNoProducts && (
+            <Select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                setPage(1);
+              }}
+              maxW="250px"
+              aria-label="Sort products"
+              isDisabled={isSearching}
+            >
+              <option value="">Default</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="newest">Newest First</option>
+            </Select>
+          )}
+
+
           <VStack gap={2}>
             <Text
               fontSize={{ base: "3xl", md: "5xl" }}
