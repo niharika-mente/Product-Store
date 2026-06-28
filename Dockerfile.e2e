@@ -1,0 +1,15 @@
+FROM mcr.microsoft.com/playwright:v1.61.0-jammy
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY FRONTEND/package*.json ./FRONTEND/
+COPY BACKEND/package*.json ./BACKEND/
+
+RUN npm ci
+RUN npm ci --prefix FRONTEND
+RUN npm ci --prefix BACKEND
+
+COPY . .
+
+CMD ["npx", "playwright", "test"]
