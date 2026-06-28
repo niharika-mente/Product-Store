@@ -26,7 +26,7 @@ import { stripeWebhook } from "./controllers/checkout.controller.js";
 import { expressMiddleware } from "@as-integrations/express4";
 import { apolloServer } from "./graphql/server.js";
 import { optionalProtect } from "./middleware/auth.js";
-
+import cartRoutes from "./routes/cart.route.js";
 // Import error handlers
 import { notFoundHandler, errorHandler } from "./middleware/errorMiddleware.js";
 import { validateEnv } from "./config/env.js";
@@ -159,7 +159,7 @@ app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/referrals", referralRoutes);
 app.use("/api/returns", returnRoutes);
 app.use("/api/saved-for-later", savedForLaterRoutes);
-
+app.use("/api/cart", cartRoutes);
 
 // ============= ERROR HANDLERS =============
 // Must come before the production catch-all so unmatched /api/* routes

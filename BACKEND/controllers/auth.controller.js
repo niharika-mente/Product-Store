@@ -5,7 +5,19 @@ import jwt from "jsonwebtoken";
 import { sendPasswordResetEmail } from "../services/email.service.js";
 import { processReferralOnRegister } from "../services/referral.service.js";
 import { verifyTOTP } from "../services/totp.service.js";
+const generateAccessToken = (user) =>
+  jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
 
+const generateRefreshToken = (user) =>
+  jwt.sign(
+    { id: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
 export const registerUser = async (req, res) => {
   try {
     
@@ -124,21 +136,18 @@ export const loginUser = async (req, res) => {
       }
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+const accessToken = generateAccessToken(user);
+const refreshToken = generateRefreshToken(user);
 
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
-      user: {
+user.refreshToken = refreshToken;
+await user.save();
+
+res.status(200).json({
+  success: true,
+  message: "Login successful",
+  accessToken,
+  refreshToken,
+  user: { 
         id: user._id,
         name: user.name,
         email: user.email,
@@ -155,6 +164,14 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id)
+      .select("+refreshToken");
+
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+
     res.status(200).json({
       success: true,
       message: "Logout successful",
@@ -163,6 +180,51 @@ export const logoutUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Refresh token required",
+      });
+    }
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    const user = await User.findById(decoded.id)
+      .select("+refreshToken");
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: "Invalid refresh token",
     });
   }
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useCart } from "../../store/cart";
-import {
+import { useCartStore } from "../../store/cart";import {
   showSuccessToast,
   showWarningToast,
 } from "../../utils/toastHelpers";
@@ -25,7 +24,7 @@ import {
 const QuickAddModal = ({ product, isOpen, onClose }) => {
   const [quantity, setQuantity] = useState(1);
 
-  const { addToCart } = useCart();
+  const { addToCart } = useCartStore();
   const toast = useToast();
 
   const isOutOfStock =
