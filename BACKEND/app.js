@@ -145,6 +145,12 @@ app.use("/api", limiter);
 
 app.use(express.json());
 
+// Health check — registered before all other routes so load balancers and
+// deployment probes always get a fast 200, unaffected by catch-all handlers.
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ success: true, status: "ok", timestamp: new Date().toISOString() });
+});
+
 // ============= API ROUTES =============
 
 app.use("/api/products", productRoutes);
