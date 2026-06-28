@@ -96,14 +96,44 @@ export const getMyReturnRequests = async (req, res) => {
 // @desc    Get all return requests (Admin)
 // @route   GET /api/returns
 // @access  Private/Admin
+// Bounds for offset-based pagination. The cap stops a single request from
+// loading the whole collection into memory (the OOM / DoS vector), even when
+// no pagination params are supplied or a huge limit is requested.
+const RETURNS_DEFAULT_LIMIT = 20;
+const RETURNS_MAX_LIMIT = 100;
+
 export const getAllReturnRequests = async (req, res) => {
   try {
-    const returns = await ReturnRequest.find({})
-      .populate('userId', 'name email')
-      .populate('orderId')
-      .sort({ createdAt: -1 });
-    
-    res.json({ success: true, returns });
+    let page = parseInt(req.query.page, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    // Gracefully coerce missing / zero / negative / non-numeric values.
+    if (!Number.isInteger(page) || page < 1) page = 1;
+    if (!Number.isInteger(limit) || limit < 1) limit = RETURNS_DEFAULT_LIMIT;
+    if (limit > RETURNS_MAX_LIMIT) limit = RETURNS_MAX_LIMIT;
+
+    const skip = (page - 1) * limit;
+
+    const [returns, totalReturns] = await Promise.all([
+      ReturnRequest.find({})
+        .populate('userId', 'name email')
+        .populate('orderId')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      ReturnRequest.countDocuments({}),
+    ]);
+
+    res.json({
+      success: true,
+      returns,
+      pagination: {
+        page,
+        limit,
+        totalReturns,
+        totalPages: Math.ceil(totalReturns / limit),
+      },
+    });
   } catch (error) {
     console.error('Get All Returns Error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
