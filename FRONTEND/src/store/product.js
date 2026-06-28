@@ -3,6 +3,13 @@ import { persist } from "zustand/middleware";
 
 const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
+// Merge two product lists, dropping any incoming items already present (by _id).
+// Used by infinite scroll so appending the next page never duplicates a card.
+const mergeUnique = (existing, incoming) => {
+  const seen = new Set(existing.map((p) => p._id));
+  return [...existing, ...incoming.filter((p) => !seen.has(p._id))];
+};
+
 export const useRecentlyViewed = create(
   persist(
     (set) => ({
@@ -20,6 +27,12 @@ export const useRecentlyViewed = create(
 export const useProductStore = create((set) =>({
     products: [],
     productCache: {},
+    // Infinite-scroll catalog state — lets HomePage restore the accumulated
+    // list (and its page) when the user navigates away and back.
+    catalogKey: null,
+    catalogPage: 1,
+    catalogTotalPages: 1,
+    catalogTotalProducts: 0,
     isLoading: false,
     isSubmitting: false,
     isDeleting: false,
@@ -87,7 +100,12 @@ export const useProductStore = create((set) =>({
             maxPrice,
             brand,
             minRating,
-            inStock
+            inStock,
+            // When true the fetched page is appended to the existing list
+            // (infinite scroll) instead of replacing it. listKey identifies the
+            // current sort+filter combination so HomePage can restore it later.
+            append = false,
+            listKey = null,
         } = options;
         const cacheKey = JSON.stringify({
             page,
@@ -104,15 +122,19 @@ export const useProductStore = create((set) =>({
         const cached = useProductStore.getState().productCache[cacheKey];
 
         if (cached && Date.now() - cached.timestamp < 30000) {
-            set({
-                products: cached.products,
+            set((state) => ({
+                products: append ? mergeUnique(state.products, cached.products) : cached.products,
                 isLoading: false,
                 error: null,
-            });
+                catalogKey: listKey ?? state.catalogKey,
+                catalogPage: cached.response.currentPage,
+                catalogTotalPages: cached.response.totalPages,
+                catalogTotalProducts: cached.response.totalProducts,
+            }));
 
             return cached.response;
         }
-        set({ isLoading: true, error: null });
+        if (!append) set({ isLoading: true, error: null });
         try {
             let url = `${API}/api/products?page=${page}&limit=${limit}`;
             if (sort) url += `&sort=${sort}`;
@@ -132,8 +154,12 @@ export const useProductStore = create((set) =>({
             }
             const data = await res.json();
             set((state) => ({
-                products: data.data,
+                products: append ? mergeUnique(state.products, data.data) : data.data,
                 isLoading: false,
+                catalogKey: listKey ?? state.catalogKey,
+                catalogPage: data.currentPage,
+                catalogTotalPages: data.totalPages,
+                catalogTotalProducts: data.totalProducts,
                 productCache: {
                     ...state.productCache,
                     [cacheKey]: {
