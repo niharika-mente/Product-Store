@@ -6,6 +6,7 @@ import {
   getMonthlyRevenue,
   getTopProducts,
   getUserGrowth,
+  exportAnalytics,
 } from '../controllers/analytics.controller.js';
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get('/summary', getSummary);
 router.get('/revenue', getMonthlyRevenue);
 router.get('/top-products', getTopProducts);
 router.get('/user-growth', getUserGrowth);
+router.get('/export', exportAnalytics);
 
 export default router;
