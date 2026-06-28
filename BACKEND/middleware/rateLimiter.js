@@ -65,3 +65,36 @@ export const checkoutLimiter = rateLimit({
     message: "Too many checkout attempts. Please try again later.",
   },
 });
+
+export const productCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many product creation requests. Please try again after 1 hour.",
+  },
+});
+
+export const productUpdateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many product update requests. Please try again after 1 hour.",
+  },
+});
+
+export const productDeleteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many product deletion requests. Please try again after 1 hour.",
+  },
+});
