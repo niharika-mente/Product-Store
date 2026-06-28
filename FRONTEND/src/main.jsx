@@ -4,6 +4,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import App from './App';
 import './i18n';
 import { BrowserRouter } from "react-router-dom";
+import PWAReloadPrompt from './components/PWAReloadPrompt';
 
 import { useCurrencyStore } from './store/currency';
 useCurrencyStore.getState().fetchRates();
@@ -16,6 +17,7 @@ root.render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
+      <PWAReloadPrompt />
     </ChakraProvider>
   </React.StrictMode>
 );
