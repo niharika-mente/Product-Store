@@ -1,4 +1,5 @@
 import express from "express";
+import { protect } from "../middleware/auth.js";
 import {
   getWishlist,
   addToWishlist,
@@ -7,9 +8,9 @@ import {
 
 const router = express.Router();
 
-// ✅ No authentication middleware
-router.get("/", getWishlist);
-router.post("/add", addToWishlist);
-router.delete("/remove/:productId", removeFromWishlist);
+// Wishlists are per-user, so every route requires authentication.
+router.get("/", protect, getWishlist);
+router.post("/add", protect, addToWishlist);
+router.delete("/remove/:productId", protect, removeFromWishlist);
 
 export default router;
