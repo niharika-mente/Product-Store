@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Box, Heading, Text, Select, Button, VStack, HStack, useToast } from '@chakra-ui/react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, Link as RouterLink } from 'react-router-dom';
+import {
+  Box, Container, Flex, Grid, GridItem, SimpleGrid, Image, Icon, Heading, Text,
+  Button, Badge, Divider, Checkbox, Select, VStack, HStack, useToast, useColorModeValue,
+} from '@chakra-ui/react';
+import {
+  FaArrowLeft, FaShoppingCart, FaCheckCircle, FaTruck, FaShieldAlt, FaUndo,
+  FaInfoCircle, FaGift, FaChevronLeft, FaChevronRight,
+} from 'react-icons/fa';
 import axios from 'axios';
 import { getSocket } from '../socket';
+import RelatedProducts from '../components/ui/RelatedProducts';
+import ProductReviews from '../components/ui/ProductReviews';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -14,6 +23,19 @@ const ProductPage = () => {
   const [displayPrice, setDisplayPrice] = useState(0);
   const [displayStock, setDisplayStock] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
+
+  // Catalog interaction state (was lost in a merge; restored here).
+  const [quantity, setQuantity] = useState(1);
+  const [activeImg, setActiveImg] = useState(0);
+  const [bundleData, setBundleData] = useState(null);
+  const [selectedBundleItems, setSelectedBundleItems] = useState([]);
+
+  const textColor = useColorModeValue("gray.700", "gray.300");
+  const priceColor = useColorModeValue("blue.600", "blue.300");
+  const borderCol = useColorModeValue("gray.200", "gray.700");
+  const cardBg = useColorModeValue("white", "gray.800");
+  const featureBg = useColorModeValue("gray.50", "gray.700");
+  const infoColor = useColorModeValue("gray.700", "gray.300");
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -65,20 +87,83 @@ const ProductPage = () => {
     };
   }, [product]);
 
+  // Load "Frequently Bought Together" data and pre-select every item.
+  useEffect(() => {
+    if (!id) return;
+    const fetchBundle = async () => {
+      try {
+        const { data } = await axios.get('/api/products/' + id + '/bundle');
+        if (data.success && data.data && data.data.items.length > 0) {
+          setBundleData(data.data);
+          setSelectedBundleItems(data.data.items.map((i) => i.product._id));
+        } else {
+          setBundleData(null);
+        }
+      } catch (err) {
+        console.error("Error fetching bundle:", err);
+        setBundleData(null);
+      }
+    };
+    fetchBundle();
+  }, [id]);
+
   const handleAddToCart = async () => {
     try {
       if (product.hasVariants && !selectedVariantId) {
         toast({ title: 'Please select valid options', status: 'warning' });
         return;
       }
-      await axios.post('/api/cart', { productId: product._id, variantId: selectedVariantId, quantity: 1 });
+      await axios.post('/api/cart', { productId: product._id, variantId: selectedVariantId, quantity });
       toast({ title: 'Added to cart!', status: 'success' });
     } catch {
       toast({ title: 'Error adding to cart', status: 'error' });
     }
   };
 
+  const toggleBundleItem = (productId) => {
+    setSelectedBundleItems((prev) =>
+      prev.includes(productId)
+        ? prev.filter((pid) => pid !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleAddBundleToCart = async () => {
+    if (!bundleData) return;
+    const selected = [
+      product,
+      ...bundleData.items
+        .filter((i) => selectedBundleItems.includes(i.product._id))
+        .map((i) => i.product),
+    ];
+    try {
+      await Promise.all(
+        selected.map((p) => axios.post('/api/cart', { productId: p._id, quantity: 1 }))
+      );
+      toast({ title: `${selected.length} items added to cart!`, status: 'success' });
+    } catch {
+      toast({ title: 'Error adding bundle to cart', status: 'error' });
+    }
+  };
+
+  // All product images, with a placeholder fallback so the gallery never breaks.
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    const imgs = [
+      product.image,
+      ...(product.images || []),
+      ...(product.variants?.flatMap((v) => v.images || []) || []),
+    ].filter(Boolean);
+    return imgs.length
+      ? [...new Set(imgs)]
+      : ["https://via.placeholder.com/600x600?text=Product+Image"];
+  }, [product]);
+
   if (!product) return <Box>Loading...</Box>;
+
+  const isOutOfStock = displayStock !== undefined && displayStock !== null && displayStock <= 0;
+  const maxQty = displayStock > 0 ? Math.min(displayStock, 10) : 10;
+  const isFullBundle = bundleData ? selectedBundleItems.length === bundleData.items.length : false;
 
   return (
     <>
@@ -214,7 +299,7 @@ const ProductPage = () => {
               {/* Price */}
               <HStack spacing={4} align="baseline" flexWrap="wrap">
                 <Text fontSize={{ base: "4xl", md: "5xl" }} fontWeight="bold" color={priceColor}>
-                  ${product.price}
+                  ${displayPrice || product.price || 0}
                 </Text>
 
                 {/* Show original price and discount only if data exists */}
@@ -261,6 +346,37 @@ const ProductPage = () => {
               </Box>
 
               <Divider />
+
+              {/* Variant Selector — shown only for products with variants */}
+              {product.hasVariants && product.variants?.length > 0 && (
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>Options</Text>
+                  <HStack spacing={4} flexWrap="wrap">
+                    <Select
+                      placeholder="Select size"
+                      value={selectedSize}
+                      onChange={(e) => setSelectedSize(e.target.value)}
+                      maxW="200px"
+                      aria-label="Select size"
+                    >
+                      {[...new Set(product.variants.map((v) => v.size))].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </Select>
+                    <Select
+                      placeholder="Select color"
+                      value={selectedColor}
+                      onChange={(e) => setSelectedColor(e.target.value)}
+                      maxW="200px"
+                      aria-label="Select color"
+                    >
+                      {[...new Set(product.variants.map((v) => v.color))].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </Select>
+                  </HStack>
+                </Box>
+              )}
 
               {/* Quantity Selector */}
               <Box>
@@ -470,4 +586,20 @@ const ProductPage = () => {
     </>
   );
 };
+// Small presentational card used in the product's features grid.
+const FeatureBox = ({ icon, title, desc, bg }) => {
+  const textColor = useColorModeValue("gray.700", "gray.300");
+  const borderColor = useColorModeValue("gray.200", "gray.600");
+
+  return (
+    <HStack p={4} bg={bg} borderRadius="lg" spacing={3} border="1px solid" borderColor={borderColor}>
+      <Icon as={icon} boxSize={6} color="blue.500" />
+      <Box>
+        <Text fontWeight="bold" fontSize="sm">{title}</Text>
+        <Text fontSize="xs" color={textColor}>{desc}</Text>
+      </Box>
+    </HStack>
+  );
+};
+
 export default ProductPage;
