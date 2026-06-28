@@ -23,6 +23,7 @@
     "serverless-http": "^4.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.22.0",
     "@playwright/test": "^1.61.0",
     "cross-env": "^7.0.3",
