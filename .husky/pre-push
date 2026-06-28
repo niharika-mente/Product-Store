@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+echo "Running frontend tests..."
+npm run test --prefix FRONTEND -- --run || exit 1

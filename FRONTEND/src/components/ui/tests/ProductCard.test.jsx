@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
@@ -34,8 +35,7 @@ vi.mock("../../../store/cart", () => ({
 }));
 
 vi.mock("../QuickAddModal", () => ({
-  default: ({ isOpen }) =>
-    isOpen ? <div>Quick Add Modal</div> : null,
+  default: ({ isOpen }) => (isOpen ? <div>Quick Add Modal</div> : null),
 }));
 
 vi.mock("@chakra-ui/react", async () => {
@@ -86,21 +86,21 @@ describe("ProductCard", () => {
     expect(screen.getByText("Quick Add Modal")).toBeInTheDocument();
   });
 
-    it("disables Add to Cart button when product is out of stock", () => {
-      render(
-        <ProductCard
-          product={{
-            ...mockProduct,
-            stock: 0,
-          }}
-        />
-      );
+  it("disables Add to Cart button when product is out of stock", () => {
+    render(
+      <ProductCard
+        product={{
+          ...mockProduct,
+          stock: 0,
+        }}
+      />
+    );
 
-      const addToCartButton = screen.getByRole("button", {
-        name: `Add ${mockProduct.name} to cart`,
-      });
-
-      expect(addToCartButton).toBeDisabled();
-      expect(addToCartButton).toHaveTextContent("Out of Stock");
+    const addToCartButton = screen.getByRole("button", {
+      name: `Add ${mockProduct.name} to cart`,
     });
+
+    expect(addToCartButton).toBeDisabled();
+    expect(addToCartButton).toHaveTextContent("Out of Stock");
   });
+});

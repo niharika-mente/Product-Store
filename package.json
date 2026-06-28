@@ -6,7 +6,8 @@
     "build": "npm install && npm install --prefix FRONTEND && npm run build --prefix FRONTEND",
     "start": "cross-env NODE_ENV=production node BACKEND/server.js",
     "test:e2e": "npx playwright test",
-    "test:e2e:ui": "npx playwright test --ui"
+    "test:e2e:ui": "npx playwright test --ui",
+    "prepare": "husky"
   },
   "type": "module",
   "keywords": [],
