@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { escapeRegex } from '../utils/escapeRegex.js';
 import cloudinary from '../config/cloudinary.js';
 import { AppError } from "../middleware/errorMiddleware.js";
-import { io } from "../server.js";
+import { getIO } from "../socket.js";
 import { indexProduct, deleteProductFromIndex, searchProductsES } from '../services/elasticsearch.service.js';
 import redis from '../config/redis.js';
 
@@ -272,7 +272,7 @@ export const updateProduct = async (req, res, next) => {
         res.status(200).json({ success: true, data: updatedProduct });
 
         if (stock !== undefined) {
-            io.emit("stockUpdate", {
+            getIO()?.emit("stockUpdate", {
                 productId: updatedProduct._id,
                 newStock: updatedProduct.stock
             });

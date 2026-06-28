@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import Stripe from 'stripe';
 import { sendOrderConfirmationEmail } from '../services/email.service.js';
 import { processReferralOnPurchase } from '../services/referral.service.js';
-import { io } from '../server.js';
+import { getIO } from '../socket.js';
 
 let stripe;
 if (process.env.NODE_ENV === 'test') {
@@ -216,7 +216,7 @@ export const stripeWebhook = async (req, res) => {
           }
 
           // Emit real-time stock update
-          io.emit("stockUpdate", {
+          getIO()?.emit("stockUpdate", {
             productId: item._id,
             newStock: updated.stock - item.quantity
           });
