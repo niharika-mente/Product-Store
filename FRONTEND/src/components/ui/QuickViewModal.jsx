@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 import { useCartStore } from "../../store/cart";
 import { useCurrencyStore } from "../../store/currency";
 import { formatPrice } from "../../utils/currency";
-
+import React from "react";
 const QuickViewModal = ({ isOpen, onClose, product }) => {
   const { addToCart } = useCartStore();
   const { currency, rates } = useCurrencyStore();
@@ -51,7 +51,9 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
               {formatPrice(product.price, currency, rates)}
             </Text>
 
-            {product.category && <Badge colorScheme="blue">{product.category}</Badge>}
+            {product.category && (
+              <Badge colorScheme="blue">{product.category}</Badge>
+            )}
 
             {product.brand && (
               <Text>

@@ -54,6 +54,10 @@ jobs:
           NODE_ENV: test
           JWT_SECRET: testsecret12345678901234567890123
 
+      - name: Run frontend coverage
+        run: npm run coverage
+        working-directory: FRONTEND
+
   e2e-tests:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
