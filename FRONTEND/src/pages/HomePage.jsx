@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import {
   Box, Button, Container, Select, SimpleGrid, Text, VStack, useColorModeValue, Image,
   Drawer, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, DrawerCloseButton, DrawerFooter,
@@ -8,7 +8,6 @@ import {
 import { Link, useSearchParams } from "react-router-dom";
 import { useProductStore, useRecentlyViewed } from "../store/product";
 import ProductCard from "../components/ui/ProductCard";
-import Pagination from '../components/ui/Pagination';
 import Footer from "../components/ui/footer";
 import ScrollToTop from "../components/ui/ScrollToTop";
 import useDebounce from "../hooks/useDebounce";
@@ -41,7 +40,11 @@ const ProductCardSkeleton = () => {
 };
 
 const HomePage = () => {
-  const { fetchProducts, products, searchQuery, setSearchQuery, searchProducts, compareList, removeFromCompare, clearCompare } = useProductStore();
+  const {
+    fetchProducts, products, searchQuery, setSearchQuery, searchProducts,
+    compareList, removeFromCompare, clearCompare,
+    catalogKey, catalogPage, catalogTotalPages, catalogTotalProducts,
+  } = useProductStore();
   const { currency, rates } = useCurrencyStore();
   const { recentlyViewed, clearRecentlyViewed } = useRecentlyViewed();
   const { isOpen: isCompareOpen, onOpen: onCompareOpen, onClose: onCompareClose } = useDisclosure();
@@ -49,10 +52,12 @@ const HomePage = () => {
 
   const [sort, setSort] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const limit = 10;
+  const sentinelRef = useRef(null);
 
   const [filters, setFilters] = useState({
     minPrice: 0,
@@ -81,39 +86,47 @@ const HomePage = () => {
     }
   }, [searchParams, setSearchQuery]);
 
-  const prevSearchRef = useRef("");
+  const isSearching = debouncedSearch.trim() !== "";
 
+  // Identifies the current sort + filter combination. The catalog list is reset
+  // and re-fetched from page 1 whenever this changes.
+  const listKey = useMemo(() => JSON.stringify({ sort, filters }), [sort, filters]);
+
+  // On first mount, restore the accumulated list from the store if it already
+  // holds this exact query (back-navigation), so we don't reset to page 1.
+  const didRestoreRef = useRef(false);
   useEffect(() => {
-    const prevSearch = prevSearchRef.current;
+    if (!isSearching && catalogKey === listKey && products.length > 0) {
+      setPage(catalogPage);
+      setTotalPages(catalogTotalPages);
+      setTotalProducts(catalogTotalProducts);
+      setLoading(false);
+      didRestoreRef.current = true;
+    }
+    // Run once on mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    if (prevSearch.trim() !== "" && debouncedSearch.trim() === "") {
-      setPage(1);
+  // Load the first page whenever the search term, sort or filters change.
+  useEffect(() => {
+    // Skip the first run right after a back-navigation restore.
+    if (didRestoreRef.current) {
+      didRestoreRef.current = false;
+      return;
     }
 
-    prevSearchRef.current = debouncedSearch;
-  }, [debouncedSearch]);
-
-  useEffect(() => {
     let ignore = false;
-
     const run = async () => {
       setLoading(true);
-
+      setPage(1);
       try {
         const query = debouncedSearch.trim();
-
         if (query !== "") {
           await searchProducts(query);
           return;
         }
-        const response = await fetchProducts({ page, limit, sort, ...filters });
+        const response = await fetchProducts({ page: 1, limit, sort, ...filters, append: false, listKey });
         if (response && response.success && !ignore) {
-          const normalizedPage = response.totalPages === 0 ? 1 : Math.min(page, response.totalPages);
-          if (page !== normalizedPage) {
-            setPage(normalizedPage);
-            return;
-          }
-
           setTotalPages(response.totalPages);
           setTotalProducts(response.totalProducts);
         }
@@ -125,13 +138,47 @@ const HomePage = () => {
     };
 
     run();
-
     return () => {
       ignore = true;
     };
-  }, [debouncedSearch, sort, page, filters, fetchProducts, searchProducts]);
+    // listKey already encodes sort + filters, so it is the single trigger here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listKey, debouncedSearch, fetchProducts, searchProducts]);
 
-  const isSearching = debouncedSearch.trim() !== "";
+  // Fetch and append the next page (infinite scroll).
+  const loadMore = useCallback(async () => {
+    if (loading || loadingMore || isSearching || page >= totalPages) return;
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const response = await fetchProducts({ page: nextPage, limit, sort, ...filters, append: true, listKey });
+      if (response && response.success) {
+        setPage(nextPage);
+        setTotalPages(response.totalPages);
+        setTotalProducts(response.totalProducts);
+      }
+    } catch (error) {
+      console.error("Error loading more products:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loading, loadingMore, isSearching, page, totalPages, sort, filters, listKey, fetchProducts]);
+
+  // Trigger loadMore when the sentinel near the grid's bottom scrolls into view.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  const hasMore = !isSearching && page < totalPages;
   const hasNoProducts = !loading && products.length === 0 && !isSearching;
   const hasNoSearchMatch = !loading && products.length === 0 && isSearching;
   const displayCount = isSearching ? products.length : (totalProducts > 0 ? totalProducts : products.length);
@@ -266,17 +313,26 @@ const HomePage = () => {
                 </VStack>
               )}
 
-              {/* Pagination */}
-              {!loading && products.length > 0 && !isSearching && (
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={(newPage) => {
-                    if (newPage >= 1 && newPage <= totalPages) {
-                      setPage(newPage);
-                    }
-                  }}
-                />
+              {/* Infinite scroll: loading skeletons, the observer sentinel,
+                  and an end-of-catalog message */}
+              {!loading && !isSearching && products.length > 0 && (
+                <Box mt={8}>
+                  {loadingMore && (
+                    <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={10} w="full">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <ProductCardSkeleton key={`more-${i}`} />
+                      ))}
+                    </SimpleGrid>
+                  )}
+
+                  {hasMore && <Box ref={sentinelRef} h="1px" aria-hidden="true" />}
+
+                  {!hasMore && !loadingMore && (
+                    <Text textAlign="center" color={labelColor} py={6}>
+                      You’ve reached the end — {totalProducts} product{totalProducts === 1 ? "" : "s"}
+                    </Text>
+                  )}
+                </Box>
               )}
 
               {/* Empty state — search returned nothing */}
