@@ -8,6 +8,7 @@ import {
   logoutUser,
   forgotPassword,
   resetPassword,
+  refreshAccessToken,
 } from "../controllers/auth.controller.js";
 import {
   setupTwoFactor,
@@ -25,7 +26,7 @@ router.post("/register",registerLimiter, registerUser);
 router.post("/login",loginLimiter, loginUser);
 
 router.post("/logout", logoutLimiter, authMiddleware,logoutUser);
-
+router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
 
