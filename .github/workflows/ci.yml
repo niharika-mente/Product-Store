@@ -74,36 +74,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            FRONTEND/package-lock.json
-            BACKEND/package-lock.json
+      - name: Build e2e Docker image
+        run: docker build -f Dockerfile.e2e -t playwright-e2e .
 
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install frontend dependencies
-        run: npm ci
-        working-directory: FRONTEND
-
-      - name: Install backend dependencies
-        run: npm ci
-        working-directory: BACKEND
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Build frontend
-        run: npm run build
-        working-directory: FRONTEND
-
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run Playwright tests in container
+        run: |
+          mkdir -p playwright-report
+          docker run --rm \
+            --network host \
+            -e MONGO_URI \
+            -e JWT_SECRET \
+            -e NODE_ENV \
+            -e PORT \
+            -e VITE_API_URL \
+            -e FRONTEND_URL \
+            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
+            playwright-e2e
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
