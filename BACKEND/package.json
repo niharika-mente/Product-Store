@@ -43,6 +43,7 @@
     "@emnapi/core": "1.11.1",
     "@emnapi/runtime": "1.11.1",
     "jest": "^30.4.2",
+    "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2"
   }
 }
