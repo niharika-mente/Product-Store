@@ -93,6 +93,12 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    refreshToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
     // Two-factor authentication (TOTP / authenticator app).
     twoFactorEnabled: {
       type: Boolean,

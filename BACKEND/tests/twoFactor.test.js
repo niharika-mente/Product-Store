@@ -168,7 +168,8 @@ describe("login with 2FA enabled", () => {
     await loginUser({ body: { email: "jane@example.com", password: "password123" } }, res);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.token).toEqual(expect.any(String));
+    expect(res.body.accessToken).toEqual(expect.any(String));
+    expect(res.body.refreshToken).toEqual(expect.any(String));
     expect(res.body.twoFactorRequired).toBeUndefined();
   });
 
@@ -181,7 +182,8 @@ describe("login with 2FA enabled", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.twoFactorRequired).toBe(true);
-    expect(res.body.token).toBeUndefined();
+    expect(res.body.accessToken).toBeUndefined();
+    expect(res.body.refreshToken).toBeUndefined();
   });
 
   it("issues a token when a valid code accompanies the password", async () => {
@@ -201,7 +203,8 @@ describe("login with 2FA enabled", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.token).toEqual(expect.any(String));
+    expect(res.body.accessToken).toEqual(expect.any(String));
+    expect(res.body.refreshToken).toEqual(expect.any(String));
   });
 
   it("rejects login when the 2FA code is wrong", async () => {
