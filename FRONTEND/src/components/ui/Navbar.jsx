@@ -95,14 +95,14 @@ const Navbar = () => {
       });
       const data = await res.json();
       if (!data.success) {
-        toast({ title: 'Invalid coupon', description: data.message, status: 'error', duration: 3000, isClosable: true });
+        toast({ id: 'coupon-invalid', title: 'Invalid coupon', description: data.message, status: 'error', duration: 3000, isClosable: true });
         return;
       }
       setAppliedCoupon(data.data);
       setPromoInput('');
-      toast({ title: `Coupon applied!`, description: `You save $${data.data.discount.toFixed(2)}`, status: 'success', duration: 3000, isClosable: true });
+      toast({ id: 'coupon-applied', title: `Coupon applied!`, description: `You save $${data.data.discount.toFixed(2)}`, status: 'success', duration: 3000, isClosable: true });
     } catch {
-      toast({ title: 'Error', description: 'Could not validate coupon', status: 'error', duration: 3000, isClosable: true });
+      toast({ id: 'coupon-fetch-error', title: 'Error', description: 'Could not validate coupon', status: 'error', duration: 3000, isClosable: true });
     } finally {
       setPromoLoading(false);
     }
@@ -120,7 +120,7 @@ const Navbar = () => {
       if (!res.ok) throw new Error(`Server error: ${res.status} ${res.statusText}`);
       const data = await res.json();
       if (!data.success) {
-        toast({ title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
+        toast({ id: 'checkout-error', title: "Checkout Error", description: data.message, status: "error", duration: 3000, isClosable: true });
         return;
       }
       setAppliedCoupon(null);
@@ -132,7 +132,7 @@ const Navbar = () => {
         : err.message?.startsWith("Server error:")
           ? "Something went wrong on our end. Please try again later."
           : "Failed to process checkout";
-      toast({ title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
+      toast({ id: 'checkout-catch-error', title: "Error", description: message, status: "error", duration: 3000, isClosable: true });
     } finally {
       setIsCheckoutLoading(false);
     }
