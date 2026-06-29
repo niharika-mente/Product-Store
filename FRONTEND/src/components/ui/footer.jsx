@@ -25,6 +25,7 @@ const Footer = () => {
   const handleSubscribe = async () => {
     if (!email.trim()) {
       toast({
+        id: "newsletter-email-required",
         title: "Email is required",
         status: "error",
         duration: 3000,
@@ -41,6 +42,7 @@ const Footer = () => {
       });
 
       toast({
+        id: "newsletter-success",
         title: res.data.message,
         status: "success",
         duration: 3000,
@@ -50,6 +52,7 @@ const Footer = () => {
       setEmail("");
     } catch (error) {
       toast({
+        id: "newsletter-error",
         title: error?.response?.data?.message || "Something went wrong",
         status: "error",
         duration: 3000,
