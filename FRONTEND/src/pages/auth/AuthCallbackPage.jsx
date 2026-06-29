@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Container, Spinner, Text, VStack, Button, Alert } from '@chakra-ui/react';
+import { Container, Spinner, Text, VStack, Button, Alert, AlertIcon } from '@chakra-ui/react';
 
 const AuthCallbackPage = () => {
   const [params] = useSearchParams();
@@ -43,12 +43,13 @@ const AuthCallbackPage = () => {
       <Container maxW="md" py={20}>
         <VStack spacing={4}>
           <Alert status="error" borderRadius="md">
+            <AlertIcon />
             {error}
           </Alert>
-          <Button colorScheme="blue" onClick={handleAuth}>
+          <Button colorScheme="blue" width="full" onClick={handleAuth}>
             Retry
           </Button>
-          <Button variant="ghost" onClick={() => navigate('/login')}>
+          <Button variant="ghost" width="full" onClick={() => navigate('/login')}>
             Back to Login
           </Button>
         </VStack>
