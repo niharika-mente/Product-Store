@@ -65,3 +65,14 @@ export const checkoutLimiter = rateLimit({
     message: "Too many checkout attempts. Please try again later.",
   },
 });
+
+export const newsletterSubscribeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many subscription attempts. Please try again after 1 hour.",
+  },
+});
