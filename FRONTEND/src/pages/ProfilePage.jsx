@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Box, Button, Container, Divider, Flex, FormControl, FormLabel,
-  Heading, HStack, IconButton, Input, Spinner, Tab, TabList,
-  TabPanel, TabPanels, Tabs, Text, useColorModeValue, useToast, VStack,
+  Heading, HStack, IconButton, Input, Skeleton, SkeletonCircle, SkeletonText,
+  Tab, TabList, TabPanel, TabPanels, Tabs, Text, useColorModeValue, useToast, VStack,
   Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter,
   ModalHeader, ModalOverlay, useDisclosure, Badge, Avatar,
 } from "@chakra-ui/react";
@@ -124,9 +124,27 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <Flex minH="60vh" align="center" justify="center">
-        <Spinner size="xl" color="blue.500" />
-      </Flex>
+      <Container maxW="container.md" py={10} data-testid="profile-skeleton">
+        <Flex justify="space-between" align="center" mb={6}>
+          <Skeleton height="36px" width="160px" />
+          <Skeleton height="40px" width="180px" borderRadius="md" />
+        </Flex>
+        <Box bg={cardBg} borderWidth="1px" borderColor={border} borderRadius="xl" p={6}>
+          <Flex align="center" gap={6} mb={6} direction={{ base: "column", sm: "row" }}>
+            <SkeletonCircle size="20" />
+            <Box flex={1}>
+              <SkeletonText noOfLines={2} spacing={3} skeletonHeight={3} />
+            </Box>
+          </Flex>
+          <Divider mb={6} />
+          <VStack spacing={4} align="stretch">
+            <Skeleton height="40px" />
+            <Skeleton height="40px" />
+            <Skeleton height="40px" />
+            <Skeleton height="40px" />
+          </VStack>
+        </Box>
+      </Container>
     );
   }
 
