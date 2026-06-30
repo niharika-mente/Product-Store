@@ -37,6 +37,7 @@ export const WishlistProvider = ({ children }) => {
   }, []);
 
   const addToWishlist = useCallback(async (productId) => {
+    setWishlistCount(prev => prev + 1);
     try {
       setError(null);
       await axios.post('/wishlist/add', { productId });
@@ -44,12 +45,15 @@ export const WishlistProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error('Add to wishlist error:', err);
+      setWishlistCount(prev => prev - 1);
       setError(err.response?.data?.message || 'Failed to add to wishlist');
       return { success: false, message: err.response?.data?.message };
     }
   }, [fetchWishlist]);
 
   const removeFromWishlist = useCallback(async (productId) => {
+    setWishlist(prev => prev.filter(item => item._id !== productId));
+    setWishlistCount(prev => Math.max(0, prev - 1));
     try {
       setError(null);
       await axios.delete(`/wishlist/remove/${productId}`);
@@ -57,6 +61,7 @@ export const WishlistProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error('Remove from wishlist error:', err);
+      await fetchWishlist();
       setError(err.response?.data?.message || 'Failed to remove from wishlist');
       return { success: false, message: err.response?.data?.message };
     }

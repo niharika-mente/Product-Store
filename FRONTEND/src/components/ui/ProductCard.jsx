@@ -174,28 +174,31 @@ const ProductCard = ({ product }) => {
   };
 
   const handleWishlistToggle = async () => {
-    if (isInWishlist) {
+    const wasInWishlist = isInWishlist;
+    setIsInWishlist(!wasInWishlist);
+
+    if (wasInWishlist) {
       const result = await removeFromWishlist(product._id);
       if (result.success) {
-        setIsInWishlist(false);
         showInfoToast(
           toast,
           "Removed from Wishlist",
           `${product.name} has been removed from your wishlist.`
         );
       } else {
+        setIsInWishlist(wasInWishlist);
         showErrorToast(toast, "Error", result.message || "Failed to remove from wishlist");
       }
     } else {
       const result = await addToWishlist(product._id);
       if (result.success) {
-        setIsInWishlist(true);
         showSuccessToast(
           toast,
           "Added to Wishlist",
           `${product.name} has been added to your wishlist. ❤️`
         );
       } else {
+        setIsInWishlist(wasInWishlist);
         showErrorToast(toast, "Error", result.message || "Failed to add to wishlist");
       }
     }
