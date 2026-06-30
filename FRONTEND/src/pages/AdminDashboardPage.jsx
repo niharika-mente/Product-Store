@@ -5,9 +5,76 @@ import {
   ModalHeader, ModalOverlay, Table, Tbody, Td, Text, Th, Thead,
   Tr, useColorModeValue, useDisclosure, useToast, VStack, Badge,
 } from '@chakra-ui/react';
+import { List } from 'react-window';
 import { useProductStore } from '../store/product';
 
+const ROW_HEIGHT = 56;
+const VIRTUALIZE_THRESHOLD = 50;
+
 const EMPTY_FORM = { name: '', price: '', image: '', description: '', category: '', stock: '' };
+
+const ProductRow = ({ product: p, trHoverBg, openEdit, handleDelete }) => (
+  <Tr _hover={{ bg: trHoverBg }}>
+    <Td>
+      {p.image
+        ? <Image src={p.image} alt={p.name} boxSize="40px" objectFit="cover" borderRadius="md" />
+        : <Box boxSize="40px" bg="gray.200" borderRadius="md" />}
+    </Td>
+    <Td fontWeight="medium" maxW="200px">
+      <Text noOfLines={1}>{p.name}</Text>
+    </Td>
+    <Td>
+      {p.category && <Badge colorScheme="purple" fontSize="11px">{p.category}</Badge>}
+    </Td>
+    <Td isNumeric>${Number(p.price).toFixed(2)}</Td>
+    <Td isNumeric>
+      <Badge colorScheme={p.stock > 0 ? 'green' : 'red'}>{p.stock ?? '—'}</Badge>
+    </Td>
+    <Td>
+      <HStack spacing={2}>
+        <Button size="xs" colorScheme="teal" onClick={() => openEdit(p)}>Edit</Button>
+        <Button size="xs" colorScheme="red" variant="outline" onClick={() => handleDelete(p._id, p.name)}>Delete</Button>
+      </HStack>
+    </Td>
+  </Tr>
+);
+
+const VirtualRow = ({ index, style, products, trHoverBg, openEdit, handleDelete }) => {
+  const p = products[index];
+  return (
+    <Flex
+      key={p._id}
+      style={style}
+      align="center"
+      px={3}
+      _hover={{ bg: trHoverBg }}
+      borderBottom="1px solid"
+      borderColor="transparent"
+    >
+      <Box w="60px">
+        {p.image
+          ? <Image src={p.image} alt={p.name} boxSize="40px" objectFit="cover" borderRadius="md" />
+          : <Box boxSize="40px" bg="gray.200" borderRadius="md" />}
+      </Box>
+      <Box flex="2" minW={0}>
+        <Text noOfLines={1} fontWeight="medium">{p.name}</Text>
+      </Box>
+      <Box flex="1">
+        {p.category && <Badge colorScheme="purple" fontSize="11px">{p.category}</Badge>}
+      </Box>
+      <Box flex="1" textAlign="right">${Number(p.price).toFixed(2)}</Box>
+      <Box flex="1" textAlign="right">
+        <Badge colorScheme={p.stock > 0 ? 'green' : 'red'}>{p.stock ?? '—'}</Badge>
+      </Box>
+      <Box flex="1" textAlign="right">
+        <HStack spacing={2} justify="flex-end">
+          <Button size="xs" colorScheme="teal" onClick={() => openEdit(p)}>Edit</Button>
+          <Button size="xs" colorScheme="red" variant="outline" onClick={() => handleDelete(p._id, p.name)}>Delete</Button>
+        </HStack>
+      </Box>
+    </Flex>
+  );
+};
 
 export default function AdminDashboardPage() {
   const { products, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductStore();
@@ -85,38 +152,29 @@ export default function AdminDashboardPage() {
                 <Th>Actions</Th>
               </Tr>
             </Thead>
-            <Tbody>
-              {products.length === 0 && (
-                <Tr><Td colSpan={6} textAlign="center" py={10} color="gray.400">No products found.</Td></Tr>
-              )}
-              {products.map((p) => (
-                <Tr key={p._id} _hover={{ bg: trHoverBg }}>
-                  <Td>
-                    {p.image
-                      ? <Image src={p.image} alt={p.name} boxSize="40px" objectFit="cover" borderRadius="md" />
-                      : <Box boxSize="40px" bg="gray.200" borderRadius="md" />}
-                  </Td>
-                  <Td fontWeight="medium" maxW="200px">
-                    <Text noOfLines={1}>{p.name}</Text>
-                  </Td>
-                  <Td>
-                    {p.category && <Badge colorScheme="purple" fontSize="11px">{p.category}</Badge>}
-                  </Td>
-                  <Td isNumeric>${Number(p.price).toFixed(2)}</Td>
-                  <Td isNumeric>
-                    <Badge colorScheme={p.stock > 0 ? 'green' : 'red'}>{p.stock ?? '—'}</Badge>
-                  </Td>
-                  <Td>
-                    <HStack spacing={2}>
-                      <Button size="xs" colorScheme="teal" onClick={() => openEdit(p)}>Edit</Button>
-                      <Button size="xs" colorScheme="red" variant="outline" onClick={() => handleDelete(p._id, p.name)}>Delete</Button>
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
+            {products.length <= VIRTUALIZE_THRESHOLD && (
+              <Tbody>
+                {products.length === 0 && (
+                  <Tr><Td colSpan={6} textAlign="center" py={10} color="gray.400">No products found.</Td></Tr>
+                )}
+                {products.map((p) => (
+                  <ProductRow key={p._id} product={p} trHoverBg={trHoverBg} openEdit={openEdit} handleDelete={handleDelete} />
+                ))}
+              </Tbody>
+            )}
           </Table>
         </Box>
+        {products.length > VIRTUALIZE_THRESHOLD && (
+          <Box data-testid="virtualized-product-list">
+            <List
+              rowComponent={VirtualRow}
+              rowCount={products.length}
+              rowHeight={ROW_HEIGHT}
+              rowProps={{ products, trHoverBg, openEdit, handleDelete }}
+              style={{ height: 480, width: '100%' }}
+            />
+          </Box>
+        )}
       </Box>
 
       <Modal isOpen={isOpen} onClose={onClose} size="md">
