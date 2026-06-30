@@ -38,6 +38,7 @@ const uploadToCloudinary = (buffer) => {
                 else resolve(result);
             }
         );
+        stream.on('error', reject);
         stream.end(buffer);
     });
 };
