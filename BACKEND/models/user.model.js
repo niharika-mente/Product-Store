@@ -134,6 +134,17 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+
+    //SOFT DELETE FIELDS
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index : true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -148,6 +159,24 @@ const userSchema = new mongoose.Schema(
     },
   }
 );
+
+//MIDDLEWARE TO FILTER DELETED USERS
+userSchema.pre('find', function(){
+  this.where({ isDeleted: false});
+});
+userSchema.pre('findOne', function() {
+  this.where({ isDeleted: false });
+});
+
+userSchema.pre('findById', function() {
+  this.where({ isDeleted: false });
+});
+
+//For admin queries that need to see the deleted users
+userSchema.statics.findAllIncludingDeleted = function(){
+  return this.find().where({ isDeleted:{ $in: [true,false]}});
+};
+
 
 const User = mongoose.model("User", userSchema);
 
