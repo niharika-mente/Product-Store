@@ -6,8 +6,6 @@ import { getSocket } from '../socket';
 
 const ProductPage = () => {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
-
   const toast = useToast();
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');

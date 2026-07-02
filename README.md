@@ -145,6 +145,36 @@ cd FRONTEND && npm run dev
 - The backend API runs at `http://localhost:5000`
 - The frontend app runs at `http://localhost:5173`
 
+---
+
+## 🚀 Continuous Deployment (CI/CD)
+
+This repository is configured with an environment-aware CI/CD pipeline using GitHub Actions and Vercel.
+
+### Deployment Environments
+
+- **Staging**: Merges/pushes to the `develop` branch automatically deploy to Vercel's preview environment targeting the `staging` GitHub Environment.
+- **Production**: Merges/pushes to the `main` branch automatically deploy to Vercel's production environment targeting the `production` GitHub Environment.
+
+Production deployments are strictly isolated and cannot be triggered from the `develop` branch.
+
+### Prerequisites & GitHub Configuration
+
+To enable deployment integration, configure the following:
+
+#### 1. GitHub Environments
+Create two environments in your GitHub repository (**Settings > Environments**):
+- `staging`
+- `production`
+
+#### 2. GitHub Secrets
+Add the following secrets to your GitHub repository (**Settings > Secrets and variables > Actions**):
+- `VERCEL_TOKEN`: Your Vercel Personal Access Token.
+- `VERCEL_ORG_ID`: Your Vercel Organization or Team ID.
+- `VERCEL_PROJECT_ID`: Your Vercel Project ID. Note that this can also be set or overridden per GitHub Environment if you deploy to separate Vercel projects.
+
+---
+
 ## 💖 Contributors
 
 Thanks to all the amazing people who contribute to **Product Store** 🚀
